@@ -14,6 +14,7 @@ from pathlib import Path
 DEPLOY_FILES = (
     "404.html",
     "app.js",
+    "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
     "index.html",
     "robots.txt",

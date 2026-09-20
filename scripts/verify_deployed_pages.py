@@ -16,6 +16,7 @@ import urllib.request
 EXPECTED_FILES = {
     "404.html",
     "app.js",
+    "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
     "index.html",
     "robots.txt",
@@ -89,6 +90,8 @@ def main() -> None:
             raise AssertionError(f"JavaScript content type mismatch: {path}")
         if path.endswith(".geojson") and not any(kind in content_type for kind in ("json", "geo+json", "octet-stream")):
             raise AssertionError(f"GeoJSON content type mismatch: {path}")
+        if path.endswith(".png") and "image/png" not in content_type:
+            raise AssertionError(f"PNG content type mismatch: {path}")
         return path, len(raw)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:

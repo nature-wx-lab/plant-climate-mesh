@@ -226,6 +226,20 @@ a { color: var(--green-dark); }
   vector-effect: non-scaling-stroke;
 }
 
+.climate-raster {
+  opacity: 0.66;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+.country-border {
+  fill: none;
+  stroke: var(--land-stroke);
+  stroke-width: 0.65;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
 .selection-cell {
   fill: rgba(227, 107, 53, 0.18);
   stroke: var(--accent);
@@ -281,6 +295,98 @@ a { color: var(--green-dark); }
   opacity: 0.45;
   cursor: default;
 }
+
+.map-controls button[aria-pressed="true"] {
+  border-color: #0f5b50;
+  color: #fff;
+  background: #18675b;
+}
+
+.climate-legend {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  bottom: 43px;
+  width: min(355px, calc(100% - 24px));
+  padding: 8px 9px;
+  border: 1px solid rgba(61, 91, 85, 0.35);
+  border-radius: 7px;
+  color: #29453f;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(22, 65, 58, 0.13);
+  backdrop-filter: blur(8px);
+}
+
+.climate-legend-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 0.7rem;
+}
+
+.climate-legend-heading span,
+.climate-legend p {
+  color: #607772;
+  font-size: 0.62rem;
+}
+
+.climate-legend-items {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 3px 5px;
+}
+
+.climate-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  font-size: 0.61rem;
+  font-weight: 800;
+}
+
+.climate-swatch {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(20, 45, 41, 0.22);
+  border-radius: 2px;
+}
+
+.kg-1 { background: #0000ff; }
+.kg-2 { background: #0078ff; }
+.kg-3 { background: #46aafa; }
+.kg-4 { background: #ff0000; }
+.kg-5 { background: #ff9696; }
+.kg-6 { background: #f5a500; }
+.kg-7 { background: #ffdc64; }
+.kg-8 { background: #ffff00; }
+.kg-9 { background: #c8c800; }
+.kg-10 { background: #969600; }
+.kg-11 { background: #96ff96; }
+.kg-12 { background: #64c864; }
+.kg-13 { background: #329632; }
+.kg-14 { background: #c8ff50; }
+.kg-15 { background: #64ff50; }
+.kg-16 { background: #32c800; }
+.kg-17 { background: #ff00ff; }
+.kg-18 { background: #c800c8; }
+.kg-19 { background: #963296; }
+.kg-20 { background: #966496; }
+.kg-21 { background: #aaafff; }
+.kg-22 { background: #5a78dc; }
+.kg-23 { background: #4b50b4; }
+.kg-24 { background: #320087; }
+.kg-25 { background: #00ffff; }
+.kg-26 { background: #37c8ff; }
+.kg-27 { background: #007d7d; }
+.kg-28 { background: #00465f; }
+.kg-29 { background: #b2b2b2; }
+.kg-30 { background: #666; }
+
+.climate-legend p { margin: 5px 0 0; }
 
 .map-badge {
   position: absolute;
@@ -385,6 +491,11 @@ a { color: var(--green-dark); }
   margin-top: 3px;
   color: #647974;
   line-height: 1.45;
+}
+
+.place-summary {
+  color: #153f37;
+  font-weight: 800;
 }
 
 .metric-grid {
@@ -611,6 +722,14 @@ footer p + p { margin-top: 5px; }
     min-width: 37px;
     min-height: 37px;
     padding: 4px 8px;
+  }
+
+  .climate-legend {
+    left: 8px;
+    bottom: 40px;
+    width: min(345px, calc(100% - 16px));
+    max-height: 42svh;
+    overflow-y: auto;
   }
 
   .map-badge {

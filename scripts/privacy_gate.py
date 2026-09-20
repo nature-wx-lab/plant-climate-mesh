@@ -27,6 +27,7 @@ FORBIDDEN_SUFFIXES = {
     ".log", ".mov", ".mp4", ".p12", ".pdf", ".pem", ".pfx", ".png",
     ".sqlite", ".tiff", ".xls", ".xlsx", ".zip",
 }
+ALLOWED_BINARY_PATHS = {Path("data/koppen-geiger-1991-2020.png")}
 MAX_FILE_BYTES = 3 * 1024 * 1024
 PATTERNS = {
     "absolute-user-path": re.compile(r"/" r"Users/|[A-Za-z]:\\\\Users\\\\", re.IGNORECASE),
@@ -96,7 +97,7 @@ def path_problem(path: Path) -> str | None:
         return "forbidden-file"
     if any(part in FORBIDDEN_PARTS for part in path.parts):
         return "forbidden-directory"
-    if path.suffix.lower() in FORBIDDEN_SUFFIXES:
+    if path.suffix.lower() in FORBIDDEN_SUFFIXES and path not in ALLOWED_BINARY_PATHS:
         return "forbidden-suffix"
     if path.suffix.lower() == ".map":
         return "source-map"

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import struct
 import subprocess
 from pathlib import Path
 
@@ -20,6 +21,7 @@ SOURCE_FILES = {
     "README.md",
     "THIRD_PARTY_NOTICES.md",
     "app.js",
+    "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
     "index.html",
     "robots.txt",
@@ -33,6 +35,7 @@ SOURCE_FILES = {
 DEPLOY_FILES = {
     "404.html",
     "app.js",
+    "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
     "index.html",
     "robots.txt",
@@ -75,8 +78,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260920-grid1\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260920-grid1"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260920-places1\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260920-places1"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -112,6 +115,11 @@ def main() -> None:
         require(f'id="{chart_id}"' in index, f"chart missing: {chart_id}")
     require("月別の数値表" in index, "monthly table disclosure missing")
     require("平均日最高" in index and "平均日最低" in index, "monthly high-low columns missing")
+    require('id="climateToggle"' in index and 'aria-pressed="false"' in index, "climate overlay toggle missing")
+    require('data-src="./data/koppen-geiger-1991-2020.png"' in index, "climate overlay asset missing")
+    require("ケッペン＝ガイガー気候区分" in index and "1991–2020年・0.1°版" in index, "climate overlay disclosure missing")
+    require("国・地域：—｜首都：—" in index, "country and capital placeholder missing")
+    require("1:50m Admin 0 Countries / 1:10m Populated Places" in index, "country/capital source disclosure missing")
 
     require("https://power.larc.nasa.gov/api/temporal/climatology/point" in app, "POWER endpoint mismatch")
     require("https://power.larc.nasa.gov/api/temporal/daily/point" in app, "POWER daily endpoint mismatch")
@@ -155,6 +163,10 @@ def main() -> None:
     require('viewBox="0 0 360 156"' in index, "temperature chart height mismatch")
     require("chart-gridline-emphasis" in styles and "chart-axis-label-emphasis" in styles, "temperature axis emphasis style missing")
     require("./data/world-50m.geojson" in app, "Natural Earth 1:50m map path missing")
+    require("function geometryContainsPoint(" in app and "function countryAt(" in app, "country lookup missing")
+    require("country.properties.capital" in app and "国・地域：海上｜首都：—" in app, "country/capital rendering missing")
+    require("function toggleClimateLayer(" in app and "KOPPEN_CLASSES" in app, "climate overlay interaction missing")
+    require(".climate-raster" in styles and ".climate-legend" in styles and ".country-border" in styles, "climate overlay style missing")
 
     require("overflow-x: auto" in styles, "narrow-screen table overflow guard missing")
     require("@media (max-width: 760px)" in styles, "mobile layout missing")
@@ -166,9 +178,16 @@ def main() -> None:
     features = collection.get("features")
     require(isinstance(features, list) and 230 <= len(features) <= 270, "unexpected Natural Earth feature count")
     coordinate_count = 0
+    capital_count = 0
     for feature in features:
         require(set(feature) == {"type", "properties", "geometry"}, "unexpected GeoJSON feature keys")
-        require(set(feature.get("properties", {})) <= {"name"}, "world map exposes unnecessary properties")
+        properties = feature.get("properties", {})
+        require(set(properties) <= {"name", "code", "capital"}, "world map exposes unnecessary properties")
+        require(isinstance(properties.get("name"), str) and properties["name"], "country name missing")
+        require(re.fullmatch(r"[A-Z0-9-]{3}", str(properties.get("code", ""))) is not None, "country code missing")
+        if "capital" in properties:
+            require(isinstance(properties["capital"], str) and properties["capital"], "invalid capital name")
+            capital_count += 1
         geometry = feature.get("geometry", {})
         require(geometry.get("type") in {"Polygon", "MultiPolygon"}, "unsupported world geometry")
         for coordinate in all_coordinates(geometry.get("coordinates")):
@@ -176,6 +195,13 @@ def main() -> None:
             longitude, latitude = coordinate[:2]
             require(-180.000001 <= longitude <= 180.000001 and -90 <= latitude <= 90, "world coordinate out of range")
     require(coordinate_count > 50_000, "world map geometry is unexpectedly sparse")
+    require(capital_count >= 200, "capital coverage is unexpectedly sparse")
+
+    overlay = (ROOT / "data/koppen-geiger-1991-2020.png").read_bytes()
+    require(overlay.startswith(b"\x89PNG\r\n\x1a\n"), "climate overlay is not PNG")
+    width, height = struct.unpack(">II", overlay[16:24])
+    require((width, height) == (4096, 4096), "climate overlay dimensions mismatch")
+    require(len(overlay) < 500_000, "climate overlay is unexpectedly large")
 
     require("plant-climate-mesh/sitemap.xml" in robots, "robots sitemap mismatch")
     require("plant-climate-mesh/" in sitemap, "sitemap URL mismatch")

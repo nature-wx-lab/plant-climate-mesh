@@ -15,11 +15,28 @@
   const AVERAGE_DAYS_PER_MONTH = [31, 28 + 8 / 30, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   const AVERAGE_DAYS_PER_YEAR = AVERAGE_DAYS_PER_MONTH.reduce((sum, days) => sum + days, 0);
   const FILL_VALUE = -999;
+  const KOPPEN_CLASSES = [
+    ["Af", "熱帯雨林"], ["Am", "熱帯モンスーン"], ["Aw", "サバナ"],
+    ["BWh", "高温砂漠"], ["BWk", "低温砂漠"], ["BSh", "高温ステップ"], ["BSk", "低温ステップ"],
+    ["Csa", "高温夏季乾燥"], ["Csb", "温暖夏季乾燥"], ["Csc", "冷涼夏季乾燥"],
+    ["Cwa", "高温冬季乾燥"], ["Cwb", "温暖冬季乾燥"], ["Cwc", "冷涼冬季乾燥"],
+    ["Cfa", "高温・乾季なし"], ["Cfb", "温暖・乾季なし"], ["Cfc", "冷涼・乾季なし"],
+    ["Dsa", "高温夏季乾燥"], ["Dsb", "温暖夏季乾燥"], ["Dsc", "冷涼夏季乾燥"], ["Dsd", "厳冬・夏季乾燥"],
+    ["Dwa", "高温冬季乾燥"], ["Dwb", "温暖冬季乾燥"], ["Dwc", "冷涼冬季乾燥"], ["Dwd", "厳冬・冬季乾燥"],
+    ["Dfa", "高温・乾季なし"], ["Dfb", "温暖・乾季なし"], ["Dfc", "冷涼・乾季なし"], ["Dfd", "厳冬・乾季なし"],
+    ["ET", "ツンドラ"], ["EF", "氷雪"],
+  ];
 
   const elements = {
     map: document.getElementById("worldMap"),
     graticule: document.getElementById("graticuleLayer"),
     land: document.getElementById("landLayer"),
+    border: document.getElementById("borderLayer"),
+    climate: document.getElementById("climateLayer"),
+    climateImage: document.getElementById("climateImage"),
+    climateToggle: document.getElementById("climateToggle"),
+    climateLegend: document.getElementById("climateLegend"),
+    climateLegendItems: document.getElementById("climateLegendItems"),
     selection: document.getElementById("selectionLayer"),
     selectionState: document.getElementById("selectionState"),
     requestStatus: document.getElementById("requestStatus"),
@@ -51,6 +68,8 @@
     cache: new Map(),
     selectedCell: null,
     drag: null,
+    countries: [],
+    climateVisible: false,
   };
 
   function clamp(value, minimum, maximum) {
@@ -125,6 +144,34 @@
     }
   }
 
+  function drawClimateLegend() {
+    const fragment = document.createDocumentFragment();
+    KOPPEN_CLASSES.forEach(([code, description], index) => {
+      const item = document.createElement("span");
+      item.className = "climate-key";
+      item.title = `${code} ${description}`;
+      const swatch = document.createElement("i");
+      swatch.className = `climate-swatch kg-${index + 1}`;
+      swatch.setAttribute("aria-hidden", "true");
+      const label = document.createElement("span");
+      label.textContent = code;
+      item.append(swatch, label);
+      fragment.append(item);
+    });
+    elements.climateLegendItems.replaceChildren(fragment);
+  }
+
+  function toggleClimateLayer() {
+    state.climateVisible = !state.climateVisible;
+    if (state.climateVisible && !elements.climateImage.getAttribute("href")) {
+      elements.climateImage.setAttribute("href", elements.climateImage.dataset.src);
+    }
+    elements.climate.toggleAttribute("hidden", !state.climateVisible);
+    elements.climateLegend.toggleAttribute("hidden", !state.climateVisible);
+    elements.climateToggle.setAttribute("aria-pressed", String(state.climateVisible));
+    elements.map.classList.toggle("climate-visible", state.climateVisible);
+  }
+
   function ringToPath(ring) {
     const commands = [];
     for (let index = 0; index < ring.length; index += 1) {
@@ -157,12 +204,19 @@
       if (collection.type !== "FeatureCollection" || !Array.isArray(collection.features)) {
         throw new Error("地図データ形式が不正です");
       }
+      state.countries = collection.features;
       const fragment = document.createDocumentFragment();
+      const borderFragment = document.createDocumentFragment();
       for (const feature of collection.features) {
         const pathData = geometryToPath(feature.geometry);
-        if (pathData) fragment.append(svgElement("path", { d: pathData, class: "land", "fill-rule": "evenodd" }));
+        if (pathData) {
+          fragment.append(svgElement("path", { d: pathData, class: "land", "fill-rule": "evenodd" }));
+          borderFragment.append(svgElement("path", { d: pathData, class: "country-border", "fill-rule": "evenodd" }));
+        }
       }
       elements.land.replaceChildren(fragment);
+      elements.border.replaceChildren(borderFragment);
+      if (state.selectedCell) updateLocation(state.selectedCell);
     } catch (error) {
       setStatus("境界線を読み込めませんでした。格子選択は利用できます", "error");
     }
@@ -213,14 +267,65 @@
     return `${Math.abs(value).toFixed(2)}°${direction}`;
   }
 
+  function ringContainsPoint(ring, longitude, latitude) {
+    let minimumLongitude = Infinity;
+    let maximumLongitude = -Infinity;
+    ring.forEach((coordinate) => {
+      const value = Number(coordinate[0]);
+      minimumLongitude = Math.min(minimumLongitude, value);
+      maximumLongitude = Math.max(maximumLongitude, value);
+    });
+    const crossesAntimeridian = maximumLongitude - minimumLongitude > 180;
+    const pointX = crossesAntimeridian && longitude < 0 ? longitude + 360 : longitude;
+    const ringLongitude = (value) => crossesAntimeridian && value < 0 ? value + 360 : value;
+    let inside = false;
+    for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+      const currentCoordinate = ring[index];
+      const previousCoordinate = ring[previous];
+      const currentX = ringLongitude(Number(currentCoordinate[0]));
+      const previousX = ringLongitude(Number(previousCoordinate[0]));
+      const currentY = Number(currentCoordinate[1]);
+      const previousY = Number(previousCoordinate[1]);
+      const crossesLatitude = (currentY > latitude) !== (previousY > latitude);
+      if (!crossesLatitude) continue;
+      const crossingX = ((previousX - currentX) * (latitude - currentY)) / (previousY - currentY) + currentX;
+      if (crossingX > pointX) inside = !inside;
+    }
+    return inside;
+  }
+
+  function polygonContainsPoint(polygon, longitude, latitude) {
+    if (!polygon.length || !ringContainsPoint(polygon[0], longitude, latitude)) return false;
+    return !polygon.slice(1).some((hole) => ringContainsPoint(hole, longitude, latitude));
+  }
+
+  function geometryContainsPoint(geometry, longitude, latitude) {
+    if (!geometry || !Array.isArray(geometry.coordinates)) return false;
+    if (geometry.type === "Polygon") return polygonContainsPoint(geometry.coordinates, longitude, latitude);
+    if (geometry.type === "MultiPolygon") {
+      return geometry.coordinates.some((polygon) => polygonContainsPoint(polygon, longitude, latitude));
+    }
+    return false;
+  }
+
+  function countryAt(longitude, latitude) {
+    return state.countries.find((feature) => geometryContainsPoint(feature.geometry, longitude, latitude)) || null;
+  }
+
   function updateLocation(cell) {
     const strong = document.createElement("strong");
     strong.textContent = "気象格子：約0.5°×0.625°（橙枠）";
     const span = document.createElement("span");
     span.textContent = `格子中心：${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
+    const country = countryAt(cell.longitude, cell.latitude);
+    const place = document.createElement("span");
+    place.className = "place-summary";
+    place.textContent = country
+      ? `国・地域：${country.properties.name}｜首都：${country.properties.capital || "—"}`
+      : "国・地域：海上｜首都：—";
     const note = document.createElement("small");
     note.textContent = "気温・降水・相対湿度は橙枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
-    elements.locationSummary.replaceChildren(strong, span, note);
+    elements.locationSummary.replaceChildren(strong, span, place, note);
     elements.selectionState.textContent = "気象格子選択済み";
   }
 
@@ -797,6 +902,7 @@
   }
 
   drawGraticule();
+  drawClimateLegend();
   setView(1);
   loadWorldMap();
   elements.map.addEventListener("pointerdown", beginDrag);
@@ -807,6 +913,7 @@
   elements.zoomIn.addEventListener("click", () => setView(state.zoom * 2));
   elements.zoomOut.addEventListener("click", () => setView(state.zoom / 2));
   elements.resetView.addEventListener("click", () => setView(1, MAP_SIZE / 2, MAP_SIZE / 2));
+  elements.climateToggle.addEventListener("click", toggleClimateLayer);
   elements.closeResults.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
 })();
