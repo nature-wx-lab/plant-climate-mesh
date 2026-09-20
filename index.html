@@ -23,31 +23,49 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="title-block">
-      <span class="eyebrow">Nature Wx Lab</span>
+    <div class="title-row">
       <h1>植物気候メッシュ <small>β</small></h1>
-      <p>世界地図をクリックして、その場所の気候を確かめる。</p>
+      <p>世界地図をクリックして、その場所の気候を確かめる</p>
     </div>
-    <nav class="top-links" aria-label="関連リンク">
-      <a href="https://naturewxlab.com/" target="_blank" rel="noopener noreferrer">公式サイト</a>
-      <a href="https://note.com/nature_wx_lab" target="_blank" rel="noopener noreferrer">note</a>
-    </nav>
+    <div class="header-actions">
+      <a class="brand" href="https://naturewxlab.com/" target="_blank" rel="noopener noreferrer" aria-label="NatureWxLab公式ホームページへ">
+        <span class="brand-home-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3.5 10.5 12 3l8.5 7.5"></path>
+            <path d="M5.5 9.5V21h13V9.5M9.5 21v-7h5v7"></path>
+          </svg>
+        </span>
+        <span class="brand-label">NatureWxLab</span>
+      </a>
+      <nav class="sns-links" aria-label="Nature Wx Lab SNSリンク">
+        <a class="sns-link youtube" href="https://www.youtube.com/@nature_wx_lab" target="_blank" rel="noopener noreferrer" aria-label="Nature Wx LabのYouTubeへ">
+          <span class="sns-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <rect x="2" y="5" width="20" height="14" rx="4" fill="#ff0033"></rect>
+              <path d="M10 8.8v6.4l5.4-3.2z" fill="#fff"></path>
+            </svg>
+          </span>
+          <span>YouTube</span>
+        </a>
+        <a class="sns-link note" href="https://note.com/nature_wx_lab" target="_blank" rel="noopener noreferrer" aria-label="Nature Wx Labのnoteへ">
+          <span class="sns-mark note-mark" aria-hidden="true">n</span>
+          <span>note</span>
+        </a>
+        <a class="sns-link x" href="https://x.com/nature_wx_lab" target="_blank" rel="noopener noreferrer" aria-label="Nature Wx LabのXへ">
+          <span class="sns-mark x-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <rect width="24" height="24" fill="#000"></rect>
+              <path d="M4.2 3.2h4.1l4.2 5.7 5-5.7h2.3l-6.2 7.1 6.4 10.5h-4.1l-4.6-6.4-5.6 6.4H3.4l6.8-7.7L4.2 3.2Zm3 1.7 9.6 14.2h1.1L8.3 4.9H7.2Z" fill="#fff"></path>
+            </svg>
+          </span>
+          <span>X</span>
+        </a>
+      </nav>
+    </div>
   </header>
 
   <main class="workspace">
-    <section class="map-panel" aria-labelledby="mapHeading">
-      <div class="panel-heading">
-        <div>
-          <h2 id="mapHeading">世界地図</h2>
-          <p>海を含む任意の場所をクリック。選択枠の中心点を取得します。</p>
-        </div>
-        <div class="map-controls" aria-label="地図の拡大縮小">
-          <button id="zoomOut" type="button" aria-label="地図を縮小">−</button>
-          <button id="zoomIn" type="button" aria-label="地図を拡大">＋</button>
-          <button id="resetView" type="button">全体</button>
-        </div>
-      </div>
-
+    <section class="map-panel" aria-label="世界地図">
       <div class="map-wrap">
         <svg id="worldMap" viewBox="0 0 1000 1000" role="img" aria-labelledby="mapTitle mapDescription">
           <title id="mapTitle">Webメルカトル図法の世界地図</title>
@@ -57,72 +75,96 @@
           <g id="landLayer" aria-hidden="true"></g>
           <g id="selectionLayer" aria-hidden="true"></g>
         </svg>
+
+        <div class="map-controls" aria-label="地図の拡大縮小">
+          <button id="zoomOut" type="button" aria-label="地図を縮小">−</button>
+          <button id="zoomIn" type="button" aria-label="地図を拡大">＋</button>
+          <button id="resetView" type="button">全体</button>
+        </div>
         <div class="map-badge">Webメルカトル｜表示緯度 ±85.05°</div>
-      </div>
-      <p class="map-help">クリック後は選択地点を拡大します。別の地域を見るときは「全体」を押してください。</p>
-    </section>
 
-    <section class="result-panel" aria-labelledby="resultHeading">
-      <div class="result-heading">
-        <div>
-          <span id="selectionState" class="eyebrow">地点未選択</span>
-          <h2 id="resultHeading">1991–2020年の気候平均</h2>
-        </div>
-        <span id="requestStatus" class="status" role="status" aria-live="polite">地図をクリックしてください</span>
-      </div>
+        <button id="openResults" class="drawer-tab" type="button" aria-controls="resultPanel" aria-expanded="false" hidden>気候データ</button>
 
-      <div id="locationSummary" class="location-summary">
-        <strong>選択枠：—</strong>
-        <span>取得点：—</span>
-      </div>
+        <aside id="resultPanel" class="result-panel" aria-labelledby="resultHeading" hidden>
+          <div class="result-heading">
+            <div>
+              <span id="selectionState" class="eyebrow">地点選択済み</span>
+              <h2 id="resultHeading">1991–2020年の気候平均</h2>
+            </div>
+            <button id="closeResults" class="drawer-close" type="button" aria-controls="resultPanel" aria-expanded="true" aria-label="気候データを右へ折りたたむ">›</button>
+          </div>
 
-      <div class="metric-grid" aria-label="年平均値">
-        <article class="metric temperature">
-          <span>年平均気温</span>
-          <strong id="annualTemperature">—</strong>
-          <small>地上2m</small>
-        </article>
-        <article class="metric precipitation">
-          <span>年平均降水量</span>
-          <strong id="annualPrecipitation">—</strong>
-          <small id="annualPrecipitationNote">日平均</small>
-        </article>
-        <article class="metric solar">
-          <span>年平均日射量</span>
-          <strong id="annualSolar">—</strong>
-          <small>全天日射量・日平均</small>
-        </article>
-        <article class="metric humidity">
-          <span>年平均相対湿度</span>
-          <strong id="annualHumidity">—</strong>
-          <small>地上2m</small>
-        </article>
-      </div>
+          <span id="requestStatus" class="status" role="status" aria-live="polite">地図をクリックしてください</span>
 
-      <div class="data-note">
-        <strong>格子について</strong>
-        <p>選択枠は1°×1°です。表示値は枠中心を含むNASA POWER元データ格子の代表値です。気温・降水・湿度は約0.5°×0.625°、日射は1°×1°で、解像度は同一ではありません。</p>
-      </div>
+          <div id="locationSummary" class="location-summary">
+            <strong>選択枠：—</strong>
+            <span>取得点：—</span>
+          </div>
 
-      <details class="monthly-details" open>
-        <summary>月別平均</summary>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">月</th>
-                <th scope="col">気温<br><small>℃</small></th>
-                <th scope="col">降水<br><small>mm/日</small></th>
-                <th scope="col">日射<br><small>MJ/㎡/日</small></th>
-                <th scope="col">湿度<br><small>%</small></th>
-              </tr>
-            </thead>
-            <tbody id="monthlyBody">
-              <tr><td colspan="5" class="empty-row">地点を選択すると表示します</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </details>
+          <div class="metric-grid" aria-label="年平均値">
+            <article class="metric temperature">
+              <span>年平均気温</span>
+              <strong id="annualTemperature">—</strong>
+              <small>地上2m</small>
+            </article>
+            <article class="metric precipitation">
+              <span>年平均降水量</span>
+              <strong id="annualPrecipitation">—</strong>
+              <small id="annualPrecipitationNote">日平均</small>
+            </article>
+            <article class="metric solar">
+              <span>年平均日射量</span>
+              <strong id="annualSolar">—</strong>
+              <small>全天日射量・日平均</small>
+            </article>
+            <article class="metric humidity">
+              <span>年平均相対湿度</span>
+              <strong id="annualHumidity">—</strong>
+              <small>地上2m</small>
+            </article>
+          </div>
+
+          <section class="chart-section" aria-labelledby="chartHeading">
+            <h3 id="chartHeading">月ごとの気候</h3>
+            <div class="chart-grid">
+              <figure class="chart-card temperature-chart">
+                <figcaption>気温 <small>℃｜折れ線</small></figcaption>
+                <svg id="temperatureChart" viewBox="0 0 360 126" role="img" aria-label="月別平均気温の折れ線グラフ"></svg>
+              </figure>
+              <figure class="chart-card precipitation-chart">
+                <figcaption>降水量 <small>mm/日｜棒</small></figcaption>
+                <svg id="precipitationChart" viewBox="0 0 360 126" role="img" aria-label="月別平均降水量の棒グラフ"></svg>
+              </figure>
+              <figure class="chart-card solar-chart">
+                <figcaption>日射量 <small>MJ/㎡/日｜折れ線</small></figcaption>
+                <svg id="solarChart" viewBox="0 0 360 126" role="img" aria-label="月別平均日射量の折れ線グラフ"></svg>
+              </figure>
+              <figure class="chart-card humidity-chart">
+                <figcaption>相対湿度 <small>%｜折れ線</small></figcaption>
+                <svg id="humidityChart" viewBox="0 0 360 126" role="img" aria-label="月別平均相対湿度の折れ線グラフ"></svg>
+              </figure>
+            </div>
+          </section>
+
+          <details class="monthly-details">
+            <summary>月別の数値表</summary>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">月</th>
+                    <th scope="col">気温<br><small>℃</small></th>
+                    <th scope="col">降水<br><small>mm/日</small></th>
+                    <th scope="col">日射<br><small>MJ/㎡/日</small></th>
+                    <th scope="col">湿度<br><small>%</small></th>
+                  </tr>
+                </thead>
+                <tbody id="monthlyBody"></tbody>
+              </table>
+            </div>
+          </details>
+        </aside>
+      </div>
     </section>
   </main>
 
@@ -130,7 +172,8 @@
     <section>
       <h2>データと利用上の注意</h2>
       <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>, Climatology API。1991年1月〜2020年12月の月別・年平均値を表示用に加工しています。NASAは本ツールを承認または推奨するものではありません。</p>
-      <p>地図境界：<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a> 1:110m（Public Domain）。境界表示は法的立場を示すものではありません。</p>
+      <p>選択枠は1°×1°です。表示値は枠中心を含む元データ格子の代表値です。気温・降水・湿度は約0.5°×0.625°、日射は1°×1°で、解像度は同一ではありません。</p>
+      <p>地図境界：<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a> 1:50m（Public Domain）。境界表示は法的立場を示すものではありません。</p>
       <p>本ツールは広域の気候傾向を確認する試作版です。局地的な地形、都市、沿岸、標高、品種、栽培環境の差は表現しません。栽培可否の断定には使用しないでください。</p>
     </section>
     <section>

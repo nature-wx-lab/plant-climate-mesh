@@ -24,6 +24,13 @@
     annualSolar: document.getElementById("annualSolar"),
     annualHumidity: document.getElementById("annualHumidity"),
     monthlyBody: document.getElementById("monthlyBody"),
+    temperatureChart: document.getElementById("temperatureChart"),
+    precipitationChart: document.getElementById("precipitationChart"),
+    solarChart: document.getElementById("solarChart"),
+    humidityChart: document.getElementById("humidityChart"),
+    resultPanel: document.getElementById("resultPanel"),
+    openResults: document.getElementById("openResults"),
+    closeResults: document.getElementById("closeResults"),
     zoomIn: document.getElementById("zoomIn"),
     zoomOut: document.getElementById("zoomOut"),
     resetView: document.getElementById("resetView"),
@@ -37,6 +44,7 @@
     controller: null,
     cache: new Map(),
     selectedCell: null,
+    drag: null,
   };
 
   function clamp(value, minimum, maximum) {
@@ -77,8 +85,22 @@
     state.centerX = clamp(centerX, size / 2, MAP_SIZE - size / 2);
     state.centerY = clamp(centerY, size / 2, MAP_SIZE - size / 2);
     elements.map.setAttribute("viewBox", `${state.centerX - size / 2} ${state.centerY - size / 2} ${size} ${size}`);
-    elements.zoomOut.disabled = state.zoom === 1;
-    elements.zoomIn.disabled = state.zoom === 16;
+    elements.zoomOut.disabled = state.zoom <= 1;
+    elements.zoomIn.disabled = state.zoom >= 16;
+  }
+
+  function openResultPanel() {
+    elements.resultPanel.hidden = false;
+    elements.openResults.hidden = true;
+    elements.openResults.setAttribute("aria-expanded", "true");
+    elements.closeResults.setAttribute("aria-expanded", "true");
+  }
+
+  function closeResultPanel() {
+    elements.resultPanel.hidden = true;
+    elements.openResults.hidden = false;
+    elements.openResults.setAttribute("aria-expanded", "false");
+    elements.closeResults.setAttribute("aria-expanded", "false");
   }
 
   function drawGraticule() {
@@ -115,7 +137,7 @@
 
   async function loadWorldMap() {
     try {
-      const response = await fetch("./data/world-110m.geojson", {
+      const response = await fetch("./data/world-50m.geojson", {
         credentials: "same-origin",
         referrerPolicy: "no-referrer",
       });
@@ -208,6 +230,92 @@
     return series && typeof series === "object" ? series : {};
   }
 
+  function renderChart(svg, values, color, type) {
+    svg.replaceChildren();
+    const validValues = values.filter(validNumber);
+    if (!validValues.length) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = "データを取得しています";
+      svg.append(empty);
+      return;
+    }
+
+    const left = 34;
+    const right = 8;
+    const top = 8;
+    const bottom = 23;
+    const width = 360 - left - right;
+    const height = 126 - top - bottom;
+    let minimum = type === "bar" ? 0 : Math.min(...validValues);
+    let maximum = Math.max(...validValues);
+    if (type !== "bar") {
+      const padding = Math.max((maximum - minimum) * 0.12, 0.5);
+      minimum -= padding;
+      maximum += padding;
+    } else {
+      maximum = maximum > 0 ? maximum * 1.12 : 1;
+    }
+    if (maximum === minimum) maximum = minimum + 1;
+
+    const x = (index) => left + (index / 11) * width;
+    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
+
+    for (let index = 0; index <= 2; index += 1) {
+      const fraction = index / 2;
+      const lineY = top + fraction * height;
+      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
+      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
+      label.textContent = (maximum - fraction * (maximum - minimum)).toFixed(1);
+      svg.append(gridline, label);
+    }
+
+    [0, 2, 5, 8, 11].forEach((monthIndex) => {
+      const label = svgElement("text", { x: x(monthIndex), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
+      label.textContent = `${monthIndex + 1}月`;
+      svg.append(label);
+    });
+
+    if (type === "bar") {
+      const barWidth = Math.max(5, width / 17);
+      values.forEach((value, index) => {
+        if (!validNumber(value)) return;
+        svg.append(svgElement("rect", {
+          x: x(index) - barWidth / 2,
+          y: y(value),
+          width: barWidth,
+          height: Math.max(1, y(0) - y(value)),
+          rx: 2,
+          fill: color,
+          class: "chart-bar",
+        }));
+      });
+      return;
+    }
+
+    const commands = [];
+    values.forEach((value, index) => {
+      if (!validNumber(value)) return;
+      commands.push(`${commands.length ? "L" : "M"}${x(index).toFixed(2)},${y(value).toFixed(2)}`);
+    });
+    svg.append(svgElement("path", { d: commands.join(" "), stroke: color, class: "chart-line" }));
+    values.forEach((value, index) => {
+      if (!validNumber(value)) return;
+      svg.append(svgElement("circle", { cx: x(index), cy: y(value), r: 3, fill: color, class: "chart-point" }));
+    });
+  }
+
+  function monthlyValues(payload, key) {
+    const series = dataSeries(payload, key);
+    return MONTHS.map((month) => series[month]);
+  }
+
+  function renderCharts(payload) {
+    renderChart(elements.temperatureChart, monthlyValues(payload, "T2M"), "#cf5946", "line");
+    renderChart(elements.precipitationChart, monthlyValues(payload, "PRECTOTCORR"), "#287bb5", "bar");
+    renderChart(elements.solarChart, monthlyValues(payload, "ALLSKY_SFC_SW_DWN"), "#d99516", "line");
+    renderChart(elements.humidityChart, monthlyValues(payload, "RH2M"), "#398d7c", "line");
+  }
+
   function renderMonthly(payload) {
     const temperature = dataSeries(payload, "T2M");
     const precipitation = dataSeries(payload, "PRECTOTCORR");
@@ -249,6 +357,7 @@
       : "日平均";
     setMetric(elements.annualSolar, solar, "MJ/㎡/日", 2);
     setMetric(elements.annualHumidity, humidity, "%");
+    renderCharts(payload);
     renderMonthly(payload);
   }
 
@@ -257,6 +366,9 @@
       element.textContent = "—";
     }
     elements.annualPrecipitationNote.textContent = "日平均";
+    for (const chart of [elements.temperatureChart, elements.precipitationChart, elements.solarChart, elements.humidityChart]) {
+      renderChart(chart, [], "#71827e", "line");
+    }
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 5;
@@ -315,23 +427,92 @@
   }
 
   function selectFromEvent(event) {
-    if (event.button !== 0) return;
     const point = eventPoint(event);
     if (!point || point.x < 0 || point.x > MAP_SIZE || point.y < 0 || point.y > MAP_SIZE) return;
     const [longitude, latitude] = unproject(point.x, point.y);
     const cell = selectedCell(longitude, latitude);
     state.selectedCell = cell;
-    const [centerX, centerY] = drawSelection(cell);
+    drawSelection(cell);
     updateLocation(cell);
-    if (state.zoom < 8) setView(8, centerX, centerY);
+    openResultPanel();
     loadClimate(cell);
+  }
+
+  function beginDrag(event) {
+    if (event.button !== 0 || state.drag) return;
+    const matrix = elements.map.getScreenCTM();
+    if (!matrix) return;
+    state.drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      centerX: state.centerX,
+      centerY: state.centerY,
+      scaleX: Math.max(Math.abs(matrix.a), 0.0001),
+      scaleY: Math.max(Math.abs(matrix.d), 0.0001),
+      moved: false,
+    };
+    elements.map.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event) {
+    if (!state.drag || event.pointerId !== state.drag.pointerId) return;
+    const deltaX = event.clientX - state.drag.startX;
+    const deltaY = event.clientY - state.drag.startY;
+    if (Math.hypot(deltaX, deltaY) > 5) state.drag.moved = true;
+    if (!state.drag.moved) return;
+    elements.map.classList.add("is-dragging");
+    setView(
+      state.zoom,
+      state.drag.centerX - deltaX / state.drag.scaleX,
+      state.drag.centerY - deltaY / state.drag.scaleY,
+    );
+  }
+
+  function endDrag(event) {
+    if (!state.drag || event.pointerId !== state.drag.pointerId) return;
+    const wasMoved = state.drag.moved;
+    state.drag = null;
+    elements.map.classList.remove("is-dragging");
+    if (elements.map.hasPointerCapture(event.pointerId)) elements.map.releasePointerCapture(event.pointerId);
+    if (!wasMoved) selectFromEvent(event);
+  }
+
+  function cancelDrag(event) {
+    if (!state.drag || event.pointerId !== state.drag.pointerId) return;
+    state.drag = null;
+    elements.map.classList.remove("is-dragging");
+  }
+
+  function zoomFromWheel(event) {
+    event.preventDefault();
+    const point = eventPoint(event);
+    if (!point) return;
+    const oldSize = MAP_SIZE / state.zoom;
+    const left = state.centerX - oldSize / 2;
+    const top = state.centerY - oldSize / 2;
+    const anchorX = (point.x - left) / oldSize;
+    const anchorY = (point.y - top) / oldSize;
+    const nextZoom = clamp(state.zoom * (event.deltaY < 0 ? 1.25 : 0.8), 1, 16);
+    const nextSize = MAP_SIZE / nextZoom;
+    setView(
+      nextZoom,
+      point.x + (0.5 - anchorX) * nextSize,
+      point.y + (0.5 - anchorY) * nextSize,
+    );
   }
 
   drawGraticule();
   setView(1);
   loadWorldMap();
-  elements.map.addEventListener("pointerup", selectFromEvent);
+  elements.map.addEventListener("pointerdown", beginDrag);
+  elements.map.addEventListener("pointermove", moveDrag);
+  elements.map.addEventListener("pointerup", endDrag);
+  elements.map.addEventListener("pointercancel", cancelDrag);
+  elements.map.addEventListener("wheel", zoomFromWheel, { passive: false });
   elements.zoomIn.addEventListener("click", () => setView(state.zoom * 2));
   elements.zoomOut.addEventListener("click", () => setView(state.zoom / 2));
   elements.resetView.addEventListener("click", () => setView(1, MAP_SIZE / 2, MAP_SIZE / 2));
+  elements.closeResults.addEventListener("click", closeResultPanel);
+  elements.openResults.addEventListener("click", openResultPanel);
 })();

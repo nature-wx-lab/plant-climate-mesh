@@ -16,7 +16,7 @@ import urllib.request
 EXPECTED_FILES = {
     "404.html",
     "app.js",
-    "data/world-110m.geojson",
+    "data/world-50m.geojson",
     "index.html",
     "robots.txt",
     "sitemap.xml",

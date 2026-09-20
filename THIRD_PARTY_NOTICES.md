@@ -12,9 +12,9 @@ NASA does not endorse this site. NASA names and identifiers are not used as prod
 
 ## Natural Earth
 
-The world boundary layer is derived from Natural Earth 1:110m Admin 0 Countries. Natural Earth data is in the public domain.
+The world boundary layer is derived from Natural Earth 1:50m Admin 0 Countries. Natural Earth data is in the public domain.
 
-- Source: <https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/>
+- Source: <https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/>
 - Terms: <https://www.naturalearthdata.com/about/terms-of-use/>
 
 Country boundaries are shown only as geographic context and do not express a legal position.
