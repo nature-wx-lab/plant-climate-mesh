@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self' https://power.larc.nasa.gov; img-src 'self' data:; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; media-src 'none'; worker-src 'none'; upgrade-insecure-requests">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="index,follow">
+  <meta name="description" content="世界地図をクリックし、1991〜2020年の気温・降水量・日射量・相対湿度の平均値を確認するNature Wx Labの試作ツールです。">
+  <meta name="application-name" content="Plant Climate Mesh">
+  <link rel="canonical" href="https://nature-wx-lab.github.io/plant-climate-mesh/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:site_name" content="Nature Wx Lab">
+  <meta property="og:title" content="植物気候メッシュ｜Nature Wx Lab">
+  <meta property="og:description" content="世界地図をクリックして、その場所の気温・降水量・日射量・相対湿度の気候平均を確認できます。">
+  <meta property="og:url" content="https://nature-wx-lab.github.io/plant-climate-mesh/">
+  <meta name="twitter:card" content="summary">
+  <title>植物気候メッシュ｜Nature Wx Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-block">
+      <span class="eyebrow">Nature Wx Lab</span>
+      <h1>植物気候メッシュ <small>β</small></h1>
+      <p>世界地図をクリックして、その場所の気候を確かめる。</p>
+    </div>
+    <nav class="top-links" aria-label="関連リンク">
+      <a href="https://naturewxlab.com/" target="_blank" rel="noopener noreferrer">公式サイト</a>
+      <a href="https://note.com/nature_wx_lab" target="_blank" rel="noopener noreferrer">note</a>
+    </nav>
+  </header>
+
+  <main class="workspace">
+    <section class="map-panel" aria-labelledby="mapHeading">
+      <div class="panel-heading">
+        <div>
+          <h2 id="mapHeading">世界地図</h2>
+          <p>海を含む任意の場所をクリック。選択枠の中心点を取得します。</p>
+        </div>
+        <div class="map-controls" aria-label="地図の拡大縮小">
+          <button id="zoomOut" type="button" aria-label="地図を縮小">−</button>
+          <button id="zoomIn" type="button" aria-label="地図を拡大">＋</button>
+          <button id="resetView" type="button">全体</button>
+        </div>
+      </div>
+
+      <div class="map-wrap">
+        <svg id="worldMap" viewBox="0 0 1000 1000" role="img" aria-labelledby="mapTitle mapDescription">
+          <title id="mapTitle">Webメルカトル図法の世界地図</title>
+          <desc id="mapDescription">クリックした1度格子の中心について、NASA POWERの気候平均値を取得します。</desc>
+          <rect class="ocean" x="0" y="0" width="1000" height="1000"></rect>
+          <g id="graticuleLayer" aria-hidden="true"></g>
+          <g id="landLayer" aria-hidden="true"></g>
+          <g id="selectionLayer" aria-hidden="true"></g>
+        </svg>
+        <div class="map-badge">Webメルカトル｜表示緯度 ±85.05°</div>
+      </div>
+      <p class="map-help">クリック後は選択地点を拡大します。別の地域を見るときは「全体」を押してください。</p>
+    </section>
+
+    <section class="result-panel" aria-labelledby="resultHeading">
+      <div class="result-heading">
+        <div>
+          <span id="selectionState" class="eyebrow">地点未選択</span>
+          <h2 id="resultHeading">1991–2020年の気候平均</h2>
+        </div>
+        <span id="requestStatus" class="status" role="status" aria-live="polite">地図をクリックしてください</span>
+      </div>
+
+      <div id="locationSummary" class="location-summary">
+        <strong>選択枠：—</strong>
+        <span>取得点：—</span>
+      </div>
+
+      <div class="metric-grid" aria-label="年平均値">
+        <article class="metric temperature">
+          <span>年平均気温</span>
+          <strong id="annualTemperature">—</strong>
+          <small>地上2m</small>
+        </article>
+        <article class="metric precipitation">
+          <span>年平均降水量</span>
+          <strong id="annualPrecipitation">—</strong>
+          <small id="annualPrecipitationNote">日平均</small>
+        </article>
+        <article class="metric solar">
+          <span>年平均日射量</span>
+          <strong id="annualSolar">—</strong>
+          <small>全天日射量・日平均</small>
+        </article>
+        <article class="metric humidity">
+          <span>年平均相対湿度</span>
+          <strong id="annualHumidity">—</strong>
+          <small>地上2m</small>
+        </article>
+      </div>
+
+      <div class="data-note">
+        <strong>格子について</strong>
+        <p>選択枠は1°×1°です。表示値は枠中心を含むNASA POWER元データ格子の代表値です。気温・降水・湿度は約0.5°×0.625°、日射は1°×1°で、解像度は同一ではありません。</p>
+      </div>
+
+      <details class="monthly-details" open>
+        <summary>月別平均</summary>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">月</th>
+                <th scope="col">気温<br><small>℃</small></th>
+                <th scope="col">降水<br><small>mm/日</small></th>
+                <th scope="col">日射<br><small>MJ/㎡/日</small></th>
+                <th scope="col">湿度<br><small>%</small></th>
+              </tr>
+            </thead>
+            <tbody id="monthlyBody">
+              <tr><td colspan="5" class="empty-row">地点を選択すると表示します</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <section>
+      <h2>データと利用上の注意</h2>
+      <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>, Climatology API。1991年1月〜2020年12月の月別・年平均値を表示用に加工しています。NASAは本ツールを承認または推奨するものではありません。</p>
+      <p>地図境界：<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a> 1:110m（Public Domain）。境界表示は法的立場を示すものではありません。</p>
+      <p>本ツールは広域の気候傾向を確認する試作版です。局地的な地形、都市、沿岸、標高、品種、栽培環境の差は表現しません。栽培可否の断定には使用しないでください。</p>
+    </section>
+    <section>
+      <h2>プライバシー</h2>
+      <p>Cookie、アクセス解析、現在地取得、入力情報の保存は行いません。地図をクリックすると、選択枠の中心座標と通常の通信情報が気候データ取得のためNASA POWERへ送信されます。</p>
+    </section>
+  </footer>
+</body>
+</html>

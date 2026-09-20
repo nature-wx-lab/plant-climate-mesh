@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Build an allowlisted Pages payload and checksum manifest."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import shutil
+from pathlib import Path
+
+
+DEPLOY_FILES = (
+    "404.html",
+    "app.js",
+    "data/world-110m.geojson",
+    "index.html",
+    "robots.txt",
+    "sitemap.xml",
+    "styles.css",
+)
+
+
+def sha256(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--destination", type=Path, default=Path("_site"))
+    parser.add_argument("--source-commit", required=True)
+    args = parser.parse_args()
+    root = args.root.resolve()
+    destination = args.destination.resolve()
+
+    if not re.fullmatch(r"[0-9a-f]{40}", args.source_commit):
+        raise SystemExit("source commit must be a full lowercase SHA-1")
+    if not root.is_dir() or root.is_symlink():
+        raise SystemExit("source root must be a real directory")
+    if destination.exists():
+        raise SystemExit("destination must not already exist")
+    destination.mkdir(parents=True)
+
+    files: dict[str, dict[str, int | str]] = {}
+    for relative in DEPLOY_FILES:
+        source = root / relative
+        if not source.is_file() or source.is_symlink():
+            raise SystemExit(f"invalid deploy source: {relative}")
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+        raw = target.read_bytes()
+        files[relative] = {"bytes": len(raw), "sha256": sha256(raw)}
+
+    manifest = {
+        "schema_version": 1,
+        "product": "plant-climate-mesh",
+        "source_commit": args.source_commit,
+        "files": files,
+    }
+    (destination / "deployment.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": "ok", "source_commit": args.source_commit, "files": len(files)}))
+
+
+if __name__ == "__main__":
+    main()
