@@ -4,6 +4,8 @@
   const SVG_NS = "http://www.w3.org/2000/svg";
   const MAP_SIZE = 1000;
   const MAX_LAT = 85.05112878;
+  const METEOROLOGY_LAT_STEP = 0.5;
+  const METEOROLOGY_LON_STEP = 0.625;
   const POWER_CLIMATOLOGY_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/climatology/point";
   const POWER_DAILY_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/daily/point";
   const PARAMETERS = ["T2M", "PRECTOTCORR", "ALLSKY_SFC_SW_DWN", "RH2M"];
@@ -167,15 +169,19 @@
   }
 
   function selectedCell(longitude, latitude) {
-    const lonMin = Math.min(179, Math.max(-180, Math.floor(longitude)));
-    const latMin = Math.min(84, Math.max(-85, Math.floor(latitude)));
+    const latitudeIndex = Math.round((clamp(latitude, -85, 85) + 90) / METEOROLOGY_LAT_STEP);
+    const longitudeIndex = Math.round((longitude + 180) / METEOROLOGY_LON_STEP);
+    const gridLatitude = -90 + latitudeIndex * METEOROLOGY_LAT_STEP;
+    let gridLongitude = -180 + longitudeIndex * METEOROLOGY_LON_STEP;
+    if (gridLongitude >= 180) gridLongitude -= 360;
+    const clean = (value) => Number(value.toFixed(6));
     return {
-      lonMin,
-      lonMax: lonMin + 1,
-      latMin,
-      latMax: latMin + 1,
-      longitude: lonMin + 0.5,
-      latitude: latMin + 0.5,
+      lonMin: clean(gridLongitude - METEOROLOGY_LON_STEP / 2),
+      lonMax: clean(gridLongitude + METEOROLOGY_LON_STEP / 2),
+      latMin: clean(gridLatitude - METEOROLOGY_LAT_STEP / 2),
+      latMax: clean(gridLatitude + METEOROLOGY_LAT_STEP / 2),
+      longitude: clean(gridLongitude),
+      latitude: clean(gridLatitude),
     };
   }
 
@@ -209,13 +215,13 @@
 
   function updateLocation(cell) {
     const strong = document.createElement("strong");
-    strong.textContent = `選択枠：${cell.latMin}°〜${cell.latMax}° / ${cell.lonMin}°〜${cell.lonMax}°`;
+    strong.textContent = "気象格子：約0.5°×0.625°（橙枠）";
     const span = document.createElement("span");
-    span.textContent = `取得点：${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
+    span.textContent = `格子中心：${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
     const note = document.createElement("small");
-    note.textContent = "枠は地点選択用。値は円内・枠内平均ではなく、中心点を含むPOWER元格子の代表値です。";
+    note.textContent = "気温・降水・相対湿度は橙枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
     elements.locationSummary.replaceChildren(strong, span, note);
-    elements.selectionState.textContent = "地点選択済み";
+    elements.selectionState.textContent = "気象格子選択済み";
   }
 
   function powerUrl(cell) {
