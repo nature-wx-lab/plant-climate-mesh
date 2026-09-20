@@ -75,8 +75,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260920-wrap1\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260920-wrap1"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260920-daily1\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260920-daily1"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -93,6 +93,8 @@ def main() -> None:
     require(index.count('href="#worldLayer"') == 3, "three wrapped world copies are required")
     require('x="-1000"' in index and 'x="1000"' in index, "east-west world copies missing")
     require("0.5°×0.625°" in index and "日射は1°×1°" in index, "native resolution disclosure missing")
+    require("円内・枠内の面積平均ではありません" in index, "selection-area disclosure missing")
+    require("通常日は30年分、2月29日は8年分" in index, "daily aggregation sample disclosure missing")
     require("使い方" not in index, "guide link must stay absent until its note exists")
     for url in (
         "https://naturewxlab.com/",
@@ -108,9 +110,14 @@ def main() -> None:
     require("月別の数値表" in index, "monthly table disclosure missing")
 
     require("https://power.larc.nasa.gov/api/temporal/climatology/point" in app, "POWER endpoint mismatch")
+    require("https://power.larc.nasa.gov/api/temporal/daily/point" in app, "POWER daily endpoint mismatch")
     for parameter in ("T2M", "PRECTOTCORR", "ALLSKY_SFC_SW_DWN", "RH2M"):
         require(parameter in app, f"missing POWER parameter {parameter}")
+    for parameter in ("T2M_MAX", "T2M_MIN"):
+        require(parameter in app, f"missing POWER daily parameter {parameter}")
     require('start: "1991"' in app and 'end: "2020"' in app, "climatology window mismatch")
+    require('start: "19910101"' in app and 'end: "20201231"' in app, "daily window mismatch")
+    require('"time-standard": "LST"' in app, "daily time standard mismatch")
     require('credentials: "omit"' in app, "cross-origin credentials must be omitted")
     require('referrerPolicy: "no-referrer"' in app, "POWER request referrer policy missing")
     require("AbortController" in app and "requestSerial" in app, "stale-response protection missing")
@@ -125,6 +132,8 @@ def main() -> None:
     require('addEventListener("pointerdown", beginDrag)' in app, "drag start contract missing")
     require('addEventListener("pointermove", moveDrag)' in app, "drag move contract missing")
     require("if (state.zoom < 8)" not in app, "point selection must not change zoom")
+    require("r: 2.2 / state.zoom" in app and "selection-cross" not in app, "selection point must stay visually small")
+    require("function averageByCalendarDay(payload, key)" in app, "daily calendar aggregation missing")
     require("./data/world-50m.geojson" in app, "Natural Earth 1:50m map path missing")
 
     require("overflow-x: auto" in styles, "narrow-screen table overflow guard missing")

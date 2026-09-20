@@ -4,8 +4,10 @@
   const SVG_NS = "http://www.w3.org/2000/svg";
   const MAP_SIZE = 1000;
   const MAX_LAT = 85.05112878;
-  const POWER_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/climatology/point";
+  const POWER_CLIMATOLOGY_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/climatology/point";
+  const POWER_DAILY_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/daily/point";
   const PARAMETERS = ["T2M", "PRECTOTCORR", "ALLSKY_SFC_SW_DWN", "RH2M"];
+  const DAILY_PARAMETERS = ["T2M_MAX", "T2M_MIN"];
   const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
   const MONTH_LABELS = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
   const FILL_VALUE = -999;
@@ -91,6 +93,7 @@
     elements.map.setAttribute("viewBox", `${state.centerX - size / 2} ${state.centerY - size / 2} ${size} ${size}`);
     elements.zoomOut.disabled = state.zoom <= 1;
     elements.zoomIn.disabled = state.zoom >= 16;
+    if (state.selectedCell) drawSelection(state.selectedCell);
   }
 
   function openResultPanel() {
@@ -187,7 +190,12 @@
         height: Math.max(0.2, bottom - top),
         class: "selection-cell",
       }));
-      copies.push(svgElement("circle", { cx: centerX + offset, cy: centerY, r: 4.5, class: "selection-cross" }));
+      copies.push(svgElement("circle", {
+        cx: centerX + offset,
+        cy: centerY,
+        r: 2.2 / state.zoom,
+        class: "selection-point",
+      }));
     }
     elements.selection.replaceChildren(...copies);
   }
@@ -202,7 +210,9 @@
     strong.textContent = `選択枠：${cell.latMin}°〜${cell.latMax}° / ${cell.lonMin}°〜${cell.lonMax}°`;
     const span = document.createElement("span");
     span.textContent = `取得点：${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
-    elements.locationSummary.replaceChildren(strong, span);
+    const note = document.createElement("small");
+    note.textContent = "枠は地点選択用。値は円内・枠内平均ではなく、中心点を含むPOWER元格子の代表値です。";
+    elements.locationSummary.replaceChildren(strong, span, note);
     elements.selectionState.textContent = "地点選択済み";
   }
 
@@ -216,7 +226,21 @@
       end: "2020",
       format: "JSON",
     });
-    return `${POWER_ENDPOINT}?${query.toString()}`;
+    return `${POWER_CLIMATOLOGY_ENDPOINT}?${query.toString()}`;
+  }
+
+  function dailyPowerUrl(cell) {
+    const query = new URLSearchParams({
+      parameters: DAILY_PARAMETERS.join(","),
+      community: "AG",
+      longitude: cell.longitude.toFixed(2),
+      latitude: cell.latitude.toFixed(2),
+      start: "19910101",
+      end: "20201231",
+      format: "JSON",
+      "time-standard": "LST",
+    });
+    return `${POWER_DAILY_ENDPOINT}?${query.toString()}`;
   }
 
   function validNumber(value) {
@@ -315,11 +339,106 @@
     return MONTHS.map((month) => series[month]);
   }
 
-  function renderCharts(payload) {
-    renderChart(elements.temperatureChart, monthlyValues(payload, "T2M"), "#cf5946", "line");
-    renderChart(elements.precipitationChart, monthlyValues(payload, "PRECTOTCORR"), "#287bb5", "bar");
-    renderChart(elements.solarChart, monthlyValues(payload, "ALLSKY_SFC_SW_DWN"), "#d99516", "line");
-    renderChart(elements.humidityChart, monthlyValues(payload, "RH2M"), "#398d7c", "line");
+  function calendarDays() {
+    const days = [];
+    const cursor = new Date(Date.UTC(2000, 0, 1));
+    const end = new Date(Date.UTC(2001, 0, 1));
+    while (cursor < end) {
+      days.push(`${String(cursor.getUTCMonth() + 1).padStart(2, "0")}${String(cursor.getUTCDate()).padStart(2, "0")}`);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return days;
+  }
+
+  function averageByCalendarDay(payload, key) {
+    const sums = new Map();
+    const counts = new Map();
+    for (const [date, value] of Object.entries(dataSeries(payload, key))) {
+      if (!/^\d{8}$/.test(date) || !validNumber(value)) continue;
+      const calendarDay = date.slice(4);
+      sums.set(calendarDay, (sums.get(calendarDay) || 0) + value);
+      counts.set(calendarDay, (counts.get(calendarDay) || 0) + 1);
+    }
+    return calendarDays().map((calendarDay) => ({
+      calendarDay,
+      value: counts.has(calendarDay) ? sums.get(calendarDay) / counts.get(calendarDay) : FILL_VALUE,
+      count: counts.get(calendarDay) || 0,
+    }));
+  }
+
+  function renderDailyTemperatureChart(payload, emptyMessage = "日別最高・最低を取得できませんでした") {
+    const svg = elements.temperatureChart;
+    svg.replaceChildren();
+    if (!payload) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = emptyMessage;
+      svg.append(empty);
+      return;
+    }
+
+    const maximumSeries = averageByCalendarDay(payload, "T2M_MAX");
+    const minimumSeries = averageByCalendarDay(payload, "T2M_MIN");
+    const values = [...maximumSeries, ...minimumSeries].map((item) => item.value).filter(validNumber);
+    if (!values.length) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = "データを取得しています";
+      svg.append(empty);
+      return;
+    }
+
+    const left = 34;
+    const right = 8;
+    const top = 8;
+    const bottom = 23;
+    const width = 360 - left - right;
+    const height = 126 - top - bottom;
+    const rawMinimum = Math.min(...values);
+    const rawMaximum = Math.max(...values);
+    const padding = Math.max((rawMaximum - rawMinimum) * 0.08, 0.5);
+    const minimum = rawMinimum - padding;
+    const maximum = rawMaximum + padding;
+    const x = (index) => left + (index / (maximumSeries.length - 1)) * width;
+    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
+
+    for (let index = 0; index <= 2; index += 1) {
+      const fraction = index / 2;
+      const lineY = top + fraction * height;
+      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
+      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
+      label.textContent = (maximum - fraction * (maximum - minimum)).toFixed(1);
+      svg.append(gridline, label);
+    }
+
+    ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
+      const index = maximumSeries.findIndex((item) => item.calendarDay === calendarDay);
+      const label = svgElement("text", { x: x(index), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
+      label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
+      svg.append(label);
+    });
+
+    const appendSeries = (series, color) => {
+      const commands = [];
+      let pathOpen = false;
+      series.forEach((item, index) => {
+        if (!validNumber(item.value)) {
+          pathOpen = false;
+          return;
+        }
+        commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
+        pathOpen = true;
+      });
+      svg.append(svgElement("path", { d: commands.join(" "), stroke: color, class: "chart-line daily-temperature-line" }));
+    };
+
+    appendSeries(maximumSeries, "#d4513e");
+    appendSeries(minimumSeries, "#287bb5");
+  }
+
+  function renderCharts(climatePayload, dailyPayload) {
+    renderDailyTemperatureChart(dailyPayload);
+    renderChart(elements.precipitationChart, monthlyValues(climatePayload, "PRECTOTCORR"), "#287bb5", "bar");
+    renderChart(elements.solarChart, monthlyValues(climatePayload, "ALLSKY_SFC_SW_DWN"), "#d99516", "line");
+    renderChart(elements.humidityChart, monthlyValues(climatePayload, "RH2M"), "#398d7c", "line");
   }
 
   function renderMonthly(payload) {
@@ -350,11 +469,11 @@
     elements.monthlyBody.replaceChildren(fragment);
   }
 
-  function renderPayload(payload) {
-    const temperature = dataSeries(payload, "T2M").ANN;
-    const precipitation = dataSeries(payload, "PRECTOTCORR").ANN;
-    const solar = dataSeries(payload, "ALLSKY_SFC_SW_DWN").ANN;
-    const humidity = dataSeries(payload, "RH2M").ANN;
+  function renderPayload(climatePayload, dailyPayload) {
+    const temperature = dataSeries(climatePayload, "T2M").ANN;
+    const precipitation = dataSeries(climatePayload, "PRECTOTCORR").ANN;
+    const solar = dataSeries(climatePayload, "ALLSKY_SFC_SW_DWN").ANN;
+    const humidity = dataSeries(climatePayload, "RH2M").ANN;
 
     setMetric(elements.annualTemperature, temperature, "℃");
     setMetric(elements.annualPrecipitation, precipitation, "mm/日", 2);
@@ -363,8 +482,8 @@
       : "日平均";
     setMetric(elements.annualSolar, solar, "MJ/㎡/日", 2);
     setMetric(elements.annualHumidity, humidity, "%");
-    renderCharts(payload);
-    renderMonthly(payload);
+    renderCharts(climatePayload, dailyPayload);
+    renderMonthly(climatePayload);
   }
 
   function resetValues(message) {
@@ -372,9 +491,8 @@
       element.textContent = "—";
     }
     elements.annualPrecipitationNote.textContent = "日平均";
-    for (const chart of [elements.temperatureChart, elements.precipitationChart, elements.solarChart, elements.humidityChart]) {
-      renderChart(chart, [], "#71827e", "line");
-    }
+    renderDailyTemperatureChart(null, "データを取得しています");
+    for (const chart of [elements.precipitationChart, elements.solarChart, elements.humidityChart]) renderChart(chart, [], "#71827e", "line");
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 5;
@@ -387,7 +505,8 @@
   async function loadClimate(cell) {
     const cacheKey = `${cell.latitude.toFixed(1)},${cell.longitude.toFixed(1)}`;
     if (state.cache.has(cacheKey)) {
-      renderPayload(state.cache.get(cacheKey));
+      const cached = state.cache.get(cacheKey);
+      renderPayload(cached.climate, cached.daily);
       setStatus("取得済みデータを表示", "ready");
       return;
     }
@@ -400,22 +519,34 @@
     setStatus("NASA POWERへ問い合わせ中", "loading");
 
     try {
-      const response = await fetch(powerUrl(cell), {
+      const request = (url) => fetch(url, {
         method: "GET",
         mode: "cors",
         credentials: "omit",
         referrerPolicy: "no-referrer",
         cache: "force-cache",
         signal: state.controller.signal,
+      }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
+      const [climateResult, dailyResult] = await Promise.allSettled([
+        request(powerUrl(cell)),
+        request(dailyPowerUrl(cell)),
+      ]);
       if (requestSerial !== state.requestSerial) return;
-      if (!payload?.properties?.parameter) throw new Error("応答形式が不正です");
-      state.cache.set(cacheKey, payload);
-      renderPayload(payload);
-      const version = payload?.header?.api?.version;
-      setStatus(version ? `取得完了｜API ${version}` : "取得完了", "ready");
+      if (climateResult.status !== "fulfilled" || !climateResult.value?.properties?.parameter) {
+        throw climateResult.status === "rejected" ? climateResult.reason : new Error("応答形式が不正です");
+      }
+      const climatePayload = climateResult.value;
+      const dailyPayload = dailyResult.status === "fulfilled" && dailyResult.value?.properties?.parameter
+        ? dailyResult.value
+        : null;
+      if (dailyPayload) state.cache.set(cacheKey, { climate: climatePayload, daily: dailyPayload });
+      renderPayload(climatePayload, dailyPayload);
+      const version = climatePayload?.header?.api?.version;
+      const status = dailyPayload ? "取得完了" : "月別値を表示｜日別最高・最低は取得できませんでした";
+      setStatus(version ? `${status}｜API ${version}` : status, dailyPayload ? "ready" : "error");
     } catch (error) {
       if (error.name === "AbortError" || requestSerial !== state.requestSerial) return;
       resetValues("データを取得できませんでした。時間をおいて再度選択してください");

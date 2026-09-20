@@ -18,8 +18,8 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260920-wrap1">
-  <script src="./app.js?v=20260920-wrap1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260920-daily1">
+  <script src="./app.js?v=20260920-daily1" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -105,6 +105,7 @@
           <div id="locationSummary" class="location-summary">
             <strong>選択枠：—</strong>
             <span>取得点：—</span>
+            <small>枠は地点選択用。値は円内・枠内平均ではなく、中心点を含むPOWER元格子の代表値です。</small>
           </div>
 
           <div class="metric-grid" aria-label="年平均値">
@@ -131,11 +132,15 @@
           </div>
 
           <section class="chart-section" aria-labelledby="chartHeading">
-            <h3 id="chartHeading">月ごとの気候</h3>
+            <h3 id="chartHeading">気候の季節変化</h3>
             <div class="chart-grid">
               <figure class="chart-card temperature-chart">
-                <figcaption>気温 <small>℃｜折れ線</small></figcaption>
-                <svg id="temperatureChart" viewBox="0 0 360 126" role="img" aria-label="月別平均気温の折れ線グラフ"></svg>
+                <figcaption>
+                  <span>日ごとの気温 <small>℃｜1991–2020年の気候平均</small></span>
+                  <span class="temperature-legend"><i class="legend-high"></i>日最高 <i class="legend-low"></i>日最低</span>
+                </figcaption>
+                <svg id="temperatureChart" viewBox="0 0 360 126" role="img" aria-label="各暦日の平均日最高気温と平均日最低気温の折れ線グラフ"></svg>
+                <p class="chart-note">各暦日を年ごとに平均。通常日は30年分、2月29日は8年分です。</p>
               </figure>
               <figure class="chart-card precipitation-chart">
                 <figcaption>降水量 <small>mm/日｜棒</small></figcaption>
@@ -153,13 +158,13 @@
           </section>
 
           <details class="monthly-details">
-            <summary>月別の数値表</summary>
+            <summary>月別の数値表（気温は月平均）</summary>
             <div class="table-scroll">
               <table>
                 <thead>
                   <tr>
                     <th scope="col">月</th>
-                    <th scope="col">気温<br><small>℃</small></th>
+                    <th scope="col">平均気温<br><small>℃</small></th>
                     <th scope="col">降水<br><small>mm/日</small></th>
                     <th scope="col">日射<br><small>MJ/㎡/日</small></th>
                     <th scope="col">湿度<br><small>%</small></th>
@@ -177,8 +182,8 @@
   <footer>
     <section>
       <h2>データと利用上の注意</h2>
-      <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>, Climatology API。1991年1月〜2020年12月の月別・年平均値を表示用に加工しています。NASAは本ツールを承認または推奨するものではありません。</p>
-      <p>選択枠は1°×1°です。表示値は枠中心を含む元データ格子の代表値です。気温・降水・湿度は約0.5°×0.625°、日射は1°×1°で、解像度は同一ではありません。</p>
+      <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>, Climatology API / Daily API。1991年1月〜2020年12月の月別・年平均値と、日最高・日最低気温を表示用に加工しています。NASAは本ツールを承認または推奨するものではありません。</p>
+      <p>選択枠は地点を選ぶための1°×1°格子で、白い小点は中心点です。円内・枠内の面積平均ではありません。表示値は中心点を含む元データ格子の代表値です。気温・降水・湿度は約0.5°×0.625°、日射は1°×1°で、解像度は同一ではありません。</p>
       <p>地図境界：<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a> 1:50m（Public Domain）。境界表示は法的立場を示すものではありません。</p>
       <p>本ツールは広域の気候傾向を確認する試作版です。局地的な地形、都市、沿岸、標高、品種、栽培環境の差は表現しません。栽培可否の断定には使用しないでください。</p>
     </section>

@@ -233,10 +233,10 @@ a { color: var(--green-dark); }
   vector-effect: non-scaling-stroke;
 }
 
-.selection-cross {
+.selection-point {
   fill: #fff;
   stroke: #9a3a17;
-  stroke-width: 3;
+  stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
 }
 
@@ -381,6 +381,12 @@ a { color: var(--green-dark); }
   font-size: 0.7rem;
 }
 
+.location-summary small {
+  margin-top: 3px;
+  color: #647974;
+  line-height: 1.45;
+}
+
 .metric-grid {
   margin-top: 9px;
   display: grid;
@@ -439,6 +445,33 @@ a { color: var(--green-dark); }
   font-weight: 800;
 }
 
+.temperature-chart figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.temperature-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #526d67;
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.temperature-legend i {
+  width: 14px;
+  height: 3px;
+  display: inline-block;
+  border-radius: 2px;
+}
+
+.legend-high { background: #d4513e; }
+.legend-low { background: #287bb5; }
+
 .chart-card figcaption small {
   color: #71827e;
   font-size: 0.62rem;
@@ -455,9 +488,17 @@ a { color: var(--green-dark); }
 .chart-gridline { stroke: #d9e5e2; stroke-width: 1; }
 .chart-axis-label { fill: #647974; font-size: 9px; font-family: inherit; }
 .chart-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.daily-temperature-line { stroke-width: 2; }
 .chart-point { stroke: #fff; stroke-width: 1.5; }
 .chart-bar { opacity: 0.82; }
 .chart-empty { fill: #71827e; font-size: 12px; font-family: inherit; text-anchor: middle; }
+
+.chart-note {
+  margin: -1px 2px 3px;
+  color: #71827e;
+  font-size: 0.58rem;
+  line-height: 1.4;
+}
 
 .monthly-details {
   margin-top: 11px;
