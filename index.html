@@ -67,12 +67,18 @@
   <main class="workspace">
     <section class="map-panel" aria-label="世界地図">
       <div class="map-wrap">
-        <svg id="worldMap" viewBox="0 0 1000 1000" role="img" aria-labelledby="mapTitle mapDescription">
-          <title id="mapTitle">Webメルカトル図法の世界地図</title>
+        <svg id="worldMap" viewBox="0 0 1000 1000" role="img" aria-label="世界地図" aria-describedby="mapDescription">
           <desc id="mapDescription">クリックした1度格子の中心について、NASA POWERの気候平均値を取得します。</desc>
-          <rect class="ocean" x="0" y="0" width="1000" height="1000"></rect>
-          <g id="graticuleLayer" aria-hidden="true"></g>
-          <g id="landLayer" aria-hidden="true"></g>
+          <defs>
+            <g id="worldLayer">
+              <rect class="ocean" x="0" y="0" width="1000" height="1000"></rect>
+              <g id="graticuleLayer" aria-hidden="true"></g>
+              <g id="landLayer" aria-hidden="true"></g>
+            </g>
+          </defs>
+          <use href="#worldLayer" x="-1000" aria-hidden="true"></use>
+          <use href="#worldLayer" x="0" aria-hidden="true"></use>
+          <use href="#worldLayer" x="1000" aria-hidden="true"></use>
           <g id="selectionLayer" aria-hidden="true"></g>
         </svg>
 
@@ -81,7 +87,7 @@
           <button id="zoomIn" type="button" aria-label="地図を拡大">＋</button>
           <button id="resetView" type="button">全体</button>
         </div>
-        <div class="map-badge">Webメルカトル｜表示緯度 ±85.05°</div>
+        <div class="map-badge">Webメルカトル｜表示緯度 ±85.05°｜東西連続</div>
 
         <button id="openResults" class="drawer-tab" type="button" aria-controls="resultPanel" aria-expanded="false" hidden>気候データ</button>
 

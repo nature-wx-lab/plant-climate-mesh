@@ -51,6 +51,10 @@
     return Math.min(maximum, Math.max(minimum, value));
   }
 
+  function wrapWorldX(value) {
+    return ((value % MAP_SIZE) + MAP_SIZE) % MAP_SIZE;
+  }
+
   function project(longitude, latitude) {
     const safeLatitude = clamp(latitude, -MAX_LAT, MAX_LAT);
     const x = ((longitude + 180) / 360) * MAP_SIZE;
@@ -60,10 +64,10 @@
   }
 
   function unproject(x, y) {
-    const longitude = (x / MAP_SIZE) * 360 - 180;
+    const longitude = (wrapWorldX(x) / MAP_SIZE) * 360 - 180;
     const mercator = Math.PI - (2 * Math.PI * y) / MAP_SIZE;
     const latitude = (180 / Math.PI) * Math.atan(Math.sinh(mercator));
-    return [clamp(longitude, -180, 180), clamp(latitude, -MAX_LAT, MAX_LAT)];
+    return [longitude, clamp(latitude, -MAX_LAT, MAX_LAT)];
   }
 
   function svgElement(name, attributes = {}) {
@@ -82,7 +86,7 @@
   function setView(zoom, centerX = state.centerX, centerY = state.centerY) {
     state.zoom = clamp(zoom, 1, 16);
     const size = MAP_SIZE / state.zoom;
-    state.centerX = clamp(centerX, size / 2, MAP_SIZE - size / 2);
+    state.centerX = wrapWorldX(centerX);
     state.centerY = clamp(centerY, size / 2, MAP_SIZE - size / 2);
     elements.map.setAttribute("viewBox", `${state.centerX - size / 2} ${state.centerY - size / 2} ${size} ${size}`);
     elements.zoomOut.disabled = state.zoom <= 1;
@@ -174,16 +178,18 @@
     const [left, top] = project(cell.lonMin, cell.latMax);
     const [right, bottom] = project(cell.lonMax, cell.latMin);
     const [centerX, centerY] = project(cell.longitude, cell.latitude);
-    const rect = svgElement("rect", {
-      x: left,
-      y: top,
-      width: Math.max(0.2, right - left),
-      height: Math.max(0.2, bottom - top),
-      class: "selection-cell",
-    });
-    const marker = svgElement("circle", { cx: centerX, cy: centerY, r: 4.5, class: "selection-cross" });
-    elements.selection.replaceChildren(rect, marker);
-    return [centerX, centerY];
+    const copies = [];
+    for (const offset of [-MAP_SIZE, 0, MAP_SIZE]) {
+      copies.push(svgElement("rect", {
+        x: left + offset,
+        y: top,
+        width: Math.max(0.2, right - left),
+        height: Math.max(0.2, bottom - top),
+        class: "selection-cell",
+      }));
+      copies.push(svgElement("circle", { cx: centerX + offset, cy: centerY, r: 4.5, class: "selection-cross" }));
+    }
+    elements.selection.replaceChildren(...copies);
   }
 
   function coordinateLabel(value, positive, negative) {
@@ -428,7 +434,7 @@
 
   function selectFromEvent(event) {
     const point = eventPoint(event);
-    if (!point || point.x < 0 || point.x > MAP_SIZE || point.y < 0 || point.y > MAP_SIZE) return;
+    if (!point || point.y < 0 || point.y > MAP_SIZE) return;
     const [longitude, latitude] = unproject(point.x, point.y);
     const cell = selectedCell(longitude, latitude);
     state.selectedCell = cell;
