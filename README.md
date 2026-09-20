@@ -34,6 +34,9 @@ format=JSON
 - 直前のリクエストを中止し、連続クリックで古い応答が新しい地点を上書きしない
 - 公開成果物を固定allowlistから組み立て、SHA-256 manifestと公開後の全ファイル照合を行う
 - 公開前CIで現行ファイルと到達可能なGit履歴、author/committer identity、秘密情報らしい文字列を検査
+- このローカルcloneは`.githooks/pre-push`を有効化し、GitHubへ送る前にも同じ全ファイル・全履歴検査を実行
+- GitHub Secret scanningとPush protectionを有効化
+- GitHub ActionsはGitHub公式Actionだけを許可し、完全なcommit SHAで固定。既定権限はreadで、pull request承認権限を与えない
 
 地点選択時には、中心座標と通常の通信情報がNASA POWERへ送信されます。この外部送信は画面にも常時表示します。
 
@@ -50,6 +53,12 @@ python3 -m http.server 8765
 ## 公開
 
 `privacy-gate.yml`はpushとpull requestで公開ファイルと全履歴を検査します。`pages.yml`は同じ検査に合格した固定allowlistだけをPages成果物にし、公開後にsource commit、全ファイルのbyte数とSHA-256、HTTPS、HSTS、404を検証します。
+
+新しいcloneでpush前検査を有効にする場合は、repo直下で次を1回実行します。
+
+```bash
+git config core.hooksPath .githooks
+```
 
 公開用Git identityは次の2種類だけを許可します。
 

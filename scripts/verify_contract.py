@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_FILES = {
+    ".githooks/pre-push",
     ".github/workflows/pages.yml",
     ".github/workflows/privacy-gate.yml",
     ".gitignore",
@@ -123,6 +124,10 @@ def main() -> None:
     require("plant-climate-mesh/" in sitemap, "sitemap URL mismatch")
     require("deploy-pages@" in workflow and "privacy_gate.py" in workflow, "verified Pages workflow missing")
     require("permissions: {}" in workflow, "workflow must default to no permissions")
+
+    hook = (ROOT / ".githooks/pre-push").read_text(encoding="utf-8")
+    require("python3 scripts/privacy_gate.py" in hook, "pre-push privacy gate missing")
+    require("git diff --check" in hook, "pre-push whitespace gate missing")
 
     subprocess.run(["node", "--check", str(ROOT / "app.js")], check=True)
     print(json.dumps({
