@@ -7,9 +7,11 @@
   const POWER_CLIMATOLOGY_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/climatology/point";
   const POWER_DAILY_ENDPOINT = "https://power.larc.nasa.gov/api/temporal/daily/point";
   const PARAMETERS = ["T2M", "PRECTOTCORR", "ALLSKY_SFC_SW_DWN", "RH2M"];
-  const DAILY_PARAMETERS = ["T2M_MAX", "T2M_MIN"];
+  const DAILY_PARAMETERS = ["T2M_MAX", "T2M_MIN", "ALLSKY_SFC_SW_DWN", "RH2M"];
   const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
   const MONTH_LABELS = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+  const AVERAGE_DAYS_PER_MONTH = [31, 28 + 8 / 30, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const AVERAGE_DAYS_PER_YEAR = AVERAGE_DAYS_PER_MONTH.reduce((sum, days) => sum + days, 0);
   const FILL_VALUE = -999;
 
   const elements = {
@@ -339,6 +341,12 @@
     return MONTHS.map((month) => series[month]);
   }
 
+  function monthlyPrecipitationTotals(payload) {
+    return monthlyValues(payload, "PRECTOTCORR").map((value, index) => (
+      validNumber(value) ? value * AVERAGE_DAYS_PER_MONTH[index] : FILL_VALUE
+    ));
+  }
+
   function calendarDays() {
     const days = [];
     const cursor = new Date(Date.UTC(2000, 0, 1));
@@ -366,11 +374,25 @@
     }));
   }
 
+  function averageDailyValuesByMonth(payload, key) {
+    const sums = Array(12).fill(0);
+    const counts = Array(12).fill(0);
+    for (const [date, value] of Object.entries(dataSeries(payload, key))) {
+      if (!/^\d{8}$/.test(date) || !validNumber(value)) continue;
+      const monthIndex = Number(date.slice(4, 6)) - 1;
+      if (monthIndex < 0 || monthIndex > 11) continue;
+      sums[monthIndex] += value;
+      counts[monthIndex] += 1;
+    }
+    return sums.map((sum, index) => (counts[index] ? sum / counts[index] : FILL_VALUE));
+  }
+
   function renderDailyTemperatureChart(payload, emptyMessage = "日別最高・最低を取得できませんでした") {
     const svg = elements.temperatureChart;
+    const chartHeight = 156;
     svg.replaceChildren();
     if (!payload) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      const empty = svgElement("text", { x: 180, y: chartHeight / 2, class: "chart-empty" });
       empty.textContent = emptyMessage;
       svg.append(empty);
       return;
@@ -380,7 +402,7 @@
     const minimumSeries = averageByCalendarDay(payload, "T2M_MIN");
     const values = [...maximumSeries, ...minimumSeries].map((item) => item.value).filter(validNumber);
     if (!values.length) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      const empty = svgElement("text", { x: 180, y: chartHeight / 2, class: "chart-empty" });
       empty.textContent = "データを取得しています";
       svg.append(empty);
       return;
@@ -391,27 +413,34 @@
     const top = 8;
     const bottom = 23;
     const width = 360 - left - right;
-    const height = 126 - top - bottom;
+    const height = chartHeight - top - bottom;
     const rawMinimum = Math.min(...values);
     const rawMaximum = Math.max(...values);
-    const padding = Math.max((rawMaximum - rawMinimum) * 0.08, 0.5);
-    const minimum = rawMinimum - padding;
-    const maximum = rawMaximum + padding;
+    const minimum = Math.min(0, Math.floor(rawMinimum / 5) * 5);
+    const maximum = Math.max(35, Math.ceil(rawMaximum / 5) * 5);
     const x = (index) => left + (index / (maximumSeries.length - 1)) * width;
     const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
 
-    for (let index = 0; index <= 2; index += 1) {
-      const fraction = index / 2;
-      const lineY = top + fraction * height;
-      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
+    for (let tick = minimum; tick <= maximum; tick += 5) {
+      const lineY = y(tick);
+      const emphasized = tick === 0 || tick === 30;
+      const gridline = svgElement("line", {
+        x1: left,
+        y1: lineY,
+        x2: left + width,
+        y2: lineY,
+        class: emphasized ? "chart-gridline chart-gridline-emphasis" : "chart-gridline",
+      });
       const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
-      label.textContent = (maximum - fraction * (maximum - minimum)).toFixed(1);
+      if (emphasized) label.classList.add("chart-axis-label-emphasis");
+      const withinCoreRange = tick >= 0 && tick <= 35;
+      label.textContent = withinCoreRange || tick % 10 === 0 ? String(tick) : "";
       svg.append(gridline, label);
     }
 
     ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
       const index = maximumSeries.findIndex((item) => item.calendarDay === calendarDay);
-      const label = svgElement("text", { x: x(index), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
+      const label = svgElement("text", { x: x(index), y: chartHeight - 5, class: "chart-axis-label", "text-anchor": "middle" });
       label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
       svg.append(label);
     });
@@ -434,26 +463,148 @@
     appendSeries(minimumSeries, "#287bb5");
   }
 
-  function renderCharts(climatePayload, dailyPayload) {
-    renderDailyTemperatureChart(dailyPayload);
-    renderChart(elements.precipitationChart, monthlyValues(climatePayload, "PRECTOTCORR"), "#287bb5", "bar");
-    renderChart(elements.solarChart, monthlyValues(climatePayload, "ALLSKY_SFC_SW_DWN"), "#d99516", "line");
-    renderChart(elements.humidityChart, monthlyValues(climatePayload, "RH2M"), "#398d7c", "line");
+  function renderDailySolarChart(payload, emptyMessage = "日別日射量を取得できませんでした") {
+    const svg = elements.solarChart;
+    svg.replaceChildren();
+    if (!payload) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = emptyMessage;
+      svg.append(empty);
+      return;
+    }
+
+    const series = averageByCalendarDay(payload, "ALLSKY_SFC_SW_DWN");
+    const values = series.map((item) => item.value).filter(validNumber);
+    if (!values.length) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = "日別日射量を取得できませんでした";
+      svg.append(empty);
+      return;
+    }
+
+    const left = 34;
+    const right = 8;
+    const top = 8;
+    const bottom = 23;
+    const width = 360 - left - right;
+    const height = 126 - top - bottom;
+    const minimum = 0;
+    const maximum = Math.ceil(Math.max(...values) / 5) * 5 || 5;
+    const x = (index) => left + (index / (series.length - 1)) * width;
+    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
+
+    for (let index = 0; index <= 2; index += 1) {
+      const value = maximum - (index / 2) * maximum;
+      const lineY = y(value);
+      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
+      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
+      label.textContent = value.toFixed(0);
+      svg.append(gridline, label);
+    }
+
+    ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
+      const index = series.findIndex((item) => item.calendarDay === calendarDay);
+      const label = svgElement("text", { x: x(index), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
+      label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
+      svg.append(label);
+    });
+
+    const commands = [];
+    let pathOpen = false;
+    series.forEach((item, index) => {
+      if (!validNumber(item.value)) {
+        pathOpen = false;
+        return;
+      }
+      commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
+      pathOpen = true;
+    });
+    svg.append(svgElement("path", { d: commands.join(" "), stroke: "#d99516", class: "chart-line daily-solar-line" }));
   }
 
-  function renderMonthly(payload) {
-    const temperature = dataSeries(payload, "T2M");
-    const precipitation = dataSeries(payload, "PRECTOTCORR");
-    const solar = dataSeries(payload, "ALLSKY_SFC_SW_DWN");
-    const humidity = dataSeries(payload, "RH2M");
+  function renderDailyHumidityChart(payload, emptyMessage = "日別相対湿度を取得できませんでした") {
+    const svg = elements.humidityChart;
+    svg.replaceChildren();
+    if (!payload) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = emptyMessage;
+      svg.append(empty);
+      return;
+    }
+
+    const series = averageByCalendarDay(payload, "RH2M");
+    const values = series.map((item) => item.value).filter(validNumber);
+    if (!values.length) {
+      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
+      empty.textContent = "日別相対湿度を取得できませんでした";
+      svg.append(empty);
+      return;
+    }
+
+    const left = 34;
+    const right = 8;
+    const top = 8;
+    const bottom = 23;
+    const width = 360 - left - right;
+    const height = 126 - top - bottom;
+    const rawMinimum = Math.min(...values);
+    const rawMaximum = Math.max(...values);
+    const minimum = Math.max(0, Math.floor((rawMinimum - 3) / 5) * 5);
+    const maximum = Math.min(100, Math.ceil((rawMaximum + 3) / 5) * 5);
+    const x = (index) => left + (index / (series.length - 1)) * width;
+    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
+
+    for (let index = 0; index <= 2; index += 1) {
+      const value = maximum - (index / 2) * (maximum - minimum);
+      const lineY = y(value);
+      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
+      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
+      label.textContent = value.toFixed(0);
+      svg.append(gridline, label);
+    }
+
+    ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
+      const index = series.findIndex((item) => item.calendarDay === calendarDay);
+      const label = svgElement("text", { x: x(index), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
+      label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
+      svg.append(label);
+    });
+
+    const commands = [];
+    let pathOpen = false;
+    series.forEach((item, index) => {
+      if (!validNumber(item.value)) {
+        pathOpen = false;
+        return;
+      }
+      commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
+      pathOpen = true;
+    });
+    svg.append(svgElement("path", { d: commands.join(" "), stroke: "#398d7c", class: "chart-line daily-humidity-line" }));
+  }
+
+  function renderCharts(climatePayload, dailyPayload) {
+    renderDailyTemperatureChart(dailyPayload);
+    renderChart(elements.precipitationChart, monthlyPrecipitationTotals(climatePayload), "#287bb5", "bar");
+    renderDailySolarChart(dailyPayload);
+    renderDailyHumidityChart(dailyPayload);
+  }
+
+  function renderMonthly(climatePayload, dailyPayload) {
+    const averageHigh = dailyPayload ? averageDailyValuesByMonth(dailyPayload, "T2M_MAX") : Array(12).fill(FILL_VALUE);
+    const averageLow = dailyPayload ? averageDailyValuesByMonth(dailyPayload, "T2M_MIN") : Array(12).fill(FILL_VALUE);
+    const precipitation = monthlyPrecipitationTotals(climatePayload);
+    const solar = dataSeries(climatePayload, "ALLSKY_SFC_SW_DWN");
+    const humidity = dataSeries(climatePayload, "RH2M");
     const fragment = document.createDocumentFragment();
 
     MONTHS.forEach((month, index) => {
       const row = document.createElement("tr");
       const values = [
         MONTH_LABELS[index],
-        numberText(temperature[month], 1),
-        numberText(precipitation[month], 2),
+        numberText(averageHigh[index], 1),
+        numberText(averageLow[index], 1),
+        numberText(precipitation[index], 1),
         numberText(solar[month], 2),
         numberText(humidity[month], 1),
       ];
@@ -476,26 +627,26 @@
     const humidity = dataSeries(climatePayload, "RH2M").ANN;
 
     setMetric(elements.annualTemperature, temperature, "℃");
-    setMetric(elements.annualPrecipitation, precipitation, "mm/日", 2);
-    elements.annualPrecipitationNote.textContent = validNumber(precipitation)
-      ? `日平均｜年換算 約${Math.round(precipitation * 365.25).toLocaleString("ja-JP")} mm`
-      : "日平均";
+    setMetric(elements.annualPrecipitation, validNumber(precipitation) ? precipitation * AVERAGE_DAYS_PER_YEAR : FILL_VALUE, "mm/年", 0);
+    elements.annualPrecipitationNote.textContent = "1991–2020年の年平均";
     setMetric(elements.annualSolar, solar, "MJ/㎡/日", 2);
     setMetric(elements.annualHumidity, humidity, "%");
     renderCharts(climatePayload, dailyPayload);
-    renderMonthly(climatePayload);
+    renderMonthly(climatePayload, dailyPayload);
   }
 
   function resetValues(message) {
     for (const element of [elements.annualTemperature, elements.annualPrecipitation, elements.annualSolar, elements.annualHumidity]) {
       element.textContent = "—";
     }
-    elements.annualPrecipitationNote.textContent = "日平均";
+    elements.annualPrecipitationNote.textContent = "1991–2020年の年平均";
     renderDailyTemperatureChart(null, "データを取得しています");
-    for (const chart of [elements.precipitationChart, elements.solarChart, elements.humidityChart]) renderChart(chart, [], "#71827e", "line");
+    renderDailySolarChart(null, "データを取得しています");
+    renderDailyHumidityChart(null, "データを取得しています");
+    renderChart(elements.precipitationChart, [], "#71827e", "line");
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.className = "empty-row";
     cell.textContent = message;
     row.append(cell);

@@ -487,8 +487,12 @@ a { color: var(--green-dark); }
 
 .chart-gridline { stroke: #d9e5e2; stroke-width: 1; }
 .chart-axis-label { fill: #647974; font-size: 9px; font-family: inherit; }
+.chart-gridline-emphasis { stroke: #789690; stroke-width: 2; }
+.chart-axis-label-emphasis { fill: #294e47; font-weight: 900; }
 .chart-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .daily-temperature-line { stroke-width: 2; }
+.daily-solar-line { stroke-width: 1.8; }
+.daily-humidity-line { stroke-width: 1.8; }
 .chart-point { stroke: #fff; stroke-width: 1.5; }
 .chart-bar { opacity: 0.82; }
 .chart-empty { fill: #71827e; font-size: 12px; font-family: inherit; text-anchor: middle; }
