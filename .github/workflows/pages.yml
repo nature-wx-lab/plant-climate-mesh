@@ -43,7 +43,7 @@ jobs:
           python scripts/verify_contract.py
           python scripts/build_deployment_manifest.py --destination _site --source-commit "${{ steps.source.outputs.sha }}"
           python scripts/privacy_gate.py --root _site --skip-history
-          test "$(find _site -type f | wc -l | tr -d ' ')" = "8"
+          test "$(find _site -type f | wc -l | tr -d ' ')" = "9"
           git diff --check
 
       - name: Upload exact verified Pages artifact
