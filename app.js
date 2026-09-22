@@ -62,6 +62,7 @@
 
   const elements = {
     map: document.getElementById("worldMap"),
+    mapWrap: document.querySelector(".map-wrap"),
     graticule: document.getElementById("graticuleLayer"),
     land: document.getElementById("landLayer"),
     border: document.getElementById("borderLayer"),
@@ -87,6 +88,7 @@
     solarChart: document.getElementById("solarChart"),
     humidityChart: document.getElementById("humidityChart"),
     resultPanel: document.getElementById("resultPanel"),
+    resultHeading: document.querySelector(".result-heading"),
     openResults: document.getElementById("openResults"),
     closeResults: document.getElementById("closeResults"),
     zoomIn: document.getElementById("zoomIn"),
@@ -124,6 +126,11 @@
     weatherLayer: "temperature",
     weatherPeriod: "annual",
     weatherVisible: true,
+    resultPanelPosition: null,
+    resultPanelScale: 1,
+    resultPanelDragging: false,
+    resultPanelDragStart: null,
+    resultPanelResizeStart: null,
   };
 
   function clamp(value, minimum, maximum) {
@@ -178,6 +185,8 @@
     elements.openResults.hidden = true;
     elements.openResults.setAttribute("aria-expanded", "true");
     elements.closeResults.setAttribute("aria-expanded", "true");
+    applyResultPanelScale();
+    applyResultPanelPosition();
   }
 
   function closeResultPanel() {
@@ -185,6 +194,127 @@
     elements.openResults.hidden = false;
     elements.openResults.setAttribute("aria-expanded", "false");
     elements.closeResults.setAttribute("aria-expanded", "false");
+  }
+
+  function defaultResultPanelPosition() {
+    const wrapRect = elements.mapWrap.getBoundingClientRect();
+    const panelRect = elements.resultPanel.getBoundingClientRect();
+    return {
+      left: Math.max(12, wrapRect.width - panelRect.width - 14),
+      top: Math.max(12, wrapRect.height - panelRect.height - 14),
+    };
+  }
+
+  function clampResultPanelPosition(position) {
+    const wrapRect = elements.mapWrap.getBoundingClientRect();
+    const panelRect = elements.resultPanel.getBoundingClientRect();
+    return {
+      left: clamp(position.left, 8, Math.max(8, wrapRect.width - panelRect.width - 8)),
+      top: clamp(position.top, 8, Math.max(8, wrapRect.height - panelRect.height - 8)),
+    };
+  }
+
+  function applyResultPanelScale() {
+    elements.resultPanel.style.setProperty("--panel-scale", String(state.resultPanelScale));
+  }
+
+  function applyResultPanelPosition() {
+    if (elements.resultPanel.hidden) return;
+    if (!state.resultPanelPosition) state.resultPanelPosition = defaultResultPanelPosition();
+    state.resultPanelPosition = clampResultPanelPosition(state.resultPanelPosition);
+    elements.resultPanel.style.left = `${state.resultPanelPosition.left}px`;
+    elements.resultPanel.style.top = `${state.resultPanelPosition.top}px`;
+  }
+
+  function beginResultPanelDrag(event) {
+    if (event.button !== 0 || event.target.closest("button") || state.resultPanelResizeStart) return;
+    const current = state.resultPanelPosition || defaultResultPanelPosition();
+    state.resultPanelDragging = true;
+    state.resultPanelDragStart = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      left: current.left,
+      top: current.top,
+    };
+    elements.resultHeading.setPointerCapture?.(event.pointerId);
+    elements.resultPanel.classList.add("dragging");
+    event.preventDefault();
+  }
+
+  function moveResultPanelDrag(event) {
+    if (!state.resultPanelDragging || !state.resultPanelDragStart || state.resultPanelResizeStart) return;
+    if (event.pointerId !== state.resultPanelDragStart.pointerId) return;
+    state.resultPanelPosition = clampResultPanelPosition({
+      left: state.resultPanelDragStart.left + event.clientX - state.resultPanelDragStart.x,
+      top: state.resultPanelDragStart.top + event.clientY - state.resultPanelDragStart.y,
+    });
+    applyResultPanelPosition();
+  }
+
+  function endResultPanelDrag(event) {
+    if (!state.resultPanelDragging || event.pointerId !== state.resultPanelDragStart?.pointerId) return;
+    try { elements.resultHeading.releasePointerCapture?.(event.pointerId); } catch { /* already released */ }
+    state.resultPanelDragging = false;
+    state.resultPanelDragStart = null;
+    elements.resultPanel.classList.remove("dragging");
+  }
+
+  function beginResultPanelResize(event) {
+    const handle = event.target.closest("[data-result-resize]");
+    if (!handle || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = elements.resultPanel.getBoundingClientRect();
+    const position = state.resultPanelPosition || defaultResultPanelPosition();
+    state.resultPanelResizeStart = {
+      pointerId: event.pointerId,
+      corner: handle.dataset.panelCorner || "se",
+      x: event.clientX,
+      y: event.clientY,
+      scale: state.resultPanelScale,
+      width: rect.width,
+      height: rect.height,
+      left: position.left,
+      top: position.top,
+    };
+    handle.setPointerCapture?.(event.pointerId);
+    elements.resultPanel.classList.add("resizing");
+  }
+
+  function moveResultPanelResize(event) {
+    const start = state.resultPanelResizeStart;
+    if (!start || event.pointerId !== start.pointerId) return;
+    event.preventDefault();
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const widthRatio = (start.width + (start.corner.includes("w") ? -dx : dx)) / start.width;
+    const heightRatio = (start.height + (start.corner.includes("n") ? -dy : dy)) / start.height;
+    const ratio = Math.max(widthRatio, heightRatio);
+    const baseWidth = start.width / start.scale;
+    const baseHeight = start.height / start.scale;
+    const wrapRect = elements.mapWrap.getBoundingClientRect();
+    const maxScale = Math.max(0.65, Math.min(
+      1.45,
+      (wrapRect.width - 16) / baseWidth,
+      (wrapRect.height - 16) / baseHeight,
+    ));
+    const scale = clamp(start.scale * ratio, 0.65, maxScale);
+    const scaleRatio = scale / start.scale;
+    state.resultPanelScale = scale;
+    state.resultPanelPosition = {
+      left: start.left + (start.corner.includes("w") ? start.width * (1 - scaleRatio) : 0),
+      top: start.top + (start.corner.includes("n") ? start.height * (1 - scaleRatio) : 0),
+    };
+    applyResultPanelScale();
+    applyResultPanelPosition();
+  }
+
+  function endResultPanelResize(event) {
+    const start = state.resultPanelResizeStart;
+    if (!start || event.pointerId !== start.pointerId) return;
+    state.resultPanelResizeStart = null;
+    elements.resultPanel.classList.remove("resizing");
   }
 
   function drawGraticule() {
@@ -1079,6 +1209,15 @@
   elements.climateToggle.addEventListener("click", toggleClimateLayer);
   elements.closeResults.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
+  elements.resultHeading.addEventListener("pointerdown", beginResultPanelDrag);
+  elements.resultPanel.addEventListener("pointerdown", beginResultPanelResize);
+  window.addEventListener("pointermove", moveResultPanelDrag);
+  window.addEventListener("pointermove", moveResultPanelResize, { passive: false });
+  window.addEventListener("pointerup", endResultPanelDrag);
+  window.addEventListener("pointercancel", endResultPanelDrag);
+  window.addEventListener("pointerup", endResultPanelResize);
+  window.addEventListener("pointercancel", endResultPanelResize);
+  window.addEventListener("resize", applyResultPanelPosition);
   elements.weatherImage.style.opacity = String(Number(elements.weatherLayerOpacity.value) / 100);
   updateWeatherLayer();
 })();

@@ -90,8 +90,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260922-maplayers1\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260922-maplayers1"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260922-floating1\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260922-floating1"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -121,8 +121,9 @@ def main() -> None:
         "https://x.com/nature_wx_lab",
     ):
         require(f'href="{url}"' in index, f"header link missing: {url}")
-    require('id="resultPanel"' in index and 'aria-controls="resultPanel"' in index, "collapsible data drawer missing")
-    require('id="resultPanel" class="result-panel" aria-labelledby="resultHeading" hidden' in index, "drawer must be hidden initially")
+    require('id="resultPanel"' in index and 'aria-controls="resultPanel"' in index, "floating data panel missing")
+    require('id="resultPanel" class="result-panel" aria-labelledby="resultHeading" hidden' in index, "floating panel must be hidden initially")
+    require(index.count("data-result-resize") == 4, "four floating-panel resize handles are required")
     require('id="layerPanel" class="layer-panel"' in index, "left map-layer panel missing")
     require(index.count('data-weather-layer=') == 4, "four weather-layer controls are required")
     require('id="layerPeriod"' in index and index.count('<option value=') == 13, "annual and monthly period selector missing")
@@ -187,9 +188,13 @@ def main() -> None:
     require("const WEATHER_LAYERS =" in app and "function updateWeatherLayer(" in app, "weather map-layer controller missing")
     require('`./data/climate-layers/${state.weatherLayer}-${state.weatherPeriod}.png`' in app, "weather layer asset path missing")
     require("weatherLayerOpacity" in app and "setWeatherVisibility" in app, "weather layer display interaction missing")
+    require("function beginResultPanelDrag(" in app and "function moveResultPanelDrag(" in app, "floating-panel drag interaction missing")
+    require("function beginResultPanelResize(" in app and "function moveResultPanelResize(" in app, "floating-panel resize interaction missing")
+    require("resultPanelScale" in app and "0.65" in app and "1.45" in app, "floating-panel scale bounds missing")
     require(".climate-raster" in styles and ".climate-legend" in styles and ".country-border" in styles, "climate overlay style missing")
     require(".layer-panel" in styles and ".weather-layer-buttons" in styles and ".weather-legend" in styles, "left layer-panel styles missing")
     require(".weather-raster" in styles and "image-rendering: pixelated" in styles, "native-grid raster rendering missing")
+    require("aspect-ratio: 16 / 9" in styles and ".panel-resize-handle" in styles, "16:9 floating-panel styles missing")
 
     require("overflow-x: auto" in styles, "narrow-screen table overflow guard missing")
     require("@media (max-width: 760px)" in styles, "mobile layout missing")
