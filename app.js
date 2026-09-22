@@ -89,6 +89,8 @@
     humidityChart: document.getElementById("humidityChart"),
     resultPanel: document.getElementById("resultPanel"),
     resultHeading: document.querySelector(".result-heading"),
+    resultTabs: [...document.querySelectorAll("[data-result-tab]")],
+    resultPages: [...document.querySelectorAll("[data-result-page]")],
     openResults: document.getElementById("openResults"),
     closeResults: document.getElementById("closeResults"),
     zoomIn: document.getElementById("zoomIn"),
@@ -128,6 +130,7 @@
     weatherVisible: true,
     resultPanelPosition: null,
     resultPanelScale: 1,
+    resultPanelPage: "overview",
     resultPanelDragging: false,
     resultPanelDragStart: null,
     resultPanelResizeStart: null,
@@ -185,6 +188,7 @@
     elements.openResults.hidden = true;
     elements.openResults.setAttribute("aria-expanded", "true");
     elements.closeResults.setAttribute("aria-expanded", "true");
+    setResultPanelPage(state.resultPanelPage);
     applyResultPanelScale();
     applyResultPanelPosition();
   }
@@ -194,6 +198,34 @@
     elements.openResults.hidden = false;
     elements.openResults.setAttribute("aria-expanded", "false");
     elements.closeResults.setAttribute("aria-expanded", "false");
+  }
+
+  function setResultPanelPage(page, focus = false) {
+    const selectedButton = elements.resultTabs.find((button) => button.dataset.resultTab === page);
+    if (!selectedButton) return;
+    state.resultPanelPage = page;
+    elements.resultTabs.forEach((button) => {
+      const selected = button === selectedButton;
+      button.setAttribute("aria-selected", String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
+    elements.resultPages.forEach((panel) => {
+      panel.hidden = panel.dataset.resultPage !== page;
+    });
+    if (focus) selectedButton.focus();
+  }
+
+  function moveResultPanelTab(event) {
+    const currentIndex = elements.resultTabs.indexOf(event.currentTarget);
+    if (currentIndex < 0) return;
+    let nextIndex = currentIndex;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % elements.resultTabs.length;
+    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + elements.resultTabs.length) % elements.resultTabs.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = elements.resultTabs.length - 1;
+    else return;
+    event.preventDefault();
+    setResultPanelPage(elements.resultTabs[nextIndex].dataset.resultTab, true);
   }
 
   function defaultResultPanelPosition() {
@@ -1094,6 +1126,7 @@
     state.selectedCell = cell;
     drawSelection(cell);
     updateLocation(cell);
+    setResultPanelPage("overview");
     openResultPanel();
     loadClimate(cell);
   }
@@ -1209,6 +1242,10 @@
   elements.climateToggle.addEventListener("click", toggleClimateLayer);
   elements.closeResults.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
+  elements.resultTabs.forEach((button) => {
+    button.addEventListener("click", () => setResultPanelPage(button.dataset.resultTab));
+    button.addEventListener("keydown", moveResultPanelTab);
+  });
   elements.resultHeading.addEventListener("pointerdown", beginResultPanelDrag);
   elements.resultPanel.addEventListener("pointerdown", beginResultPanelResize);
   window.addEventListener("pointermove", moveResultPanelDrag);
