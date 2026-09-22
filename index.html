@@ -18,8 +18,8 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260920-places1">
-  <script src="./app.js?v=20260920-places1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260922-maplayers1">
+  <script src="./app.js?v=20260922-maplayers1" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -65,6 +65,85 @@
   </header>
 
   <main class="workspace">
+    <aside id="layerPanel" class="layer-panel" aria-labelledby="layerPanelHeading">
+      <div class="layer-panel-heading">
+        <div>
+          <span>MAP LAYER</span>
+          <h2 id="layerPanelHeading">世界の気候分布</h2>
+        </div>
+        <button id="toggleLayerPanel" type="button" aria-controls="layerPanelBody" aria-expanded="false" aria-label="地図レイヤー設定を開閉">⌄</button>
+      </div>
+
+      <div id="layerPanelBody" class="layer-panel-body">
+        <section class="layer-control-group" aria-labelledby="elementHeading">
+          <h3 id="elementHeading">気象要素</h3>
+          <div class="weather-layer-buttons">
+            <button type="button" data-weather-layer="temperature" aria-pressed="true">
+              <b aria-hidden="true">℃</b><span>気温</span>
+            </button>
+            <button type="button" data-weather-layer="precipitation" aria-pressed="false">
+              <b aria-hidden="true">雨</b><span>降水量</span>
+            </button>
+            <button type="button" data-weather-layer="humidity" aria-pressed="false">
+              <b aria-hidden="true">%</b><span>湿度</span>
+            </button>
+            <button type="button" data-weather-layer="solar" aria-pressed="false">
+              <b aria-hidden="true">☀</b><span>日射量</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="layer-control-group" aria-labelledby="periodHeading">
+          <h3 id="periodHeading">表示期間</h3>
+          <label class="select-field" for="layerPeriod">
+            <span>年間・月別</span>
+            <select id="layerPeriod">
+              <option value="annual">年平均</option>
+              <option value="01">1月</option>
+              <option value="02">2月</option>
+              <option value="03">3月</option>
+              <option value="04">4月</option>
+              <option value="05">5月</option>
+              <option value="06">6月</option>
+              <option value="07">7月</option>
+              <option value="08">8月</option>
+              <option value="09">9月</option>
+              <option value="10">10月</option>
+              <option value="11">11月</option>
+              <option value="12">12月</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="active-layer-card" aria-live="polite">
+          <span id="activeLayerPeriod">年平均</span>
+          <strong id="activeLayerName">平均気温</strong>
+          <small id="activeLayerMeta">1991–2020年の気候平均｜0.5°×0.625°格子</small>
+          <span id="layerStatus" class="layer-status" data-state="ready">表示中</span>
+        </section>
+
+        <section class="weather-legend" aria-labelledby="weatherLegendTitle">
+          <div class="weather-legend-heading">
+            <strong id="weatherLegendTitle">平均気温</strong>
+            <span id="weatherLegendUnit">℃</span>
+          </div>
+          <div id="weatherLegendBar" class="weather-legend-bar" aria-hidden="true"></div>
+          <div id="weatherLegendTicks" class="weather-legend-ticks"></div>
+        </section>
+
+        <section class="layer-control-group compact-settings" aria-label="レイヤー表示設定">
+          <label class="check-field"><input id="weatherLayerToggle" type="checkbox" checked>気象レイヤーを表示</label>
+          <label class="range-field" for="weatherLayerOpacity">
+            <span>気象レイヤーの濃さ <output id="weatherLayerOpacityValue">82%</output></span>
+            <input id="weatherLayerOpacity" type="range" min="20" max="100" value="82" step="1">
+          </label>
+          <button id="climateToggle" class="secondary-layer-button" type="button" aria-controls="climateLegend" aria-pressed="false">気候区分を重ねる</button>
+        </section>
+
+        <p class="layer-panel-note">NASA POWERの月別データから独自算出。地図をクリックすると、選んだ格子の年間変化を右側に表示します。</p>
+      </div>
+    </aside>
+
     <section class="map-panel" aria-label="世界地図">
       <div class="map-wrap">
         <svg id="worldMap" viewBox="0 0 1000 1000" role="img" aria-label="世界地図" aria-describedby="mapDescription">
@@ -74,6 +153,9 @@
               <rect class="ocean" x="0" y="0" width="1000" height="1000"></rect>
               <g id="graticuleLayer" aria-hidden="true"></g>
               <g id="landLayer" aria-hidden="true"></g>
+              <g id="weatherLayer" aria-hidden="true">
+                <image id="weatherImage" class="weather-raster" x="0" y="0" width="1000" height="1000" preserveAspectRatio="none"></image>
+              </g>
               <g id="climateLayer" aria-hidden="true" hidden>
                 <image id="climateImage" class="climate-raster" x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-src="./data/koppen-geiger-1991-2020.png"></image>
               </g>
@@ -90,8 +172,8 @@
           <button id="zoomOut" type="button" aria-label="地図を縮小">−</button>
           <button id="zoomIn" type="button" aria-label="地図を拡大">＋</button>
           <button id="resetView" type="button">全体</button>
-          <button id="climateToggle" type="button" aria-controls="climateLegend" aria-pressed="false">気候区分</button>
         </div>
+        <div id="mapLayerLabel" class="map-layer-label">年平均｜平均気温</div>
         <section id="climateLegend" class="climate-legend" aria-label="ケッペン＝ガイガー気候区分の凡例" hidden>
           <div class="climate-legend-heading">
             <strong>ケッペン＝ガイガー気候区分</strong>
@@ -199,7 +281,7 @@
   <footer>
     <section>
       <h2>データと利用上の注意</h2>
-      <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>, Climatology API / Daily API。1991年1月〜2020年12月の月別・年平均値と、日最高・日最低気温を表示用に加工しています。降水量はAPIの日平均量に各月・年の日数を掛けて月降水量・年降水量へ換算しています。NASAは本ツールを承認または推奨するものではありません。</p>
+      <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>。全球分布図は公開AWS Zarrの月別データから1991年1月〜2020年12月を独自集計し、地点詳細はClimatology API / Daily APIから取得しています。降水量は日平均量に各月・年の日数を掛けて月降水量・年降水量へ換算しています。NASAは本ツールを承認または推奨するものではありません。</p>
       <p>橙枠は、クリック位置に最も近いNASA POWER気象格子の中心に合わせた約0.5°×0.625°の範囲です。白い小点は格子中心です。気温・降水量・相対湿度は橙枠に対応する元格子の空間平均を示します。日射量は同じ中心点に対応する別の1°×1°格子の値で、橙枠とは範囲が異なります。</p>
       <p>気候区分：<a href="https://doi.org/10.6084/m9.figshare.c.6395666" target="_blank" rel="noopener noreferrer">Beckほか（2023）ケッペン＝ガイガー気候区分</a>の1991–2020年・0.1°版（CC0）をWebメルカトルへ再投影しています。区分境界付近には不確実性があります。</p>
       <p>地図境界・国名・首都：<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a> 1:50m Admin 0 Countries / 1:10m Populated Places（Public Domain）。格子中心が属する国・地域を表示します。境界・名称表示は法的立場を示すものではありません。</p>

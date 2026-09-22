@@ -1,0 +1,521 @@
+{
+  "schema_version": 1,
+  "product": "plant-climate-mesh",
+  "climatology_window": {
+    "start": 1991,
+    "end": 2020
+  },
+  "time_standard": "LST",
+  "projection": "EPSG:3857",
+  "image_size": [
+    2048,
+    2048
+  ],
+  "sources": {
+    "meteorology": "https://nasa-power.s3.us-west-2.amazonaws.com/merra2/temporal/power_merra2_monthly_temporal_lst.zarr",
+    "solar_1991_2000": "https://nasa-power.s3.us-west-2.amazonaws.com/srb/temporal/power_srb_monthly_temporal_lst.zarr",
+    "solar_2001_2020": "https://nasa-power.s3.us-west-2.amazonaws.com/syn1deg/temporal/power_syn1deg_monthly_temporal_lst.zarr"
+  },
+  "layers": {
+    "temperature": {
+      "label": "平均気温",
+      "unit": "℃",
+      "source": "MERRA-2",
+      "source_grid": "0.5°×0.625°",
+      "periods": {
+        "annual": {
+          "label": "年平均",
+          "file": "temperature-annual.png",
+          "bytes": 110405,
+          "sha256": "00a23478163c41ef2ad9854c342793e1f7cfb53b8603dcf9defdb3cb088a998e",
+          "source_min": -54.7932,
+          "source_max": 33.2028,
+          "source_valid_cells": 207936
+        },
+        "01": {
+          "label": "1月",
+          "file": "temperature-01.png",
+          "bytes": 120277,
+          "sha256": "6d8d13ede402ba73e520f2c56296cf865e20d31d90047313738e797467f28e3c",
+          "source_min": -40.7397,
+          "source_max": 34.008,
+          "source_valid_cells": 207936
+        },
+        "02": {
+          "label": "2月",
+          "file": "temperature-02.png",
+          "bytes": 119811,
+          "sha256": "a9e6bbf6fd947c4f18094f0437ddb10a8bf5611041a8237b289c88c81445d2cf",
+          "source_min": -44.679,
+          "source_max": 33.0013,
+          "source_valid_cells": 207936
+        },
+        "03": {
+          "label": "3月",
+          "file": "temperature-03.png",
+          "bytes": 116536,
+          "sha256": "fad4ffb6b83db61180733fb627697cf2a2f352d818f367141657a05254b36d63",
+          "source_min": -57.1917,
+          "source_max": 33.1583,
+          "source_valid_cells": 207936
+        },
+        "04": {
+          "label": "4月",
+          "file": "temperature-04.png",
+          "bytes": 112724,
+          "sha256": "a3f32aac8a551b659c4c20794aa27ca5ca8c631c5bc3388556767d5f8df8eda2",
+          "source_min": -62.8743,
+          "source_max": 34.5453,
+          "source_valid_cells": 207936
+        },
+        "05": {
+          "label": "5月",
+          "file": "temperature-05.png",
+          "bytes": 112715,
+          "sha256": "d4002ed56b12d40892bce7a944b6a0e4b4df31a87afa3ce1944674841d8f4abe",
+          "source_min": -64.92,
+          "source_max": 37.1417,
+          "source_valid_cells": 207936
+        },
+        "06": {
+          "label": "6月",
+          "file": "temperature-06.png",
+          "bytes": 113981,
+          "sha256": "022a8f084fd226639a56b0684c1482efdafd10a0943506e20119cf7f0afa5de1",
+          "source_min": -64.8657,
+          "source_max": 39.4443,
+          "source_valid_cells": 207936
+        },
+        "07": {
+          "label": "7月",
+          "file": "temperature-07.png",
+          "bytes": 114045,
+          "sha256": "ddd14a96288729f998e96e0c1f7eb70567f884e1bf33ac931b4444e397b148a1",
+          "source_min": -66.438,
+          "source_max": 39.457,
+          "source_valid_cells": 207936
+        },
+        "08": {
+          "label": "8月",
+          "file": "temperature-08.png",
+          "bytes": 111007,
+          "sha256": "7bd95e815441d9238e42046f15443e0b4435958f8c383687e1c6257118deedab",
+          "source_min": -66.655,
+          "source_max": 39.115,
+          "source_valid_cells": 207936
+        },
+        "09": {
+          "label": "9月",
+          "file": "temperature-09.png",
+          "bytes": 111734,
+          "sha256": "0adc867a8dfa284934efd7d7d2a5c2592f1d1406e2e7977bd0b0b8051488dcbe",
+          "source_min": -65.6483,
+          "source_max": 35.3387,
+          "source_valid_cells": 207936
+        },
+        "10": {
+          "label": "10月",
+          "file": "temperature-10.png",
+          "bytes": 115723,
+          "sha256": "9e6e3a9107acb7978ca162acf47fddef1c953a9e20e506d86c40032751c732c4",
+          "source_min": -57.226,
+          "source_max": 33.2297,
+          "source_valid_cells": 207936
+        },
+        "11": {
+          "label": "11月",
+          "file": "temperature-11.png",
+          "bytes": 118635,
+          "sha256": "e2f84d2ab04b55e3701b0fc4ea131982600d774433bce1014fdd33401edb8e06",
+          "source_min": -43.8893,
+          "source_max": 34.4033,
+          "source_valid_cells": 207936
+        },
+        "12": {
+          "label": "12月",
+          "file": "temperature-12.png",
+          "bytes": 120067,
+          "sha256": "d030ef1a80e3b9478d21f30f95cc556a84646d2c7759e64233d443d48df423b6",
+          "source_min": -40.0413,
+          "source_max": 34.0743,
+          "source_valid_cells": 207936
+        }
+      }
+    },
+    "precipitation": {
+      "label": "降水量",
+      "unit": "mm",
+      "source": "MERRA-2",
+      "source_grid": "0.5°×0.625°",
+      "periods": {
+        "annual": {
+          "label": "年平均",
+          "file": "precipitation-annual.png",
+          "bytes": 154772,
+          "sha256": "fbeb29bcd669bbfc51b358f4e60a7a61c90f9b20a47d04dec543c7b3cbedaba3",
+          "source_min": 0.3485,
+          "source_max": 6294.1807,
+          "source_valid_cells": 207936
+        },
+        "01": {
+          "label": "1月",
+          "file": "precipitation-01.png",
+          "bytes": 139575,
+          "sha256": "a910f4f2953ddf6a04ffa0e2d218f87d3f7d77d94f80e21a62913493078e5eb1",
+          "source_min": 0.0,
+          "source_max": 552.978,
+          "source_valid_cells": 207936
+        },
+        "02": {
+          "label": "2月",
+          "file": "precipitation-02.png",
+          "bytes": 133771,
+          "sha256": "d3c44aef9086030c08b7d5e303fdf68019360fcd8adb230db655cab25ea0381d",
+          "source_min": 0.0,
+          "source_max": 462.6404,
+          "source_valid_cells": 207936
+        },
+        "03": {
+          "label": "3月",
+          "file": "precipitation-03.png",
+          "bytes": 138291,
+          "sha256": "c67510c74618c43d09b0a2ed8695e5c7a05100100af0029434996c01a5c53ff6",
+          "source_min": 0.0,
+          "source_max": 517.1317,
+          "source_valid_cells": 207936
+        },
+        "04": {
+          "label": "4月",
+          "file": "precipitation-04.png",
+          "bytes": 136575,
+          "sha256": "ff771076ce0728a7e205f5d864ba6ff637220047d1b72552e6a31321764680a7",
+          "source_min": 0.0,
+          "source_max": 493.86,
+          "source_valid_cells": 207936
+        },
+        "05": {
+          "label": "5月",
+          "file": "precipitation-05.png",
+          "bytes": 139209,
+          "sha256": "9f9d9484ecbf92583b973a0112ccdb2400354b2d1240cb13056f09b8674fd98f",
+          "source_min": 0.0103,
+          "source_max": 650.8246,
+          "source_valid_cells": 207936
+        },
+        "06": {
+          "label": "6月",
+          "file": "precipitation-06.png",
+          "bytes": 142540,
+          "sha256": "152d59eb7d069c7f623b0fb202fab26d5408ba5e2325af258ebc31a8c61f0d1a",
+          "source_min": 0.0,
+          "source_max": 952.3401,
+          "source_valid_cells": 207936
+        },
+        "07": {
+          "label": "7月",
+          "file": "precipitation-07.png",
+          "bytes": 144880,
+          "sha256": "ae1e96aab21baf8d250b602921b3850e1340c1501236cba9f74608a92d0bf97f",
+          "source_min": 0.0,
+          "source_max": 1195.0914,
+          "source_valid_cells": 207936
+        },
+        "08": {
+          "label": "8月",
+          "file": "precipitation-08.png",
+          "bytes": 143237,
+          "sha256": "12c62d6ba003df152515737df7682b7152333c26c277acf9c276f7e28fb2ce6a",
+          "source_min": 0.0,
+          "source_max": 881.0202,
+          "source_valid_cells": 207936
+        },
+        "09": {
+          "label": "9月",
+          "file": "precipitation-09.png",
+          "bytes": 140919,
+          "sha256": "a23e896bf92a3ec914746c0db0ae4d5074241925c0ff23fb3112dea6a1056b6a",
+          "source_min": 0.0,
+          "source_max": 646.9801,
+          "source_valid_cells": 207936
+        },
+        "10": {
+          "label": "10月",
+          "file": "precipitation-10.png",
+          "bytes": 142362,
+          "sha256": "ab7d316b32e7472efb8b1355080925686e8d6513fbf3f5c1b462cd5938b6a3b8",
+          "source_min": 0.0,
+          "source_max": 618.5947,
+          "source_valid_cells": 207936
+        },
+        "11": {
+          "label": "11月",
+          "file": "precipitation-11.png",
+          "bytes": 140636,
+          "sha256": "d4d098ad4cdb3d9fddc9a448cd1aabfee5ba8a2043c115f589928b37e389d883",
+          "source_min": 0.0,
+          "source_max": 666.9899,
+          "source_valid_cells": 207936
+        },
+        "12": {
+          "label": "12月",
+          "file": "precipitation-12.png",
+          "bytes": 140848,
+          "sha256": "e86a23a8d12227857cde52aa405b4c49a71d508c949c6a227e434e732ada2b7c",
+          "source_min": 0.0,
+          "source_max": 603.4355,
+          "source_valid_cells": 207936
+        }
+      }
+    },
+    "humidity": {
+      "label": "相対湿度",
+      "unit": "%",
+      "source": "MERRA-2",
+      "source_grid": "0.5°×0.625°",
+      "periods": {
+        "annual": {
+          "label": "年平均",
+          "file": "humidity-annual.png",
+          "bytes": 149801,
+          "sha256": "4a08a979ca0956150ba4a460fe8d8ce4ef6d355a2a954cd3f4e9aadbce58d1d0",
+          "source_min": 16.6867,
+          "source_max": 98.964,
+          "source_valid_cells": 207936
+        },
+        "01": {
+          "label": "1月",
+          "file": "humidity-01.png",
+          "bytes": 153043,
+          "sha256": "3de87893427f238ba4ecc551091dc7d8092b6e51e79be6c923573fcbb512aed6",
+          "source_min": 14.8717,
+          "source_max": 99.7947,
+          "source_valid_cells": 207936
+        },
+        "02": {
+          "label": "2月",
+          "file": "humidity-02.png",
+          "bytes": 154584,
+          "sha256": "bcff6c96072a3345a101cf1240fb81a451fc39b128240e8a8a18374dd3fa342e",
+          "source_min": 12.4333,
+          "source_max": 99.8453,
+          "source_valid_cells": 207936
+        },
+        "03": {
+          "label": "3月",
+          "file": "humidity-03.png",
+          "bytes": 156189,
+          "sha256": "f737179b7388b9432bafd7f946488abe4bbc5694c1f24d0901db4357e6454eee",
+          "source_min": 11.0087,
+          "source_max": 99.6213,
+          "source_valid_cells": 207936
+        },
+        "04": {
+          "label": "4月",
+          "file": "humidity-04.png",
+          "bytes": 160296,
+          "sha256": "c5a3b4d67d47ca47a97d1c2d66419e6d7306a948f8e87ad8fbc89e8557f0368a",
+          "source_min": 10.7827,
+          "source_max": 99.88,
+          "source_valid_cells": 207936
+        },
+        "05": {
+          "label": "5月",
+          "file": "humidity-05.png",
+          "bytes": 163867,
+          "sha256": "a1e365f03812fed0deb3fea75ce50936411cb8a17c542f3fa47ac6cdff83eb8a",
+          "source_min": 12.1213,
+          "source_max": 99.919,
+          "source_valid_cells": 207936
+        },
+        "06": {
+          "label": "6月",
+          "file": "humidity-06.png",
+          "bytes": 167728,
+          "sha256": "a874e53119c749b0f68b98613fa27ecdc5863d41dc59ca60fc0e72693d6b0b40",
+          "source_min": 10.5297,
+          "source_max": 99.922,
+          "source_valid_cells": 207936
+        },
+        "07": {
+          "label": "7月",
+          "file": "humidity-07.png",
+          "bytes": 169940,
+          "sha256": "d1bf8c90f2ca05553356d812fd5d8b302ec3eccadb85ff51f29ee3686d3ff206",
+          "source_min": 10.27,
+          "source_max": 99.8973,
+          "source_valid_cells": 207936
+        },
+        "08": {
+          "label": "8月",
+          "file": "humidity-08.png",
+          "bytes": 168170,
+          "sha256": "548eb83ef97af01c6648be9a5506eab7e35fe52f8ff36d49746cd8dc62427aff",
+          "source_min": 10.2057,
+          "source_max": 99.9633,
+          "source_valid_cells": 207936
+        },
+        "09": {
+          "label": "9月",
+          "file": "humidity-09.png",
+          "bytes": 164069,
+          "sha256": "b866838c0d3cc7c4ccea92e84194b46cc3327fa1378b9883d19de228fab545e1",
+          "source_min": 10.7253,
+          "source_max": 99.9363,
+          "source_valid_cells": 207936
+        },
+        "10": {
+          "label": "10月",
+          "file": "humidity-10.png",
+          "bytes": 158823,
+          "sha256": "4fbfd47fe0d06988bb78e5da6d5ab24c71271665139468d13e9ae347229f1172",
+          "source_min": 12.822,
+          "source_max": 99.7,
+          "source_valid_cells": 207936
+        },
+        "11": {
+          "label": "11月",
+          "file": "humidity-11.png",
+          "bytes": 155657,
+          "sha256": "c823834841052cd7b7bad65ff276d01ddd0cc0be68bb959e153bda5d565cf9b2",
+          "source_min": 15.125,
+          "source_max": 99.5937,
+          "source_valid_cells": 207936
+        },
+        "12": {
+          "label": "12月",
+          "file": "humidity-12.png",
+          "bytes": 153655,
+          "sha256": "143abbcc6fd7b6766e5dff831572b2d269109a8fda8a3df816f7df098a3608f1",
+          "source_min": 18.281,
+          "source_max": 99.785,
+          "source_valid_cells": 207936
+        }
+      }
+    },
+    "solar": {
+      "label": "日射量",
+      "unit": "MJ/㎡/日",
+      "source": "SRB＋SYN1deg",
+      "source_grid": "1°×1°",
+      "periods": {
+        "annual": {
+          "label": "年平均",
+          "file": "solar-annual.png",
+          "bytes": 65468,
+          "sha256": "84485af3bab5da36a8b60d08f2c4420664ddbd73ce2d3f35dbff7f191d5350f9",
+          "source_min": 4.8081,
+          "source_max": 26.6498,
+          "source_valid_cells": 64800
+        },
+        "01": {
+          "label": "1月",
+          "file": "solar-01.png",
+          "bytes": 65354,
+          "sha256": "982a5bda3e29bc62ee1e981d91224246ae94facf375f5d1802c0e72a2c5cb30c",
+          "source_min": 0.0,
+          "source_max": 35.7173,
+          "source_valid_cells": 64800
+        },
+        "02": {
+          "label": "2月",
+          "file": "solar-02.png",
+          "bytes": 68292,
+          "sha256": "8b1a0070d35d6d14fca6728016a4b7b3384f7d9eaf2dd8553bd8bd54d09b4b38",
+          "source_min": 0.0,
+          "source_max": 31.0099,
+          "source_valid_cells": 64800
+        },
+        "03": {
+          "label": "3月",
+          "file": "solar-03.png",
+          "bytes": 70823,
+          "sha256": "23ae0ff182cca018e8933096bfe5e3c3e5986136215cc12704cd6ffc8fc93df8",
+          "source_min": 0.6454,
+          "source_max": 28.1602,
+          "source_valid_cells": 64800
+        },
+        "04": {
+          "label": "4月",
+          "file": "solar-04.png",
+          "bytes": 67371,
+          "sha256": "d740934db9412844a26fa3f8e9c091f631b4b16d80faa67640b01ace2e8a9794",
+          "source_min": 0.0,
+          "source_max": 28.1788,
+          "source_valid_cells": 64800
+        },
+        "05": {
+          "label": "5月",
+          "file": "solar-05.png",
+          "bytes": 63237,
+          "sha256": "bbd6178406f2ea034dde0185a380053514c4ce58bd54f3526dd2bd3010e8496c",
+          "source_min": 0.0,
+          "source_max": 29.6442,
+          "source_valid_cells": 64800
+        },
+        "06": {
+          "label": "6月",
+          "file": "solar-06.png",
+          "bytes": 63217,
+          "sha256": "85ac6c9bdffe8f79fbbb540fe751bc5f1cec61473731dc9c641945f06a39bbf5",
+          "source_min": 0.0,
+          "source_max": 33.9154,
+          "source_valid_cells": 64800
+        },
+        "07": {
+          "label": "7月",
+          "file": "solar-07.png",
+          "bytes": 64353,
+          "sha256": "81eb5f1343f11e4e5ce8d4ee316489d14cbdd5ccbfd20f0483103f2d7a3ab05d",
+          "source_min": 0.0,
+          "source_max": 30.1079,
+          "source_valid_cells": 64800
+        },
+        "08": {
+          "label": "8月",
+          "file": "solar-08.png",
+          "bytes": 66851,
+          "sha256": "db3b4998f274fa2c38efd1399eebb82d370ec24f1502fcdfe10433264661fbd5",
+          "source_min": 0.0,
+          "source_max": 28.4315,
+          "source_valid_cells": 64800
+        },
+        "09": {
+          "label": "9月",
+          "file": "solar-09.png",
+          "bytes": 70349,
+          "sha256": "a6f8286d4d8dee36bd3bdd0e6f25fe4bb2d64d87dc4877ad0b887c57c1fecfe3",
+          "source_min": 0.378,
+          "source_max": 27.1282,
+          "source_valid_cells": 64800
+        },
+        "10": {
+          "label": "10月",
+          "file": "solar-10.png",
+          "bytes": 68940,
+          "sha256": "4bcefe9851be702eb9fa7e91559c1ad9c1246210a889c4fea6aed1adb55ebf87",
+          "source_min": 0.0,
+          "source_max": 31.4022,
+          "source_valid_cells": 64800
+        },
+        "11": {
+          "label": "11月",
+          "file": "solar-11.png",
+          "bytes": 66245,
+          "sha256": "28cb79f76e08b1473196e051e30bca4ffe1d6d011a53d79d6d93fda2a990b27c",
+          "source_min": 0.0,
+          "source_max": 34.5141,
+          "source_valid_cells": 64800
+        },
+        "12": {
+          "label": "12月",
+          "file": "solar-12.png",
+          "bytes": 60836,
+          "sha256": "c03eb7771d297f9025f0cc322b5c6ba493c81d9801e540836ef3b7c4670cd9af",
+          "source_min": 0.0,
+          "source_max": 40.3137,
+          "source_valid_cells": 64800
+        }
+      }
+    }
+  }
+}

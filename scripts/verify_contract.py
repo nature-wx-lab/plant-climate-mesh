@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import struct
@@ -11,6 +12,13 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CLIMATE_LAYER_KEYS = ("temperature", "precipitation", "humidity", "solar")
+CLIMATE_LAYER_PERIODS = ("annual",) + tuple(f"{month:02d}" for month in range(1, 13))
+CLIMATE_LAYER_FILES = {
+    f"data/climate-layers/{key}-{period}.png"
+    for key in CLIMATE_LAYER_KEYS
+    for period in CLIMATE_LAYER_PERIODS
+}
 SOURCE_FILES = {
     ".githooks/pre-push",
     ".github/workflows/pages.yml",
@@ -26,12 +34,15 @@ SOURCE_FILES = {
     "index.html",
     "robots.txt",
     "scripts/build_deployment_manifest.py",
+    "scripts/build_climate_layers.py",
+    "scripts/climate_layers_requirements.txt",
     "scripts/privacy_gate.py",
     "scripts/verify_contract.py",
     "scripts/verify_deployed_pages.py",
     "sitemap.xml",
     "styles.css",
-}
+    "data/climate-layers/manifest.json",
+} | CLIMATE_LAYER_FILES
 DEPLOY_FILES = {
     "404.html",
     "app.js",
@@ -41,7 +52,8 @@ DEPLOY_FILES = {
     "robots.txt",
     "sitemap.xml",
     "styles.css",
-}
+    "data/climate-layers/manifest.json",
+} | CLIMATE_LAYER_FILES
 
 
 def require(condition: bool, message: str) -> None:
@@ -78,8 +90,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260920-places1\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260920-places1"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260922-maplayers1\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260922-maplayers1"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -111,6 +123,12 @@ def main() -> None:
         require(f'href="{url}"' in index, f"header link missing: {url}")
     require('id="resultPanel"' in index and 'aria-controls="resultPanel"' in index, "collapsible data drawer missing")
     require('id="resultPanel" class="result-panel" aria-labelledby="resultHeading" hidden' in index, "drawer must be hidden initially")
+    require('id="layerPanel" class="layer-panel"' in index, "left map-layer panel missing")
+    require(index.count('data-weather-layer=') == 4, "four weather-layer controls are required")
+    require('id="layerPeriod"' in index and index.count('<option value=') == 13, "annual and monthly period selector missing")
+    require('id="weatherLayerToggle"' in index and 'id="weatherLayerOpacity"' in index, "weather-layer display controls missing")
+    require('id="weatherLayer"' in index and 'id="weatherImage"' in index, "weather raster layer missing")
+    require("NASA POWERの月別データから独自算出" in index, "map-layer provenance missing")
     for chart_id in ("temperatureChart", "precipitationChart", "solarChart", "humidityChart"):
         require(f'id="{chart_id}"' in index, f"chart missing: {chart_id}")
     require("月別の数値表" in index, "monthly table disclosure missing")
@@ -166,7 +184,12 @@ def main() -> None:
     require("function geometryContainsPoint(" in app and "function countryAt(" in app, "country lookup missing")
     require("country.properties.capital" in app and "国・地域：海上｜首都：—" in app, "country/capital rendering missing")
     require("function toggleClimateLayer(" in app and "KOPPEN_CLASSES" in app, "climate overlay interaction missing")
+    require("const WEATHER_LAYERS =" in app and "function updateWeatherLayer(" in app, "weather map-layer controller missing")
+    require('`./data/climate-layers/${state.weatherLayer}-${state.weatherPeriod}.png`' in app, "weather layer asset path missing")
+    require("weatherLayerOpacity" in app and "setWeatherVisibility" in app, "weather layer display interaction missing")
     require(".climate-raster" in styles and ".climate-legend" in styles and ".country-border" in styles, "climate overlay style missing")
+    require(".layer-panel" in styles and ".weather-layer-buttons" in styles and ".weather-legend" in styles, "left layer-panel styles missing")
+    require(".weather-raster" in styles and "image-rendering: pixelated" in styles, "native-grid raster rendering missing")
 
     require("overflow-x: auto" in styles, "narrow-screen table overflow guard missing")
     require("@media (max-width: 760px)" in styles, "mobile layout missing")
@@ -202,6 +225,31 @@ def main() -> None:
     width, height = struct.unpack(">II", overlay[16:24])
     require((width, height) == (4096, 4096), "climate overlay dimensions mismatch")
     require(len(overlay) < 500_000, "climate overlay is unexpectedly large")
+
+    climate_manifest = json.loads((ROOT / "data/climate-layers/manifest.json").read_text(encoding="utf-8"))
+    require(climate_manifest.get("schema_version") == 1, "climate-layer manifest schema mismatch")
+    require(climate_manifest.get("product") == "plant-climate-mesh", "climate-layer manifest product mismatch")
+    require(climate_manifest.get("climatology_window") == {"start": 1991, "end": 2020}, "climate-layer period mismatch")
+    require(climate_manifest.get("projection") == "EPSG:3857", "climate-layer projection mismatch")
+    require(climate_manifest.get("image_size") == [2048, 2048], "climate-layer image size mismatch")
+    require(set(climate_manifest.get("layers", {})) == set(CLIMATE_LAYER_KEYS), "climate-layer family mismatch")
+    manifest_files = set()
+    for key in CLIMATE_LAYER_KEYS:
+        layer = climate_manifest["layers"][key]
+        require(set(layer.get("periods", {})) == set(CLIMATE_LAYER_PERIODS), f"climate-layer periods mismatch: {key}")
+        for period in CLIMATE_LAYER_PERIODS:
+            record = layer["periods"][period]
+            relative = f"data/climate-layers/{record['file']}"
+            require(relative in CLIMATE_LAYER_FILES, f"unexpected climate-layer file: {relative}")
+            raw = (ROOT / relative).read_bytes()
+            require(raw.startswith(b"\x89PNG\r\n\x1a\n"), f"climate layer is not PNG: {relative}")
+            width, height = struct.unpack(">II", raw[16:24])
+            require((width, height) == (2048, 2048), f"climate-layer dimensions mismatch: {relative}")
+            require(len(raw) == record["bytes"], f"climate-layer byte count mismatch: {relative}")
+            require(hashlib.sha256(raw).hexdigest() == record["sha256"], f"climate-layer checksum mismatch: {relative}")
+            require(len(raw) < 500_000, f"climate-layer file is unexpectedly large: {relative}")
+            manifest_files.add(relative)
+    require(manifest_files == CLIMATE_LAYER_FILES, "climate-layer manifest coverage mismatch")
 
     require("plant-climate-mesh/sitemap.xml" in robots, "robots sitemap mismatch")
     require("plant-climate-mesh/" in sitemap, "sitemap URL mismatch")

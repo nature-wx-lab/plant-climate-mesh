@@ -12,6 +12,39 @@
   const DAILY_PARAMETERS = ["T2M_MAX", "T2M_MIN", "ALLSKY_SFC_SW_DWN", "RH2M"];
   const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
   const MONTH_LABELS = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+  const WEATHER_LAYERS = {
+    temperature: {
+      name: "平均気温",
+      unit: "℃",
+      grid: "0.5°×0.625°格子",
+      stops: [[-50, "#21134f"], [-40, "#2c2b83"], [-30, "#3154b4"], [-20, "#377dcc"], [-10, "#63add8"], [0, "#b8dfe4"], [10, "#eef1c2"], [20, "#ffd27a"], [30, "#ed6c3b"], [40, "#b51f4b"], [50, "#59052c"]],
+      ticks: [-50, -30, -10, 10, 30, 50],
+    },
+    precipitation: {
+      name: "降水量",
+      grid: "0.5°×0.625°格子",
+      monthlyUnit: "mm/月",
+      annualUnit: "mm/年",
+      monthlyStops: [[0, "#fff7ec"], [25, "#e0f3db"], [50, "#ccebc5"], [100, "#a8ddb5"], [200, "#7bccc4"], [300, "#43a2ca"], [500, "#0868ac"], [800, "#084081"]],
+      annualStops: [[0, "#fff7ec"], [250, "#e0f3db"], [500, "#ccebc5"], [1000, "#a8ddb5"], [1500, "#7bccc4"], [2500, "#43a2ca"], [4000, "#0868ac"], [6000, "#084081"]],
+      monthlyTicks: [0, 100, 300, 500, 800],
+      annualTicks: [0, 1000, 2500, 4000, 6000],
+    },
+    humidity: {
+      name: "相対湿度",
+      unit: "%",
+      grid: "0.5°×0.625°格子",
+      stops: [[0, "#7a4f28"], [20, "#bc8957"], [40, "#e3c89e"], [60, "#dce9c6"], [70, "#a9d8c3"], [80, "#58b5a7"], [90, "#257d89"], [100, "#174f70"]],
+      ticks: [0, 40, 60, 80, 100],
+    },
+    solar: {
+      name: "日射量",
+      unit: "MJ/㎡/日",
+      grid: "1°×1°格子",
+      stops: [[0, "#28306f"], [5, "#3769a9"], [10, "#4ca5c2"], [15, "#8bcf9c"], [20, "#eee879"], [25, "#f4a64f"], [30, "#cc4b3d"], [35, "#761d39"]],
+      ticks: [0, 10, 20, 30, 35],
+    },
+  };
   const AVERAGE_DAYS_PER_MONTH = [31, 28 + 8 / 30, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   const AVERAGE_DAYS_PER_YEAR = AVERAGE_DAYS_PER_MONTH.reduce((sum, days) => sum + days, 0);
   const FILL_VALUE = -999;
@@ -32,6 +65,8 @@
     graticule: document.getElementById("graticuleLayer"),
     land: document.getElementById("landLayer"),
     border: document.getElementById("borderLayer"),
+    weather: document.getElementById("weatherLayer"),
+    weatherImage: document.getElementById("weatherImage"),
     climate: document.getElementById("climateLayer"),
     climateImage: document.getElementById("climateImage"),
     climateToggle: document.getElementById("climateToggle"),
@@ -57,6 +92,22 @@
     zoomIn: document.getElementById("zoomIn"),
     zoomOut: document.getElementById("zoomOut"),
     resetView: document.getElementById("resetView"),
+    layerPanel: document.getElementById("layerPanel"),
+    toggleLayerPanel: document.getElementById("toggleLayerPanel"),
+    layerButtons: document.querySelectorAll("[data-weather-layer]"),
+    layerPeriod: document.getElementById("layerPeriod"),
+    activeLayerPeriod: document.getElementById("activeLayerPeriod"),
+    activeLayerName: document.getElementById("activeLayerName"),
+    activeLayerMeta: document.getElementById("activeLayerMeta"),
+    layerStatus: document.getElementById("layerStatus"),
+    weatherLegendTitle: document.getElementById("weatherLegendTitle"),
+    weatherLegendUnit: document.getElementById("weatherLegendUnit"),
+    weatherLegendBar: document.getElementById("weatherLegendBar"),
+    weatherLegendTicks: document.getElementById("weatherLegendTicks"),
+    weatherLayerToggle: document.getElementById("weatherLayerToggle"),
+    weatherLayerOpacity: document.getElementById("weatherLayerOpacity"),
+    weatherLayerOpacityValue: document.getElementById("weatherLayerOpacityValue"),
+    mapLayerLabel: document.getElementById("mapLayerLabel"),
   };
 
   const state = {
@@ -70,6 +121,9 @@
     drag: null,
     countries: [],
     climateVisible: false,
+    weatherLayer: "temperature",
+    weatherPeriod: "annual",
+    weatherVisible: true,
   };
 
   function clamp(value, minimum, maximum) {
@@ -159,6 +213,83 @@
       fragment.append(item);
     });
     elements.climateLegendItems.replaceChildren(fragment);
+  }
+
+  function weatherLayerConfig() {
+    return WEATHER_LAYERS[state.weatherLayer];
+  }
+
+  function weatherStops(config = weatherLayerConfig()) {
+    if (state.weatherLayer === "precipitation") {
+      return state.weatherPeriod === "annual" ? config.annualStops : config.monthlyStops;
+    }
+    return config.stops;
+  }
+
+  function weatherTicks(config = weatherLayerConfig()) {
+    if (state.weatherLayer === "precipitation") {
+      return state.weatherPeriod === "annual" ? config.annualTicks : config.monthlyTicks;
+    }
+    return config.ticks;
+  }
+
+  function weatherUnit(config = weatherLayerConfig()) {
+    if (state.weatherLayer === "precipitation") {
+      return state.weatherPeriod === "annual" ? config.annualUnit : config.monthlyUnit;
+    }
+    return config.unit;
+  }
+
+  function periodLabel() {
+    if (state.weatherPeriod === "annual") return "年平均";
+    return `${Number(state.weatherPeriod)}月`;
+  }
+
+  function renderWeatherLegend() {
+    const config = weatherLayerConfig();
+    const stops = weatherStops(config);
+    const minimum = stops[0][0];
+    const maximum = stops[stops.length - 1][0];
+    const gradient = stops.map(([value, color]) => {
+      const position = ((value - minimum) / (maximum - minimum)) * 100;
+      return `${color} ${position.toFixed(2)}%`;
+    }).join(", ");
+    elements.weatherLegendBar.style.background = `linear-gradient(90deg, ${gradient})`;
+    const ticks = weatherTicks(config).map((value, index, values) => {
+      const tick = document.createElement("span");
+      tick.textContent = String(value);
+      tick.style.left = `${((value - minimum) / (maximum - minimum)) * 100}%`;
+      if (index === 0) tick.style.left = "0";
+      if (index === values.length - 1) tick.style.left = "100%";
+      return tick;
+    });
+    elements.weatherLegendTicks.replaceChildren(...ticks);
+    elements.weatherLegendTitle.textContent = config.name;
+    elements.weatherLegendUnit.textContent = weatherUnit(config);
+  }
+
+  function updateWeatherLayer() {
+    const config = weatherLayerConfig();
+    const label = periodLabel();
+    const path = `./data/climate-layers/${state.weatherLayer}-${state.weatherPeriod}.png`;
+    elements.activeLayerPeriod.textContent = label;
+    elements.activeLayerName.textContent = config.name;
+    elements.activeLayerMeta.textContent = `1991–2020年の気候平均｜${config.grid}`;
+    elements.mapLayerLabel.textContent = state.weatherVisible ? `${label}｜${config.name}` : "気象レイヤー非表示";
+    elements.layerStatus.textContent = "読み込み中";
+    elements.layerStatus.dataset.state = "loading";
+    elements.weatherImage.setAttribute("href", path);
+    elements.layerButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.weatherLayer === state.weatherLayer));
+    });
+    renderWeatherLegend();
+  }
+
+  function setWeatherVisibility(visible) {
+    state.weatherVisible = visible;
+    elements.weather.toggleAttribute("hidden", !visible);
+    const config = weatherLayerConfig();
+    elements.mapLayerLabel.textContent = visible ? `${periodLabel()}｜${config.name}` : "気象レイヤー非表示";
   }
 
   function toggleClimateLayer() {
@@ -905,6 +1036,38 @@
   drawClimateLegend();
   setView(1);
   loadWorldMap();
+  elements.weatherImage.addEventListener("load", () => {
+    elements.layerStatus.textContent = "表示中";
+    elements.layerStatus.dataset.state = "ready";
+  });
+  elements.weatherImage.addEventListener("error", () => {
+    elements.layerStatus.textContent = "レイヤーを読み込めませんでした";
+    elements.layerStatus.dataset.state = "error";
+  });
+  elements.layerButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!WEATHER_LAYERS[button.dataset.weatherLayer]) return;
+      state.weatherLayer = button.dataset.weatherLayer;
+      updateWeatherLayer();
+    });
+  });
+  elements.layerPeriod.addEventListener("change", () => {
+    if (elements.layerPeriod.value !== "annual" && !/^\d{2}$/.test(elements.layerPeriod.value)) return;
+    state.weatherPeriod = elements.layerPeriod.value;
+    updateWeatherLayer();
+  });
+  elements.weatherLayerToggle.addEventListener("change", () => {
+    setWeatherVisibility(elements.weatherLayerToggle.checked);
+  });
+  elements.weatherLayerOpacity.addEventListener("input", () => {
+    const opacity = clamp(Number(elements.weatherLayerOpacity.value) / 100, 0.2, 1);
+    elements.weatherImage.style.opacity = String(opacity);
+    elements.weatherLayerOpacityValue.textContent = `${Math.round(opacity * 100)}%`;
+  });
+  elements.toggleLayerPanel.addEventListener("click", () => {
+    const expanded = elements.layerPanel.classList.toggle("is-open");
+    elements.toggleLayerPanel.setAttribute("aria-expanded", String(expanded));
+  });
   elements.map.addEventListener("pointerdown", beginDrag);
   elements.map.addEventListener("pointermove", moveDrag);
   elements.map.addEventListener("pointerup", endDrag);
@@ -916,4 +1079,6 @@
   elements.climateToggle.addEventListener("click", toggleClimateLayer);
   elements.closeResults.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
+  elements.weatherImage.style.opacity = String(Number(elements.weatherLayerOpacity.value) / 100);
+  updateWeatherLayer();
 })();

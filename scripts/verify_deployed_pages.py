@@ -13,6 +13,11 @@ import urllib.parse
 import urllib.request
 
 
+CLIMATE_LAYER_FILES = {
+    f"data/climate-layers/{key}-{period}.png"
+    for key in ("temperature", "precipitation", "humidity", "solar")
+    for period in (("annual",) + tuple(f"{month:02d}" for month in range(1, 13)))
+}
 EXPECTED_FILES = {
     "404.html",
     "app.js",
@@ -22,7 +27,8 @@ EXPECTED_FILES = {
     "robots.txt",
     "sitemap.xml",
     "styles.css",
-}
+    "data/climate-layers/manifest.json",
+} | CLIMATE_LAYER_FILES
 
 
 def request(url: str) -> urllib.request.Request:
@@ -92,6 +98,8 @@ def main() -> None:
             raise AssertionError(f"GeoJSON content type mismatch: {path}")
         if path.endswith(".png") and "image/png" not in content_type:
             raise AssertionError(f"PNG content type mismatch: {path}")
+        if path.endswith(".json") and "json" not in content_type:
+            raise AssertionError(f"JSON content type mismatch: {path}")
         return path, len(raw)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:

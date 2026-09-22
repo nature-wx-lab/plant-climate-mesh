@@ -27,7 +27,14 @@ FORBIDDEN_SUFFIXES = {
     ".log", ".mov", ".mp4", ".p12", ".pdf", ".pem", ".pfx", ".png",
     ".sqlite", ".tiff", ".xls", ".xlsx", ".zip",
 }
-ALLOWED_BINARY_PATHS = {Path("data/koppen-geiger-1991-2020.png")}
+ALLOWED_BINARY_PATHS = {
+    Path("data/koppen-geiger-1991-2020.png"),
+    *{
+        Path(f"data/climate-layers/{key}-{period}.png")
+        for key in ("temperature", "precipitation", "humidity", "solar")
+        for period in (("annual",) + tuple(f"{month:02d}" for month in range(1, 13)))
+    },
+}
 MAX_FILE_BYTES = 3 * 1024 * 1024
 PATTERNS = {
     "absolute-user-path": re.compile(r"/" r"Users/|[A-Za-z]:\\\\Users\\\\", re.IGNORECASE),

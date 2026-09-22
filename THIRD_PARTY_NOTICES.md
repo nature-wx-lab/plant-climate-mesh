@@ -4,9 +4,12 @@
 
 Climate values are retrieved at runtime from the NASA Langley Research Center POWER Project Climatology and Daily APIs. The site requests temperature, corrected precipitation, all-sky surface shortwave downward irradiance, relative humidity, daily maximum temperature, and daily minimum temperature for January 1991 through December 2020. Daily maximum temperature, daily minimum temperature, daily all-sky surface shortwave downward irradiance, and daily mean relative humidity are averaged by calendar day in the browser.
 
+The global annual and monthly map layers are derived from the public POWER Data v10 monthly Zarr datasets in the NASA POWER AWS Open Data store. Meteorological layers use the MERRA-2 monthly LST source grid. Solar layers combine SRB for 1991–2000 and SYN1deg for 2001–2020, following the source periods used by POWER for the selected 1991–2020 climatology. Source-grid values are aggregated to monthly climatologies and day-weighted annual values, colorized, and reprojected to Web Mercator without smoothing between source cells.
+
 - POWER: <https://power.larc.nasa.gov/>
 - Referencing guidance: <https://power.larc.nasa.gov/docs/referencing/>
 - NASA Earthdata data use policy: <https://www.earthdata.nasa.gov/engage/open-data-services-software/data-use-policy>
+- POWER AWS access: <https://power.larc.nasa.gov/docs/services/aws/>
 
 NASA does not endorse this site. NASA names and identifiers are not used as product branding.
 

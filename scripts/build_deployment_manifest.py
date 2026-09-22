@@ -11,6 +11,11 @@ import shutil
 from pathlib import Path
 
 
+CLIMATE_LAYER_FILES = tuple(
+    f"data/climate-layers/{key}-{period}.png"
+    for key in ("temperature", "precipitation", "humidity", "solar")
+    for period in (("annual",) + tuple(f"{month:02d}" for month in range(1, 13)))
+)
 DEPLOY_FILES = (
     "404.html",
     "app.js",
@@ -20,7 +25,8 @@ DEPLOY_FILES = (
     "robots.txt",
     "sitemap.xml",
     "styles.css",
-)
+    "data/climate-layers/manifest.json",
+) + CLIMATE_LAYER_FILES
 
 
 def sha256(raw: bytes) -> str:
