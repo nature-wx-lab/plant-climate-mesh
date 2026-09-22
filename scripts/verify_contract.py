@@ -75,7 +75,7 @@ def verify_comparison_math() -> None:
 const assert = require("node:assert/strict");
 const app = require("node:fs").readFileSync(process.argv[1], "utf8");
 const names = ["boundedChartWindow", "validNumber", "calendarDays", "dataSeries",
-  "averageByCalendarDay", "sameCell", "chartLocationGroups"];
+  "averageByCalendarDay", "sameCell", "chartLocationGroups", "chartSeriesStyle"];
 const functions = names.map(name => {
   const match = app.match(new RegExp("^  function " + name + "\\([\\s\\S]*?^  }", "m"));
   assert.ok(match, name + " missing");
@@ -97,7 +97,10 @@ assert.equal(series[59].value, 8);
 assert.equal(api.validNumber(0), true);
 assert.equal(api.validNumber(null), false);
 assert.equal(api.validNumber(NaN), false);
-assert.equal(api.chartLocationGroups(false)[0].colors[0], "#bd4818");
+assert.equal(api.chartLocationGroups(false)[0].role, "選択地点 A");
+assert.equal(api.chartLocationGroups(false)[0].colors[0], "#2463b4");
+assert.equal(api.chartSeriesStyle("temperature", api.chartLocationGroups(false)[0], 0).outlined, false);
+assert.equal(api.chartSeriesStyle("temperature", api.chartLocationGroups(false)[0], 1).color, "#227bb9");
 state.referenceRecord = {...state.currentRecord};
 assert.equal(api.chartLocationGroups(false)[0].role, "基準 A");
 assert.equal(api.chartLocationGroups(false)[0].colors[0], "#2463b4");
@@ -107,6 +110,14 @@ assert.deepEqual(groups.map(g => g.role), ["基準 A", "比較 B"]);
 assert.equal(groups[0].name, "B");
 assert.equal(groups[1].name, "B2");
 assert.equal(api.chartLocationGroups(false)[0].role, "比較 B");
+for (const group of groups) {
+  assert.deepEqual(api.chartSeriesStyle("temperature", group, 0), {color:"#d84a36",outlined:group.isBaseline});
+  assert.deepEqual(api.chartSeriesStyle("temperature", group, 1), {color:"#227bb9",outlined:group.isBaseline});
+  assert.equal(api.chartSeriesStyle("solar", group, 0).color, group.colors[0]);
+  assert.equal(api.chartSeriesStyle("humidity", group, 0).outlined, false);
+}
+state.currentRecord = state.referenceRecord;
+assert.equal(api.chartSeriesStyle("temperature", api.chartLocationGroups(false)[0], 1).outlined, true);
 console.log("COMPARISON_MATH_OK");
 '''
     subprocess.run(["node", "-e", program, str(ROOT / "app.js")], check=True)
@@ -133,8 +144,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260922-climatecompare2\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260922-climatecompare2"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260922-climatecompare3\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260922-climatecompare3"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -252,6 +263,7 @@ def main() -> None:
     require("function swapLocations(" in app, "A/B swap missing")
     require("#2463b4" in app and "#bd4818" in app, "A/B location colors missing")
     require(".chart-reference-series { opacity: 1; stroke-dasharray: none; }" in styles, "baseline curves must be solid and opaque")
+    require("chart-line-outline" in app and "data-outline-for" in app and "swatch-outlined" in styles, "baseline temperature outline and matching legend missing")
     require("model.pinch" in app and 'svg.addEventListener("wheel"' in app, "chart zoom gestures missing")
     require("chart-readout-values" in app and 'event.key === "ArrowLeft"' in app, "accessible exact-value chart readout missing")
     require("resultPanelScale" in app and "0.65" in app and "1.45" in app, "floating-panel scale bounds missing")

@@ -100,6 +100,10 @@
     clearReference: document.getElementById("clearReference"),
     swapLocations: document.getElementById("swapLocations"),
     referenceCard: document.getElementById("referenceCard"),
+    referenceRole: document.getElementById("referenceRole"),
+    referenceState: document.getElementById("referenceState"),
+    referenceActions: document.getElementById("referenceActions"),
+    currentActions: document.getElementById("currentActions"),
     referenceLocation: document.getElementById("referenceLocation"),
     referenceDetail: document.getElementById("referenceDetail"),
     currentCard: document.getElementById("currentCard"),
@@ -599,15 +603,18 @@
 
   function drawSelections() {
     const copies = [];
-    if (state.referenceRecord?.cell) {
-      copies.push(...cellCopies(state.referenceRecord.cell, "reference-cell", "reference-point"));
+    const firstRecord = state.referenceRecord || state.currentRecord;
+    const secondRecord = state.referenceRecord && !sameCell(state.currentRecord?.cell, state.referenceRecord.cell)
+      ? state.currentRecord : null;
+    if (firstRecord?.cell) {
+      copies.push(...cellCopies(firstRecord.cell, "reference-cell", "reference-point"));
     }
-    if (state.selectedCell && !sameCell(state.selectedCell, state.referenceRecord?.cell)) {
-      copies.push(...cellCopies(state.selectedCell, "selection-cell", "selection-point"));
+    if (secondRecord?.cell) {
+      copies.push(...cellCopies(secondRecord.cell, "selection-cell", "selection-point"));
     }
-    for (const [record, label, color] of [[state.referenceRecord, "A", "#2463b4"],
-      [state.currentRecord, "B", "#bd4818"]]) {
-      if (!record || (label === "B" && sameCell(record.cell, state.referenceRecord?.cell))) continue;
+    for (const [record, label, color] of [[firstRecord, "A", "#2463b4"],
+      [secondRecord, "B", "#bd4818"]]) {
+      if (!record) continue;
       const [x, y] = project(record.cell.longitude, record.cell.latitude);
       for (const offset of [-MAP_SIZE, 0, MAP_SIZE]) {
         const marker = svgElement("text", { x: x + offset + 6 / state.zoom, y: y - 5 / state.zoom,
@@ -852,15 +859,16 @@
       && sameCell(state.referenceRecord.cell, state.currentRecord.cell));
     const current = {
       key: "current",
-      role: isReference ? "基準 A" : (state.referenceRecord ? "比較 B" : "選択地点 B"),
+      role: isReference ? "基準 A" : (state.referenceRecord ? "比較 B" : "選択地点 A"),
       name: state.currentRecord?.location?.headerLabel || "地点を選択",
-      tone: isReference ? "reference" : "current",
-      colors: isReference ? ["#2463b4", "#4c8fc5"] : ["#bd4818", "#cf8537"],
+      tone: isReference || !state.referenceRecord ? "reference" : "current",
+      isBaseline: isReference,
+      colors: isReference || !state.referenceRecord ? ["#2463b4", "#4c8fc5"] : ["#bd4818", "#cf8537"],
     };
     return referenceAvailable ? [{
       key: "reference", role: "基準 A",
       name: state.referenceRecord?.location?.headerLabel || "基準地点",
-      tone: "reference", colors: ["#2463b4", "#4c8fc5"],
+      tone: "reference", isBaseline: true, colors: ["#2463b4", "#4c8fc5"],
     }, current] : [current];
   }
 
@@ -869,6 +877,15 @@
     element.className = className;
     if (text !== undefined) element.textContent = text;
     return element;
+  }
+
+  function chartSeriesStyle(kind, group, index) {
+    // Temperature hue denotes the measurement, never the selected location.
+    if (kind === "temperature") return {
+      color: index === 0 ? "#d84a36" : "#227bb9",
+      outlined: Boolean(group.isBaseline),
+    };
+    return { color: group.colors[index] || group.colors[0], outlined: false };
   }
 
   function visibleChartSeries(model) {
@@ -1027,12 +1044,15 @@
       const row = chartElement("div", "chart-location-key chart-key-" + group.tone);
       const name = chartElement("span", "chart-key-name", group.role + "  " + group.name);
       name.title = name.textContent;
+      if (model.kind === "temperature" && state.referenceRecord) name.append(chartElement("span", "chart-line-treatment",
+        group.isBaseline ? "［黒縁］" : "［縁なし］"));
       if (group.status) name.append(chartElement("span", "chart-key-status", "（" + group.status + "）"));
       const swatches = chartElement("span", "chart-series-keys");
       for (const series of model.series.filter((item) => item.group === group.key)) {
         const key = chartElement("span", "chart-series-key");
         const swatch = chartElement("i", "chart-series-swatch");
         swatch.style.backgroundColor = series.color;
+        swatch.classList.toggle("swatch-outlined", Boolean(series.outlined));
         key.append(swatch, document.createTextNode(series.label));
         swatches.append(key);
       }
@@ -1118,7 +1138,8 @@
     }
     for (const series of visibleSeries) {
       const value = series.values[index];
-      if (validNumber(value)) cursor.append(svgElement("circle", { cx: x, cy: model.geometry.y(value), r: 3.5, fill: series.color, class: "chart-point" }));
+      if (validNumber(value)) cursor.append(svgElement("circle", { cx: x, cy: model.geometry.y(value), r: 3.5, fill: series.color,
+        class: "chart-point" + (series.outlined ? " chart-point-outlined" : "") }));
     }
     model.svg.append(cursor);
   }
@@ -1152,6 +1173,7 @@
         && !key.textContent.includes(temperatureChartMode === "high" ? "最高" : "最低"));
     });
     svg.setAttribute("aria-label", model.title + "。" + model.groups.map((group) => group.role + " " + group.name).join("、")
+      + (model.kind === "temperature" ? "。最高は赤、最低は青" + (state.referenceRecord ? "。基準Aは黒縁、比較Bは縁なしの実線" : "") : "")
       + "。左右キーで日付と数値を確認" + (model.daily ? "、プラスとマイナスで拡縮、Homeで全年。" : "。"));
     if (!model.hasData) {
       model.geometry = null;
@@ -1226,7 +1248,10 @@
           commands.push((open ? "L" : "M") + x(index).toFixed(2) + "," + y(value).toFixed(2));
           open = true;
         }
-        plot.append(svgElement("path", { d: commands.join(" "), stroke: item.color, class: "chart-line"
+        const pathData = commands.join(" ");
+        if (item.outlined) plot.append(svgElement("path", { d: pathData, class: "chart-line-outline",
+          "data-outline-for": item.group + "-" + item.measure, "aria-hidden": "true" }));
+        plot.append(svgElement("path", { d: pathData, stroke: item.color, class: "chart-line"
           + (item.group === "reference" ? " chart-reference-series" : ""), "data-series": item.group + "-" + item.measure }));
       }
     });
@@ -1302,7 +1327,7 @@
     for (const group of groups) {
       const source = group.key === "reference" ? referenceSource : payload;
       options.parameters.forEach(([key, measure, label], index) => {
-        series.push({ group: group.key, measure, label, color: group.colors[index] || group.colors[0],
+        series.push({ group: group.key, measure, label, ...chartSeriesStyle(options.kind, group, index),
           values: averageByCalendarDay(source, key).map((item) => item.value) });
       });
       group.status = series.some((item) => item.group === group.key && item.values.some(validNumber))
@@ -1343,27 +1368,35 @@
     const currentIsReference = hasReference && sameCell(state.currentRecord?.cell, state.referenceRecord.cell);
     elements.setReference.disabled = !currentReady;
     elements.setReference.hidden = currentIsReference;
-    elements.setReference.textContent = hasReference ? "Bを新しい基準に" : "この地点を基準に固定";
+    elements.setReference.textContent = hasReference ? "Bを新しい基準に" : "Aを基準に固定";
     elements.setReference.title = hasReference ? "現在の比較地点Bで、基準地点Aを置き換える" : "この地点を基準地点Aに固定する";
     elements.toggleComparison.hidden = !hasReference;
     elements.clearReference.hidden = !hasReference;
     elements.toggleComparison.setAttribute("aria-pressed", String(state.comparisonEnabled));
     elements.swapLocations.hidden = !hasReference || currentIsReference;
     elements.swapLocations.disabled = !currentReady;
-    elements.selectionState.textContent = hasReference ? "比較地点" : "選択地点";
-    elements.referenceCard.classList.toggle("is-empty", !hasReference);
+    const actions = hasReference ? elements.currentActions : elements.referenceActions;
+    if (elements.setReference.parentElement !== actions) actions.prepend(elements.setReference);
+    elements.referenceCard.parentElement.classList.toggle("has-reference", hasReference);
+    elements.referenceRole.textContent = hasReference ? "基準地点" : "選択地点";
+    elements.referenceState.textContent = hasReference ? "固定" : "未固定";
+    elements.currentCard.hidden = !hasReference;
+    elements.referenceCard.classList.toggle("is-empty", !state.currentRecord && !hasReference);
     elements.referenceCard.classList.toggle("overlay-off", hasReference && !state.comparisonEnabled);
     elements.currentCard.classList.toggle("is-empty", currentIsReference);
     const coordinates = (record) => `格子中心 ${coordinateLabel(record.cell.latitude, "N", "S")} · ${coordinateLabel(record.cell.longitude, "E", "W")}`;
-    elements.referenceLocation.textContent = hasReference ? state.referenceRecord.location.headerLabel : "まだ設定されていません";
-    elements.referenceDetail.textContent = hasReference ? coordinates(state.referenceRecord) : "比べたい地点を選び「基準に固定」";
+    const firstRecord = state.referenceRecord || state.currentRecord;
+    elements.referenceLocation.textContent = firstRecord?.location.headerLabel || "地図で地点Aを選択";
+    elements.referenceDetail.textContent = firstRecord ? coordinates(firstRecord) : "Aを基準に固定すると、比較地点Bを選べます";
     if (hasReference && !state.referenceRecord.daily) elements.referenceDetail.textContent += "｜日別データなし";
-    elements.currentLocation.textContent = currentIsReference ? "次に、地図で比べたい地点を選択" : state.currentRecord?.location.headerLabel || "地図で地点を選択";
+    elements.currentLocation.textContent = currentIsReference ? "次に、地図で比べたい地点Bを選択" : state.currentRecord?.location.headerLabel || "地図で地点Bを選択";
     elements.currentDetail.textContent = currentIsReference ? "Aの地点・データはそのまま保持します" : state.currentRecord ? coordinates(state.currentRecord) : "国と周辺地域を表示します";
     elements.currentDetail.dataset.state = "idle";
+    elements.referenceDetail.dataset.state = "idle";
     if (["loading", "error"].includes(state.dataStatus?.kind)) {
-      elements.currentDetail.textContent = state.dataStatus.message;
-      elements.currentDetail.dataset.state = state.dataStatus.kind;
+      const statusDetail = !hasReference || currentIsReference ? elements.referenceDetail : elements.currentDetail;
+      statusDetail.textContent = state.dataStatus.message;
+      statusDetail.dataset.state = state.dataStatus.kind;
     }
     elements.referenceLocation.title = elements.referenceLocation.textContent;
     elements.currentLocation.title = elements.currentLocation.textContent;
