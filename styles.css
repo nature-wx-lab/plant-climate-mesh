@@ -524,6 +524,21 @@ a { color: var(--green-dark); }
   vector-effect: non-scaling-stroke;
 }
 
+.reference-cell {
+  fill: rgba(24, 103, 91, 0.1);
+  stroke: #187a6b;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.reference-point {
+  fill: #fff;
+  stroke: #187a6b;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
 .map-controls {
   position: absolute;
   z-index: 3;
@@ -730,9 +745,11 @@ a { color: var(--green-dark); }
 
 .result-heading-copy {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   align-items: baseline;
   gap: 8px;
+  overflow: hidden;
 }
 
 .result-heading h2 {
@@ -753,11 +770,64 @@ a { color: var(--green-dark); }
 }
 
 .result-drag-hint {
-  margin-left: auto;
+  flex: 0 0 auto;
   color: #71827e;
   font-size: 0.55rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.result-header-actions {
+  min-width: 0;
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.header-action {
+  min-width: 0;
+  height: 24px;
+  padding: 2px 6px;
+  overflow: hidden;
+  border: 1px solid #bfcfca;
+  border-radius: 999px;
+  color: #31544d;
+  background: #fff;
+  font-size: 0.55rem;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.header-action:hover,
+.header-action:focus-visible {
+  border-color: var(--green);
+  outline: 2px solid rgba(24, 103, 91, 0.14);
+}
+
+.header-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.compare-toggle[aria-pressed="true"] {
+  border-color: #187a6b;
+  color: #fff;
+  background: #187a6b;
+}
+
+.compare-toggle[aria-pressed="false"] {
+  border-style: dashed;
+  color: #607772;
+  background: #f4f7f6;
+}
+
+.reference-clear {
+  padding-inline: 5px;
+  color: #6e4740;
 }
 
 .result-tabs {
@@ -968,17 +1038,43 @@ a { color: var(--green-dark); }
 
 .chart-card figcaption {
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   color: #3f5d57;
   font-size: 0.72rem;
   font-weight: 800;
 }
 
 .temperature-chart figcaption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
+
+.chart-caption-tools,
+.comparison-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.chart-caption-tools { gap: 8px; }
+
+.comparison-key {
+  color: #526d67;
+  font-size: 0.55rem;
+  font-weight: 700;
+}
+
+.comparison-key i {
+  width: 13px;
+  height: 0;
+  display: inline-block;
+  border-top: 2px solid #345f58;
+}
+
+.comparison-key .key-reference { border-top-style: dashed; }
 
 .temperature-legend {
   display: inline-flex;
@@ -1019,11 +1115,13 @@ a { color: var(--green-dark); }
 .chart-gridline-emphasis { stroke: #789690; stroke-width: 2; }
 .chart-axis-label-emphasis { fill: #294e47; font-weight: 900; }
 .chart-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart-reference-series { opacity: 0.72; stroke-dasharray: 6 4; }
 .daily-temperature-line { stroke-width: 2; }
 .daily-solar-line { stroke-width: 1.8; }
 .daily-humidity-line { stroke-width: 1.8; }
 .chart-point { stroke: #fff; stroke-width: 1.5; }
 .chart-bar { opacity: 0.82; }
+.chart-reference-bar { fill: none; stroke-width: 1.5; stroke-dasharray: 4 2; opacity: 0.8; }
 .chart-empty { fill: #71827e; font-size: 12px; font-family: inherit; text-anchor: middle; }
 
 .chart-note {
@@ -1065,6 +1163,13 @@ th:first-child,
 td:first-child { text-align: left; }
 th { color: #49625d; background: #f3f7f5; }
 th small { color: #71827e; font-size: 0.5rem; font-weight: 600; }
+
+.monthly-delta {
+  margin-left: 2px;
+  color: #187a6b;
+  font-size: 0.48rem;
+  font-weight: 800;
+}
 
 footer {
   width: min(1440px, 100%);
@@ -1185,11 +1290,15 @@ footer p + p { margin-top: 5px; }
 
   .result-panel { width: calc(100% - 24px); max-height: calc(100% - 24px); }
 
-  .result-heading { min-height: 32px; padding: 2px 4px 2px 6px; gap: 5px; }
-  .result-heading-copy { gap: 5px; }
+  .result-heading { min-height: 32px; padding: 2px 4px 2px 6px; gap: 3px; }
+  .result-heading-copy { gap: 4px; }
   .result-heading h2 { font-size: 0.74rem; }
   .eyebrow { display: none; }
-  .result-drag-hint { font-size: 0.5rem; }
+  .result-drag-hint { display: none; }
+  .result-header-actions { gap: 2px; }
+  .header-action { height: 24px; padding-inline: 4px; font-size: 0.5rem; }
+  .header-action .wide-label { display: none; }
+  .compare-toggle { max-width: 72px; }
   .drawer-close { width: 26px; height: 26px; }
   .result-tabs { padding: 3px 4px; gap: 2px; }
   .result-tabs button { min-height: 23px; padding: 2px; font-size: 0.58rem; }
@@ -1217,6 +1326,9 @@ footer p + p { margin-top: 5px; }
   .chart-card { padding: 4px 5px 2px; }
   .chart-card figcaption { font-size: 0.6rem; }
   .chart-card figcaption small { font-size: 0.52rem; }
+  .chart-caption-tools { gap: 4px; }
+  .comparison-key { font-size: 0.46rem; gap: 2px; }
+  .comparison-key i { width: 9px; }
   .temperature-legend { font-size: 0.5rem; }
   .monthly-page h3 { font-size: 0.58rem; }
   table { font-size: 0.52rem; }

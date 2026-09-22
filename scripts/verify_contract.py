@@ -90,8 +90,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260922-paneltabs1\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260922-paneltabs1"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260922-climatecompare1\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260922-climatecompare1"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -126,6 +126,8 @@ def main() -> None:
     require(index.count("data-result-resize") == 4, "four floating-panel resize handles are required")
     require('role="tablist"' in index and index.count("data-result-tab=") == 6, "six result-panel tabs are required")
     require(index.count("data-result-page=") == 6, "six result-panel pages are required")
+    for control_id in ("setReference", "toggleComparison", "referenceShortLabel", "clearReference"):
+        require(f'id="{control_id}"' in index, f"comparison control missing: {control_id}")
     for result_page in ("overview", "temperature", "precipitation", "solar", "humidity", "monthly"):
         require(f'data-result-tab="{result_page}"' in index, f"result tab missing: {result_page}")
         require(f'data-result-page="{result_page}"' in index, f"result page missing: {result_page}")
@@ -142,7 +144,7 @@ def main() -> None:
     require('id="climateToggle"' in index and 'aria-pressed="false"' in index, "climate overlay toggle missing")
     require('data-src="./data/koppen-geiger-1991-2020.png"' in index, "climate overlay asset missing")
     require("ケッペン＝ガイガー気候区分" in index and "1991–2020年・0.1°版" in index, "climate overlay disclosure missing")
-    require("国・地域：—｜首都：—" in index, "country and capital placeholder missing")
+    require("国・地域：—｜周辺：—" in index, "country and nearby-place placeholder missing")
     require("1:50m Admin 0 Countries / 1:10m Populated Places" in index, "country/capital source disclosure missing")
 
     require("https://power.larc.nasa.gov/api/temporal/climatology/point" in app, "POWER endpoint mismatch")
@@ -158,6 +160,7 @@ def main() -> None:
     require('credentials: "omit"' in app, "cross-origin credentials must be omitted")
     require('referrerPolicy: "no-referrer"' in app, "POWER request referrer policy missing")
     require("AbortController" in app and "requestSerial" in app, "stale-response protection missing")
+    require("localStorage" not in app and "sessionStorage" not in app, "comparison state must stay memory-only")
     require("innerHTML" not in app and "outerHTML" not in app, "unsafe HTML insertion detected")
     require("Math.atan(Math.sinh(mercator))" in app, "inverse Web Mercator formula missing")
     require("Math.log((1 + sine) / (1 - sine))" in app, "forward Web Mercator formula missing")
@@ -188,7 +191,8 @@ def main() -> None:
     require("chart-gridline-emphasis" in styles and "chart-axis-label-emphasis" in styles, "temperature axis emphasis style missing")
     require("./data/world-50m.geojson" in app, "Natural Earth 1:50m map path missing")
     require("function geometryContainsPoint(" in app and "function countryAt(" in app, "country lookup missing")
-    require("country.properties.capital" in app and "国・地域：海上｜首都：—" in app, "country/capital rendering missing")
+    require("function nearestPlace(" in app and "function describeLocation(" in app, "nearby-place location rendering missing")
+    require("country.properties.capital" in app and "周辺：${location.areaLabel}" in app, "country/area rendering missing")
     require("function toggleClimateLayer(" in app and "KOPPEN_CLASSES" in app, "climate overlay interaction missing")
     require("const WEATHER_LAYERS =" in app and "function updateWeatherLayer(" in app, "weather map-layer controller missing")
     require('`./data/climate-layers/${state.weatherLayer}-${state.weatherPeriod}.png`' in app, "weather layer asset path missing")
@@ -196,12 +200,17 @@ def main() -> None:
     require("function beginResultPanelDrag(" in app and "function moveResultPanelDrag(" in app, "floating-panel drag interaction missing")
     require("function beginResultPanelResize(" in app and "function moveResultPanelResize(" in app, "floating-panel resize interaction missing")
     require("function setResultPanelPage(" in app and "function moveResultPanelTab(" in app, "result-panel tab interaction missing")
+    require("function setReferenceFromCurrent(" in app, "reference-location action missing")
+    require("function toggleComparison(" in app and "function clearReference(" in app, "comparison toggle or clear action missing")
+    require("function activeReferenceRecord(" in app and "chart-reference-series" in app, "comparison overlay rendering missing")
+    require("referenceRecord" in app and "comparisonEnabled" in app, "comparison state missing")
     require("resultPanelScale" in app and "0.65" in app and "1.45" in app, "floating-panel scale bounds missing")
     require(".climate-raster" in styles and ".climate-legend" in styles and ".country-border" in styles, "climate overlay style missing")
     require(".layer-panel" in styles and ".weather-layer-buttons" in styles and ".weather-legend" in styles, "left layer-panel styles missing")
     require(".weather-raster" in styles and "image-rendering: pixelated" in styles, "native-grid raster rendering missing")
     require("aspect-ratio: 16 / 9" in styles and ".panel-resize-handle" in styles, "16:9 floating-panel styles missing")
     require(".result-tabs" in styles and ".result-pages" in styles and ".result-page[hidden]" in styles, "tabbed panel styles missing")
+    require(".reference-cell" in styles and ".chart-reference-series" in styles, "comparison marker or chart style missing")
 
     require(".table-scroll" in styles and "overflow: auto" in styles, "narrow-screen table overflow guard missing")
     require("@media (max-width: 760px)" in styles, "mobile layout missing")
@@ -231,6 +240,23 @@ def main() -> None:
             require(-180.000001 <= longitude <= 180.000001 and -90 <= latitude <= 90, "world coordinate out of range")
     require(coordinate_count > 50_000, "world map geometry is unexpectedly sparse")
     require(capital_count >= 200, "capital coverage is unexpectedly sparse")
+    places_source = collection.get("placesSource", {})
+    require(places_source.get("dataset") == "Natural Earth 1:10m Populated Places Simple", "place dataset mismatch")
+    require(places_source.get("version") == "5.1.2", "place dataset version mismatch")
+    require(str(places_source.get("url", "")).startswith("https://naciscdn.org/naturalearth/"), "place dataset URL mismatch")
+    places = collection.get("places")
+    require(isinstance(places, list) and 2_500 <= len(places) <= 3_500, "unexpected nearby-place count")
+    country_codes = {feature["properties"]["code"] for feature in features}
+    for place in places:
+        require(set(place) == {"n", "c", "a", "x", "y", "q"}, "unexpected nearby-place keys")
+        require(isinstance(place["n"], str) and place["n"], "nearby-place name missing")
+        require(place["c"] in country_codes, "nearby-place country code mismatch")
+        require(isinstance(place["a"], str), "nearby-place admin name invalid")
+        require(isinstance(place["x"], (int, float)) and -180 <= place["x"] <= 180, "nearby-place longitude invalid")
+        require(isinstance(place["y"], (int, float)) and -90 <= place["y"] <= 90, "nearby-place latitude invalid")
+        require(place["q"] in {"c", "a", "p"}, "nearby-place category invalid")
+    require(any(place["n"] == "Tokyo" and place["c"] == "JPN" for place in places), "Tokyo reference place missing")
+    require(any(place["n"] == "Osh" and place["c"] == "KGZ" for place in places), "Osh comparison place missing")
 
     overlay = (ROOT / "data/koppen-geiger-1991-2020.png").read_bytes()
     require(overlay.startswith(b"\x89PNG\r\n\x1a\n"), "climate overlay is not PNG")
@@ -279,6 +305,7 @@ def main() -> None:
         "deploy_files": len(DEPLOY_FILES),
         "world_features": len(features),
         "world_coordinates": coordinate_count,
+        "nearby_places": len(places),
     }, ensure_ascii=False))
 
 

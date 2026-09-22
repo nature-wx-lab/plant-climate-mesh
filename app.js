@@ -78,17 +78,27 @@
     requestStatus: document.getElementById("requestStatus"),
     locationSummary: document.getElementById("locationSummary"),
     annualTemperature: document.getElementById("annualTemperature"),
+    annualTemperatureNote: document.getElementById("annualTemperatureNote"),
     annualPrecipitation: document.getElementById("annualPrecipitation"),
     annualPrecipitationNote: document.getElementById("annualPrecipitationNote"),
     annualSolar: document.getElementById("annualSolar"),
+    annualSolarNote: document.getElementById("annualSolarNote"),
     annualHumidity: document.getElementById("annualHumidity"),
+    annualHumidityNote: document.getElementById("annualHumidityNote"),
     monthlyBody: document.getElementById("monthlyBody"),
+    monthlyHeading: document.getElementById("monthlyHeading"),
     temperatureChart: document.getElementById("temperatureChart"),
     precipitationChart: document.getElementById("precipitationChart"),
     solarChart: document.getElementById("solarChart"),
     humidityChart: document.getElementById("humidityChart"),
     resultPanel: document.getElementById("resultPanel"),
     resultHeading: document.querySelector(".result-heading"),
+    resultTitle: document.getElementById("resultHeading"),
+    setReference: document.getElementById("setReference"),
+    toggleComparison: document.getElementById("toggleComparison"),
+    referenceShortLabel: document.getElementById("referenceShortLabel"),
+    clearReference: document.getElementById("clearReference"),
+    comparisonKeys: [...document.querySelectorAll("[data-comparison-key]")],
     resultTabs: [...document.querySelectorAll("[data-result-tab]")],
     resultPages: [...document.querySelectorAll("[data-result-page]")],
     openResults: document.getElementById("openResults"),
@@ -124,6 +134,10 @@
     selectedCell: null,
     drag: null,
     countries: [],
+    places: [],
+    currentRecord: null,
+    referenceRecord: null,
+    comparisonEnabled: true,
     climateVisible: false,
     weatherLayer: "temperature",
     weatherPeriod: "annual",
@@ -180,7 +194,7 @@
     elements.map.setAttribute("viewBox", `${state.centerX - size / 2} ${state.centerY - size / 2} ${size} ${size}`);
     elements.zoomOut.disabled = state.zoom <= 1;
     elements.zoomIn.disabled = state.zoom >= 16;
-    if (state.selectedCell) drawSelection(state.selectedCell);
+    if (state.selectedCell) drawSelections();
   }
 
   function openResultPanel() {
@@ -498,6 +512,7 @@
         throw new Error("地図データ形式が不正です");
       }
       state.countries = collection.features;
+      state.places = Array.isArray(collection.places) ? collection.places : [];
       const fragment = document.createDocumentFragment();
       const borderFragment = document.createDocumentFragment();
       for (const feature of collection.features) {
@@ -509,6 +524,9 @@
       }
       elements.land.replaceChildren(fragment);
       elements.border.replaceChildren(borderFragment);
+      if (state.referenceRecord?.cell) {
+        state.referenceRecord.location = describeLocation(state.referenceRecord.cell);
+      }
       if (state.selectedCell) updateLocation(state.selectedCell);
     } catch (error) {
       setStatus("境界線を読み込めませんでした。格子選択は利用できます", "error");
@@ -532,7 +550,7 @@
     };
   }
 
-  function drawSelection(cell) {
+  function cellCopies(cell, cellClass, pointClass) {
     const [left, top] = project(cell.lonMin, cell.latMax);
     const [right, bottom] = project(cell.lonMax, cell.latMin);
     const [centerX, centerY] = project(cell.longitude, cell.latitude);
@@ -543,14 +561,31 @@
         y: top,
         width: Math.max(0.2, right - left),
         height: Math.max(0.2, bottom - top),
-        class: "selection-cell",
+        class: cellClass,
       }));
       copies.push(svgElement("circle", {
         cx: centerX + offset,
         cy: centerY,
         r: 2.2 / state.zoom,
-        class: "selection-point",
+        class: pointClass,
       }));
+    }
+    return copies;
+  }
+
+  function sameCell(first, second) {
+    return Boolean(first && second
+      && first.latitude === second.latitude
+      && first.longitude === second.longitude);
+  }
+
+  function drawSelections() {
+    const copies = [];
+    if (state.referenceRecord?.cell) {
+      copies.push(...cellCopies(state.referenceRecord.cell, "reference-cell", "reference-point"));
+    }
+    if (state.selectedCell) {
+      copies.push(...cellCopies(state.selectedCell, "selection-cell", "selection-point"));
     }
     elements.selection.replaceChildren(...copies);
   }
@@ -605,7 +640,95 @@
     return state.countries.find((feature) => geometryContainsPoint(feature.geometry, longitude, latitude)) || null;
   }
 
+  function radians(value) {
+    return (value * Math.PI) / 180;
+  }
+
+  function distanceKilometers(firstLatitude, firstLongitude, secondLatitude, secondLongitude) {
+    const latitudeDelta = radians(secondLatitude - firstLatitude);
+    const longitudeDelta = radians(secondLongitude - firstLongitude);
+    const first = radians(firstLatitude);
+    const second = radians(secondLatitude);
+    const haversine = Math.sin(latitudeDelta / 2) ** 2
+      + Math.cos(first) * Math.cos(second) * Math.sin(longitudeDelta / 2) ** 2;
+    const safe = clamp(haversine, 0, 1);
+    return 6371.0088 * 2 * Math.atan2(Math.sqrt(safe), Math.sqrt(1 - safe));
+  }
+
+  function directionFromPlace(place, cell) {
+    const first = radians(place.y);
+    const second = radians(cell.latitude);
+    const longitudeDelta = radians(cell.longitude - place.x);
+    const bearing = (Math.atan2(
+      Math.sin(longitudeDelta) * Math.cos(second),
+      Math.cos(first) * Math.sin(second) - Math.sin(first) * Math.cos(second) * Math.cos(longitudeDelta),
+    ) * 180 / Math.PI + 360) % 360;
+    return ["北", "北東", "東", "南東", "南", "南西", "西", "北西"][Math.round(bearing / 45) % 8];
+  }
+
+  function roundedDistance(distance) {
+    const step = distance < 100 ? 5 : distance < 500 ? 10 : 50;
+    return Math.max(step, Math.round(distance / step) * step);
+  }
+
+  function nearestPlace(cell, country) {
+    if (!country || !state.places.length) return null;
+    let nearest = null;
+    let nearestDistance = Infinity;
+    for (const place of state.places) {
+      if (place.c !== country.properties.code) continue;
+      const distance = distanceKilometers(cell.latitude, cell.longitude, place.y, place.x);
+      if (distance < nearestDistance) {
+        nearest = place;
+        nearestDistance = distance;
+      }
+    }
+    return nearest ? { place: nearest, distance: nearestDistance } : null;
+  }
+
+  function describeLocation(cell) {
+    const country = countryAt(cell.longitude, cell.latitude);
+    if (!country) {
+      const coordinates = `${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
+      return {
+        countryName: "海上",
+        areaLabel: coordinates,
+        placeName: "海上",
+        headerLabel: `海上｜${coordinates}`,
+      };
+    }
+    const nearest = nearestPlace(cell, country);
+    if (!nearest) {
+      return {
+        countryName: country.properties.name,
+        areaLabel: country.properties.capital ? `${country.properties.capital}方面` : "地点情報なし",
+        placeName: country.properties.capital || country.properties.name,
+        headerLabel: `${country.properties.name}｜${country.properties.capital || "地点情報なし"}`,
+      };
+    }
+    const localizedName = nearest.place.q === "c" && country.properties.capital
+      ? country.properties.capital
+      : nearest.place.n;
+    const areaLabel = nearest.distance <= 45
+      ? `${localizedName}周辺`
+      : `${localizedName}の${directionFromPlace(nearest.place, cell)} 約${roundedDistance(nearest.distance)}km`;
+    return {
+      countryName: country.properties.name,
+      areaLabel,
+      placeName: localizedName,
+      headerLabel: `${country.properties.name}｜${areaLabel}`,
+    };
+  }
+
   function updateLocation(cell) {
+    const location = describeLocation(cell);
+    const previous = state.currentRecord;
+    state.currentRecord = {
+      cell,
+      location,
+      climate: sameCell(previous?.cell, cell) ? previous.climate : null,
+      daily: sameCell(previous?.cell, cell) ? previous.daily : null,
+    };
     const strong = document.createElement("strong");
     strong.textContent = "気象格子：約0.5°×0.625°（橙枠）";
     const span = document.createElement("span");
@@ -613,13 +736,13 @@
     const country = countryAt(cell.longitude, cell.latitude);
     const place = document.createElement("span");
     place.className = "place-summary";
-    place.textContent = country
-      ? `国・地域：${country.properties.name}｜首都：${country.properties.capital || "—"}`
-      : "国・地域：海上｜首都：—";
+    place.textContent = `国・地域：${location.countryName}｜周辺：${location.areaLabel}`;
     const note = document.createElement("small");
     note.textContent = "気温・降水・相対湿度は橙枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
     elements.locationSummary.replaceChildren(strong, span, place, note);
-    elements.selectionState.textContent = "気象格子選択済み";
+    elements.resultTitle.textContent = location.headerLabel;
+    elements.resultTitle.title = location.headerLabel;
+    updateComparisonControls();
   }
 
   function powerUrl(cell) {
@@ -661,14 +784,26 @@
     element.textContent = validNumber(value) ? `${numberText(value, digits)} ${unit}` : "データなし";
   }
 
+  function signedNumberText(value, digits = 1) {
+    if (!validNumber(value)) return "—";
+    const rounded = Number(value.toFixed(digits));
+    return `${rounded > 0 ? "+" : ""}${rounded.toFixed(digits)}`;
+  }
+
+  function setMetricComparison(noteElement, current, reference, unit, digits, defaultText) {
+    noteElement.textContent = validNumber(reference) && validNumber(current)
+      ? `基準 ${numberText(reference, digits)}｜差 ${signedNumberText(current - reference, digits)} ${unit}`
+      : defaultText;
+  }
+
   function dataSeries(payload, key) {
     const series = payload?.properties?.parameter?.[key];
     return series && typeof series === "object" ? series : {};
   }
 
-  function renderChart(svg, values, color, type) {
+  function renderChart(svg, values, referenceValues, color, type) {
     svg.replaceChildren();
-    const validValues = values.filter(validNumber);
+    const validValues = [...values, ...(referenceValues || [])].filter(validNumber);
     if (!validValues.length) {
       const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
       empty.textContent = "データを取得しています";
@@ -712,11 +847,26 @@
     });
 
     if (type === "bar") {
-      const barWidth = Math.max(5, width / 17);
+      const comparing = Array.isArray(referenceValues) && referenceValues.some(validNumber);
+      const barWidth = Math.max(5, width / (comparing ? 24 : 17));
+      if (comparing) {
+        referenceValues.forEach((value, index) => {
+          if (!validNumber(value)) return;
+          svg.append(svgElement("rect", {
+            x: x(index) + 1,
+            y: y(value),
+            width: barWidth,
+            height: Math.max(1, y(0) - y(value)),
+            rx: 1,
+            stroke: color,
+            class: "chart-reference-bar",
+          }));
+        });
+      }
       values.forEach((value, index) => {
         if (!validNumber(value)) return;
         svg.append(svgElement("rect", {
-          x: x(index) - barWidth / 2,
+          x: x(index) - (comparing ? barWidth + 1 : barWidth / 2),
           y: y(value),
           width: barWidth,
           height: Math.max(1, y(0) - y(value)),
@@ -726,6 +876,19 @@
         }));
       });
       return;
+    }
+
+    if (Array.isArray(referenceValues) && referenceValues.some(validNumber)) {
+      const referenceCommands = [];
+      referenceValues.forEach((value, index) => {
+        if (!validNumber(value)) return;
+        referenceCommands.push(`${referenceCommands.length ? "L" : "M"}${x(index).toFixed(2)},${y(value).toFixed(2)}`);
+      });
+      svg.append(svgElement("path", {
+        d: referenceCommands.join(" "),
+        stroke: color,
+        class: "chart-line chart-reference-series",
+      }));
     }
 
     const commands = [];
@@ -791,7 +954,7 @@
     return sums.map((sum, index) => (counts[index] ? sum / counts[index] : FILL_VALUE));
   }
 
-  function renderDailyTemperatureChart(payload, emptyMessage = "日別最高・最低を取得できませんでした") {
+  function renderDailyTemperatureChart(payload, referencePayload = null, emptyMessage = "日別最高・最低を取得できませんでした") {
     const svg = elements.temperatureChart;
     const chartHeight = 156;
     svg.replaceChildren();
@@ -804,7 +967,11 @@
 
     const maximumSeries = averageByCalendarDay(payload, "T2M_MAX");
     const minimumSeries = averageByCalendarDay(payload, "T2M_MIN");
-    const values = [...maximumSeries, ...minimumSeries].map((item) => item.value).filter(validNumber);
+    const referenceMaximumSeries = referencePayload ? averageByCalendarDay(referencePayload, "T2M_MAX") : [];
+    const referenceMinimumSeries = referencePayload ? averageByCalendarDay(referencePayload, "T2M_MIN") : [];
+    const values = [...maximumSeries, ...minimumSeries, ...referenceMaximumSeries, ...referenceMinimumSeries]
+      .map((item) => item.value)
+      .filter(validNumber);
     if (!values.length) {
       const empty = svgElement("text", { x: 180, y: chartHeight / 2, class: "chart-empty" });
       empty.textContent = "データを取得しています";
@@ -849,7 +1016,8 @@
       svg.append(label);
     });
 
-    const appendSeries = (series, color) => {
+    const appendSeries = (series, color, reference = false) => {
+      if (!series.some((item) => validNumber(item.value))) return;
       const commands = [];
       let pathOpen = false;
       series.forEach((item, index) => {
@@ -860,14 +1028,20 @@
         commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
         pathOpen = true;
       });
-      svg.append(svgElement("path", { d: commands.join(" "), stroke: color, class: "chart-line daily-temperature-line" }));
+      svg.append(svgElement("path", {
+        d: commands.join(" "),
+        stroke: color,
+        class: `chart-line daily-temperature-line${reference ? " chart-reference-series" : ""}`,
+      }));
     };
 
+    appendSeries(referenceMaximumSeries, "#d4513e", true);
+    appendSeries(referenceMinimumSeries, "#287bb5", true);
     appendSeries(maximumSeries, "#d4513e");
     appendSeries(minimumSeries, "#287bb5");
   }
 
-  function renderDailySolarChart(payload, emptyMessage = "日別日射量を取得できませんでした") {
+  function renderDailySolarChart(payload, referencePayload = null, emptyMessage = "日別日射量を取得できませんでした") {
     const svg = elements.solarChart;
     svg.replaceChildren();
     if (!payload) {
@@ -878,7 +1052,8 @@
     }
 
     const series = averageByCalendarDay(payload, "ALLSKY_SFC_SW_DWN");
-    const values = series.map((item) => item.value).filter(validNumber);
+    const referenceSeries = referencePayload ? averageByCalendarDay(referencePayload, "ALLSKY_SFC_SW_DWN") : [];
+    const values = [...series, ...referenceSeries].map((item) => item.value).filter(validNumber);
     if (!values.length) {
       const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
       empty.textContent = "日別日射量を取得できませんでした";
@@ -913,20 +1088,29 @@
       svg.append(label);
     });
 
-    const commands = [];
-    let pathOpen = false;
-    series.forEach((item, index) => {
-      if (!validNumber(item.value)) {
-        pathOpen = false;
-        return;
-      }
-      commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
-      pathOpen = true;
-    });
-    svg.append(svgElement("path", { d: commands.join(" "), stroke: "#d99516", class: "chart-line daily-solar-line" }));
+    const appendSeries = (items, reference = false) => {
+      if (!items.some((item) => validNumber(item.value))) return;
+      const commands = [];
+      let pathOpen = false;
+      items.forEach((item, index) => {
+        if (!validNumber(item.value)) {
+          pathOpen = false;
+          return;
+        }
+        commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
+        pathOpen = true;
+      });
+      svg.append(svgElement("path", {
+        d: commands.join(" "),
+        stroke: "#d99516",
+        class: `chart-line daily-solar-line${reference ? " chart-reference-series" : ""}`,
+      }));
+    };
+    appendSeries(referenceSeries, true);
+    appendSeries(series);
   }
 
-  function renderDailyHumidityChart(payload, emptyMessage = "日別相対湿度を取得できませんでした") {
+  function renderDailyHumidityChart(payload, referencePayload = null, emptyMessage = "日別相対湿度を取得できませんでした") {
     const svg = elements.humidityChart;
     svg.replaceChildren();
     if (!payload) {
@@ -937,7 +1121,8 @@
     }
 
     const series = averageByCalendarDay(payload, "RH2M");
-    const values = series.map((item) => item.value).filter(validNumber);
+    const referenceSeries = referencePayload ? averageByCalendarDay(referencePayload, "RH2M") : [];
+    const values = [...series, ...referenceSeries].map((item) => item.value).filter(validNumber);
     if (!values.length) {
       const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
       empty.textContent = "日別相対湿度を取得できませんでした";
@@ -974,48 +1159,122 @@
       svg.append(label);
     });
 
-    const commands = [];
-    let pathOpen = false;
-    series.forEach((item, index) => {
-      if (!validNumber(item.value)) {
-        pathOpen = false;
-        return;
-      }
-      commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
-      pathOpen = true;
-    });
-    svg.append(svgElement("path", { d: commands.join(" "), stroke: "#398d7c", class: "chart-line daily-humidity-line" }));
+    const appendSeries = (items, reference = false) => {
+      if (!items.some((item) => validNumber(item.value))) return;
+      const commands = [];
+      let pathOpen = false;
+      items.forEach((item, index) => {
+        if (!validNumber(item.value)) {
+          pathOpen = false;
+          return;
+        }
+        commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
+        pathOpen = true;
+      });
+      svg.append(svgElement("path", {
+        d: commands.join(" "),
+        stroke: "#398d7c",
+        class: `chart-line daily-humidity-line${reference ? " chart-reference-series" : ""}`,
+      }));
+    };
+    appendSeries(referenceSeries, true);
+    appendSeries(series);
   }
 
-  function renderCharts(climatePayload, dailyPayload) {
-    renderDailyTemperatureChart(dailyPayload);
-    renderChart(elements.precipitationChart, monthlyPrecipitationTotals(climatePayload), "#287bb5", "bar");
-    renderDailySolarChart(dailyPayload);
-    renderDailyHumidityChart(dailyPayload);
+  function activeReferenceRecord() {
+    if (!state.comparisonEnabled || !state.referenceRecord || !state.currentRecord) return null;
+    return sameCell(state.referenceRecord.cell, state.currentRecord.cell) ? null : state.referenceRecord;
   }
 
-  function renderMonthly(climatePayload, dailyPayload) {
+  function updateComparisonControls() {
+    const currentReady = Boolean(state.currentRecord?.climate);
+    const hasReference = Boolean(state.referenceRecord?.climate);
+    const currentIsReference = hasReference && sameCell(state.currentRecord?.cell, state.referenceRecord.cell);
+    elements.setReference.disabled = !currentReady;
+    elements.setReference.hidden = currentIsReference;
+    elements.setReference.title = hasReference ? "現在の比較先を新しい基準地点に変更" : "現在の地点を比較基準に固定";
+    elements.toggleComparison.hidden = !hasReference;
+    elements.clearReference.hidden = !hasReference;
+    elements.toggleComparison.setAttribute("aria-pressed", String(state.comparisonEnabled));
+    elements.selectionState.textContent = currentIsReference ? "基準地点" : "比較先";
+    if (hasReference) {
+      const label = state.referenceRecord.location.placeName;
+      elements.referenceShortLabel.textContent = label;
+      const mode = state.comparisonEnabled ? "重ね表示中" : "重ね表示なし";
+      elements.toggleComparison.title = `基準：${state.referenceRecord.location.headerLabel}｜${mode}`;
+      elements.toggleComparison.setAttribute("aria-label", `${elements.toggleComparison.title}。クリックして切り替え`);
+      elements.clearReference.title = `基準：${state.referenceRecord.location.headerLabel}を解除`;
+    }
+    const comparing = Boolean(activeReferenceRecord());
+    elements.comparisonKeys.forEach((element) => { element.hidden = !comparing; });
+    drawSelections();
+  }
+
+  function renderCharts(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload) {
+    renderDailyTemperatureChart(dailyPayload, referenceDailyPayload);
+    renderChart(
+      elements.precipitationChart,
+      monthlyPrecipitationTotals(climatePayload),
+      referenceClimatePayload ? monthlyPrecipitationTotals(referenceClimatePayload) : null,
+      "#287bb5",
+      "bar",
+    );
+    renderDailySolarChart(dailyPayload, referenceDailyPayload);
+    renderDailyHumidityChart(dailyPayload, referenceDailyPayload);
+  }
+
+  function renderMonthly(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload) {
     const averageHigh = dailyPayload ? averageDailyValuesByMonth(dailyPayload, "T2M_MAX") : Array(12).fill(FILL_VALUE);
     const averageLow = dailyPayload ? averageDailyValuesByMonth(dailyPayload, "T2M_MIN") : Array(12).fill(FILL_VALUE);
     const precipitation = monthlyPrecipitationTotals(climatePayload);
     const solar = dataSeries(climatePayload, "ALLSKY_SFC_SW_DWN");
     const humidity = dataSeries(climatePayload, "RH2M");
+    const referenceHigh = referenceDailyPayload ? averageDailyValuesByMonth(referenceDailyPayload, "T2M_MAX") : Array(12).fill(FILL_VALUE);
+    const referenceLow = referenceDailyPayload ? averageDailyValuesByMonth(referenceDailyPayload, "T2M_MIN") : Array(12).fill(FILL_VALUE);
+    const referencePrecipitation = referenceClimatePayload ? monthlyPrecipitationTotals(referenceClimatePayload) : Array(12).fill(FILL_VALUE);
+    const referenceSolar = referenceClimatePayload ? dataSeries(referenceClimatePayload, "ALLSKY_SFC_SW_DWN") : {};
+    const referenceHumidity = referenceClimatePayload ? dataSeries(referenceClimatePayload, "RH2M") : {};
+    const comparing = Boolean(referenceClimatePayload);
     const fragment = document.createDocumentFragment();
+    elements.monthlyHeading.textContent = comparing
+      ? "月別の数値（比較先｜括弧内は基準との差）"
+      : "月別の数値表（平均日最高・平均日最低）";
 
     MONTHS.forEach((month, index) => {
       const row = document.createElement("tr");
       const values = [
         MONTH_LABELS[index],
-        numberText(averageHigh[index], 1),
-        numberText(averageLow[index], 1),
-        numberText(precipitation[index], 1),
-        numberText(solar[month], 2),
-        numberText(humidity[month], 1),
+        averageHigh[index],
+        averageLow[index],
+        precipitation[index],
+        solar[month],
+        humidity[month],
       ];
+      const referenceValues = [
+        null,
+        referenceHigh[index],
+        referenceLow[index],
+        referencePrecipitation[index],
+        referenceSolar[month],
+        referenceHumidity[month],
+      ];
+      const digits = [0, 1, 1, 1, 2, 1];
       values.forEach((value, cellIndex) => {
         const cell = document.createElement(cellIndex === 0 ? "th" : "td");
         if (cellIndex === 0) cell.scope = "row";
-        cell.textContent = value;
+        if (cellIndex === 0) {
+          cell.textContent = value;
+        } else {
+          cell.textContent = numberText(value, digits[cellIndex]);
+          const referenceValue = referenceValues[cellIndex];
+          if (comparing && validNumber(value) && validNumber(referenceValue)) {
+            const delta = document.createElement("small");
+            delta.className = "monthly-delta";
+            delta.textContent = `(${signedNumberText(value - referenceValue, digits[cellIndex])})`;
+            cell.append(delta);
+            cell.title = `比較先 ${numberText(value, digits[cellIndex])}｜基準 ${numberText(referenceValue, digits[cellIndex])}｜差 ${signedNumberText(value - referenceValue, digits[cellIndex])}`;
+          }
+        }
         row.append(cell);
       });
       fragment.append(row);
@@ -1024,30 +1283,83 @@
     elements.monthlyBody.replaceChildren(fragment);
   }
 
-  function renderPayload(climatePayload, dailyPayload) {
+  function renderPayload(climatePayload, dailyPayload, referenceClimatePayload = null, referenceDailyPayload = null) {
     const temperature = dataSeries(climatePayload, "T2M").ANN;
     const precipitation = dataSeries(climatePayload, "PRECTOTCORR").ANN;
     const solar = dataSeries(climatePayload, "ALLSKY_SFC_SW_DWN").ANN;
     const humidity = dataSeries(climatePayload, "RH2M").ANN;
+    const referenceTemperature = dataSeries(referenceClimatePayload, "T2M").ANN;
+    const referencePrecipitationDaily = dataSeries(referenceClimatePayload, "PRECTOTCORR").ANN;
+    const referenceSolar = dataSeries(referenceClimatePayload, "ALLSKY_SFC_SW_DWN").ANN;
+    const referenceHumidity = dataSeries(referenceClimatePayload, "RH2M").ANN;
+    const annualPrecipitation = validNumber(precipitation) ? precipitation * AVERAGE_DAYS_PER_YEAR : FILL_VALUE;
+    const referenceAnnualPrecipitation = validNumber(referencePrecipitationDaily)
+      ? referencePrecipitationDaily * AVERAGE_DAYS_PER_YEAR
+      : FILL_VALUE;
 
     setMetric(elements.annualTemperature, temperature, "℃");
-    setMetric(elements.annualPrecipitation, validNumber(precipitation) ? precipitation * AVERAGE_DAYS_PER_YEAR : FILL_VALUE, "mm/年", 0);
-    elements.annualPrecipitationNote.textContent = "1991–2020年の年平均";
+    setMetricComparison(elements.annualTemperatureNote, temperature, referenceTemperature, "℃", 1, "地上2m");
+    setMetric(elements.annualPrecipitation, annualPrecipitation, "mm/年", 0);
+    setMetricComparison(elements.annualPrecipitationNote, annualPrecipitation, referenceAnnualPrecipitation, "mm/年", 0, "1991–2020年の年平均");
     setMetric(elements.annualSolar, solar, "MJ/㎡/日", 2);
+    setMetricComparison(elements.annualSolarNote, solar, referenceSolar, "MJ/㎡/日", 2, "全天日射量・日平均");
     setMetric(elements.annualHumidity, humidity, "%");
-    renderCharts(climatePayload, dailyPayload);
-    renderMonthly(climatePayload, dailyPayload);
+    setMetricComparison(elements.annualHumidityNote, humidity, referenceHumidity, "%", 1, "地上2m");
+    renderCharts(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload);
+    renderMonthly(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload);
+  }
+
+  function renderCurrentPayload() {
+    if (!state.currentRecord?.climate) return;
+    updateComparisonControls();
+    const reference = activeReferenceRecord();
+    renderPayload(
+      state.currentRecord.climate,
+      state.currentRecord.daily,
+      reference?.climate || null,
+      reference?.daily || null,
+    );
+  }
+
+  function setReferenceFromCurrent() {
+    if (!state.currentRecord?.climate) return;
+    state.referenceRecord = {
+      cell: { ...state.currentRecord.cell },
+      location: { ...state.currentRecord.location },
+      climate: state.currentRecord.climate,
+      daily: state.currentRecord.daily,
+    };
+    state.comparisonEnabled = true;
+    renderCurrentPayload();
+  }
+
+  function toggleComparison() {
+    if (!state.referenceRecord) return;
+    state.comparisonEnabled = !state.comparisonEnabled;
+    renderCurrentPayload();
+  }
+
+  function clearReference() {
+    state.referenceRecord = null;
+    state.comparisonEnabled = true;
+    if (state.currentRecord?.climate) renderCurrentPayload();
+    else updateComparisonControls();
   }
 
   function resetValues(message) {
     for (const element of [elements.annualTemperature, elements.annualPrecipitation, elements.annualSolar, elements.annualHumidity]) {
       element.textContent = "—";
     }
+    elements.annualTemperatureNote.textContent = "地上2m";
     elements.annualPrecipitationNote.textContent = "1991–2020年の年平均";
-    renderDailyTemperatureChart(null, "データを取得しています");
-    renderDailySolarChart(null, "データを取得しています");
-    renderDailyHumidityChart(null, "データを取得しています");
-    renderChart(elements.precipitationChart, [], "#71827e", "line");
+    elements.annualSolarNote.textContent = "全天日射量・日平均";
+    elements.annualHumidityNote.textContent = "地上2m";
+    elements.monthlyHeading.textContent = "月別の数値表（平均日最高・平均日最低）";
+    elements.comparisonKeys.forEach((element) => { element.hidden = true; });
+    renderDailyTemperatureChart(null, null, "データを取得しています");
+    renderDailySolarChart(null, null, "データを取得しています");
+    renderDailyHumidityChart(null, null, "データを取得しています");
+    renderChart(elements.precipitationChart, [], null, "#71827e", "line");
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 6;
@@ -1059,16 +1371,18 @@
 
   async function loadClimate(cell) {
     const cacheKey = `${cell.latitude.toFixed(1)},${cell.longitude.toFixed(1)}`;
-    if (state.cache.has(cacheKey)) {
-      const cached = state.cache.get(cacheKey);
-      renderPayload(cached.climate, cached.daily);
-      setStatus("取得済みデータを表示", "ready");
-      return;
-    }
-
     state.requestSerial += 1;
     const requestSerial = state.requestSerial;
     if (state.controller) state.controller.abort();
+    state.controller = null;
+    if (state.cache.has(cacheKey)) {
+      const cached = state.cache.get(cacheKey);
+      state.currentRecord = { ...state.currentRecord, cell, climate: cached.climate, daily: cached.daily };
+      renderCurrentPayload();
+      setStatus("取得完了", cached.daily ? "ready" : "error");
+      return;
+    }
+
     state.controller = new AbortController();
     resetValues("NASA POWERから取得しています");
     setStatus("NASA POWERへ問い合わせ中", "loading");
@@ -1097,8 +1411,9 @@
       const dailyPayload = dailyResult.status === "fulfilled" && dailyResult.value?.properties?.parameter
         ? dailyResult.value
         : null;
-      if (dailyPayload) state.cache.set(cacheKey, { climate: climatePayload, daily: dailyPayload });
-      renderPayload(climatePayload, dailyPayload);
+      state.cache.set(cacheKey, { climate: climatePayload, daily: dailyPayload });
+      state.currentRecord = { ...state.currentRecord, cell, climate: climatePayload, daily: dailyPayload };
+      renderCurrentPayload();
       const version = climatePayload?.header?.api?.version;
       const status = dailyPayload ? "取得完了" : "月別値を表示｜日別最高・最低は取得できませんでした";
       setStatus(version ? `${status}｜API ${version}` : status, dailyPayload ? "ready" : "error");
@@ -1124,8 +1439,8 @@
     const [longitude, latitude] = unproject(point.x, point.y);
     const cell = selectedCell(longitude, latitude);
     state.selectedCell = cell;
-    drawSelection(cell);
     updateLocation(cell);
+    drawSelections();
     setResultPanelPage("overview");
     openResultPanel();
     loadClimate(cell);
@@ -1240,6 +1555,9 @@
   elements.zoomOut.addEventListener("click", () => setView(state.zoom / 2));
   elements.resetView.addEventListener("click", () => setView(1, MAP_SIZE / 2, MAP_SIZE / 2));
   elements.climateToggle.addEventListener("click", toggleClimateLayer);
+  elements.setReference.addEventListener("click", setReferenceFromCurrent);
+  elements.toggleComparison.addEventListener("click", toggleComparison);
+  elements.clearReference.addEventListener("click", clearReference);
   elements.closeResults.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
   elements.resultTabs.forEach((button) => {

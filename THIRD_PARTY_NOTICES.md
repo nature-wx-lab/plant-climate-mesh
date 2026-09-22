@@ -15,7 +15,7 @@ NASA does not endorse this site. NASA names and identifiers are not used as prod
 
 ## Natural Earth
 
-The world boundary layer and country names are derived from Natural Earth 1:50m Admin 0 Countries. Capital names are derived from Natural Earth 1:10m Populated Places. Natural Earth data is in the public domain.
+The world boundary layer and country names are derived from Natural Earth 1:50m Admin 0 Countries. Capital names and the nearby-place index are derived from Natural Earth 1:10m Populated Places Simple version 5.1.2. The nearby-place index retains places with `SCALERANK <= 5`, admin-0 capitals, or admin-1 capitals. Natural Earth data is in the public domain.
 
 - Source: <https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/>
 - Capital source: <https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/>
