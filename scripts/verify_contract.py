@@ -69,6 +69,49 @@ def all_coordinates(value: object):
             yield from all_coordinates(child)
 
 
+def verify_comparison_math() -> None:
+    """Exercise the actual pure helpers without a browser or network fixtures."""
+    program = r'''
+const assert = require("node:assert/strict");
+const app = require("node:fs").readFileSync(process.argv[1], "utf8");
+const names = ["boundedChartWindow", "validNumber", "calendarDays", "dataSeries",
+  "averageByCalendarDay", "sameCell", "chartLocationGroups"];
+const functions = names.map(name => {
+  const match = app.match(new RegExp("^  function " + name + "\\([\\s\\S]*?^  }", "m"));
+  assert.ok(match, name + " missing");
+  return match[0];
+}).join("\n");
+const state = { currentRecord: {cell:{latitude:36,longitude:139.375},location:{headerLabel:"B"}} };
+const api = new Function("state", "FILL_VALUE", functions + "\nreturn {" + names.join(",") + "};")(state, -999);
+assert.deepEqual(api.boundedChartWindow(-20, 10), {start:0,end:30});
+assert.deepEqual(api.boundedChartWindow(355, 385), {start:335,end:365});
+assert.deepEqual(api.boundedChartWindow(100, 101), {start:100,end:106});
+assert.deepEqual(api.boundedChartWindow(0, 999), {start:0,end:365});
+assert.equal(api.calendarDays().length, 366);
+assert.equal(api.calendarDays()[59], "0229");
+const series = api.averageByCalendarDay({properties:{parameter:{T:{"19910101":0,"19920101":2,"19910102":-999,"19920229":8}}}}, "T");
+assert.equal(series[0].value, 1);
+assert.equal(series[0].count, 2);
+assert.equal(series[1].value, -999);
+assert.equal(series[59].value, 8);
+assert.equal(api.validNumber(0), true);
+assert.equal(api.validNumber(null), false);
+assert.equal(api.validNumber(NaN), false);
+assert.equal(api.chartLocationGroups(false)[0].colors[0], "#bd4818");
+state.referenceRecord = {...state.currentRecord};
+assert.equal(api.chartLocationGroups(false)[0].role, "基準 A");
+assert.equal(api.chartLocationGroups(false)[0].colors[0], "#2463b4");
+state.currentRecord = {cell:{latitude:28,longitude:113.125},location:{headerLabel:"B2"}};
+const groups = api.chartLocationGroups(true);
+assert.deepEqual(groups.map(g => g.role), ["基準 A", "比較 B"]);
+assert.equal(groups[0].name, "B");
+assert.equal(groups[1].name, "B2");
+assert.equal(api.chartLocationGroups(false)[0].role, "比較 B");
+console.log("COMPARISON_MATH_OK");
+'''
+    subprocess.run(["node", "-e", program, str(ROOT / "app.js")], check=True)
+
+
 def main() -> None:
     actual_files = {
         path.relative_to(ROOT).as_posix()
@@ -90,8 +133,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260922-climatecompare1\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260922-climatecompare1"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260922-climatecompare2\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260922-climatecompare2"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -108,7 +151,7 @@ def main() -> None:
     require(index.count('href="#worldLayer"') == 3, "three wrapped world copies are required")
     require('x="-1000"' in index and 'x="1000"' in index, "east-west world copies missing")
     require("0.5°×0.625°" in index and "1°×1°格子" in index, "native resolution disclosure missing")
-    require("気温・降水量・相対湿度は橙枠に対応する元格子の空間平均" in index, "meteorology-grid disclosure missing")
+    require("気温・降水量・相対湿度は選択した枠に対応する元格子の空間平均" in index, "meteorology-grid disclosure missing")
     require("日射量は同じ中心点に対応する別の1°×1°格子" in index, "solar-grid distinction missing")
     require("通常日は30年分、2月29日は8年分" in index, "daily aggregation sample disclosure missing")
     require("月降水量" in index and "mm/月" in index and "年降水量" in index, "precipitation total labels missing")
@@ -126,7 +169,7 @@ def main() -> None:
     require(index.count("data-result-resize") == 4, "four floating-panel resize handles are required")
     require('role="tablist"' in index and index.count("data-result-tab=") == 6, "six result-panel tabs are required")
     require(index.count("data-result-page=") == 6, "six result-panel pages are required")
-    for control_id in ("setReference", "toggleComparison", "referenceShortLabel", "clearReference"):
+    for control_id in ("setReference", "toggleComparison", "referenceShortLabel", "clearReference", "swapLocations", "referenceLocation", "currentLocation"):
         require(f'id="{control_id}"' in index, f"comparison control missing: {control_id}")
     for result_page in ("overview", "temperature", "precipitation", "solar", "humidity", "monthly"):
         require(f'data-result-tab="{result_page}"' in index, f"result tab missing: {result_page}")
@@ -186,7 +229,7 @@ def main() -> None:
     require("function monthlyPrecipitationTotals(payload)" in app, "monthly precipitation conversion missing")
     require("28 + 8 / 30" in app and "AVERAGE_DAYS_PER_YEAR" in app, "climatology day counts missing")
     require("cell.colSpan = 6" in app, "monthly table fallback span mismatch")
-    require("tick += 5" in app and "tick === 0 || tick === 30" in app, "temperature axis interval or emphasis missing")
+    require('model.kind === "temperature" ? 5' in app and "tick === 0 || tick === 30" in app, "temperature axis interval or emphasis missing")
     require('viewBox="0 0 360 156"' in index, "temperature chart height mismatch")
     require("chart-gridline-emphasis" in styles and "chart-axis-label-emphasis" in styles, "temperature axis emphasis style missing")
     require("./data/world-50m.geojson" in app, "Natural Earth 1:50m map path missing")
@@ -204,6 +247,13 @@ def main() -> None:
     require("function toggleComparison(" in app and "function clearReference(" in app, "comparison toggle or clear action missing")
     require("function activeReferenceRecord(" in app and "chart-reference-series" in app, "comparison overlay rendering missing")
     require("referenceRecord" in app and "comparisonEnabled" in app, "comparison state missing")
+    require("function boundedChartWindow(" in app and "function setDailyChartWindow(" in app, "shared chart viewport missing")
+    require("function chartLocationGroups(" in app and "group.name" in app, "named chart legends missing")
+    require("function swapLocations(" in app, "A/B swap missing")
+    require("#2463b4" in app and "#bd4818" in app, "A/B location colors missing")
+    require(".chart-reference-series { opacity: 1; stroke-dasharray: none; }" in styles, "baseline curves must be solid and opaque")
+    require("model.pinch" in app and 'svg.addEventListener("wheel"' in app, "chart zoom gestures missing")
+    require("chart-readout-values" in app and 'event.key === "ArrowLeft"' in app, "accessible exact-value chart readout missing")
     require("resultPanelScale" in app and "0.65" in app and "1.45" in app, "floating-panel scale bounds missing")
     require(".climate-raster" in styles and ".climate-legend" in styles and ".country-border" in styles, "climate overlay style missing")
     require(".layer-panel" in styles and ".weather-layer-buttons" in styles and ".weather-legend" in styles, "left layer-panel styles missing")
@@ -299,6 +349,7 @@ def main() -> None:
     require("git diff --check" in hook, "pre-push whitespace gate missing")
 
     subprocess.run(["node", "--check", str(ROOT / "app.js")], check=True)
+    verify_comparison_math()
     print(json.dumps({
         "status": "ok",
         "source_files": len(actual_files),

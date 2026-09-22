@@ -98,6 +98,13 @@
     toggleComparison: document.getElementById("toggleComparison"),
     referenceShortLabel: document.getElementById("referenceShortLabel"),
     clearReference: document.getElementById("clearReference"),
+    swapLocations: document.getElementById("swapLocations"),
+    referenceCard: document.getElementById("referenceCard"),
+    referenceLocation: document.getElementById("referenceLocation"),
+    referenceDetail: document.getElementById("referenceDetail"),
+    currentCard: document.getElementById("currentCard"),
+    currentLocation: document.getElementById("currentLocation"),
+    currentDetail: document.getElementById("currentDetail"),
     comparisonKeys: [...document.querySelectorAll("[data-comparison-key]")],
     resultTabs: [...document.querySelectorAll("[data-result-tab]")],
     resultPages: [...document.querySelectorAll("[data-result-page]")],
@@ -135,6 +142,7 @@
     drag: null,
     countries: [],
     places: [],
+    geographyStatus: "loading",
     currentRecord: null,
     referenceRecord: null,
     comparisonEnabled: true,
@@ -184,6 +192,8 @@
   function setStatus(message, kind = "idle") {
     elements.requestStatus.textContent = message;
     elements.requestStatus.dataset.state = kind;
+    state.dataStatus = { message, kind };
+    updateComparisonControls();
   }
 
   function setView(zoom, centerX = state.centerX, centerY = state.centerY) {
@@ -266,6 +276,11 @@
 
   function applyResultPanelPosition() {
     if (elements.resultPanel.hidden) return;
+    const bounds = elements.mapWrap.getBoundingClientRect();
+    const maxScale = Math.min(1.45, (bounds.width - 16) / elements.resultPanel.offsetWidth,
+      (bounds.height - 16) / elements.resultPanel.offsetHeight);
+    state.resultPanelScale = clamp(state.resultPanelScale, 0.65, Math.max(0.65, maxScale));
+    applyResultPanelScale();
     if (!state.resultPanelPosition) state.resultPanelPosition = defaultResultPanelPosition();
     state.resultPanelPosition = clampResultPanelPosition(state.resultPanelPosition);
     elements.resultPanel.style.left = `${state.resultPanelPosition.left}px`;
@@ -513,6 +528,7 @@
       }
       state.countries = collection.features;
       state.places = Array.isArray(collection.places) ? collection.places : [];
+      state.geographyStatus = "ready";
       const fragment = document.createDocumentFragment();
       const borderFragment = document.createDocumentFragment();
       for (const feature of collection.features) {
@@ -529,7 +545,9 @@
       }
       if (state.selectedCell) updateLocation(state.selectedCell);
     } catch (error) {
-      setStatus("境界線を読み込めませんでした。格子選択は利用できます", "error");
+      state.geographyStatus = "error";
+      if (state.referenceRecord?.cell) state.referenceRecord.location = describeLocation(state.referenceRecord.cell);
+      if (state.selectedCell) updateLocation(state.selectedCell);
     }
   }
 
@@ -584,8 +602,20 @@
     if (state.referenceRecord?.cell) {
       copies.push(...cellCopies(state.referenceRecord.cell, "reference-cell", "reference-point"));
     }
-    if (state.selectedCell) {
+    if (state.selectedCell && !sameCell(state.selectedCell, state.referenceRecord?.cell)) {
       copies.push(...cellCopies(state.selectedCell, "selection-cell", "selection-point"));
+    }
+    for (const [record, label, color] of [[state.referenceRecord, "A", "#2463b4"],
+      [state.currentRecord, "B", "#bd4818"]]) {
+      if (!record || (label === "B" && sameCell(record.cell, state.referenceRecord?.cell))) continue;
+      const [x, y] = project(record.cell.longitude, record.cell.latitude);
+      for (const offset of [-MAP_SIZE, 0, MAP_SIZE]) {
+        const marker = svgElement("text", { x: x + offset + 6 / state.zoom, y: y - 5 / state.zoom,
+          fill: color, stroke: "white", "stroke-width": 3 / state.zoom, "paint-order": "stroke",
+          "font-size": 15 / state.zoom, "font-weight": 800, class: "map-location-label" });
+        marker.textContent = label;
+        copies.push(marker);
+      }
     }
     elements.selection.replaceChildren(...copies);
   }
@@ -690,20 +720,22 @@
     const country = countryAt(cell.longitude, cell.latitude);
     if (!country) {
       const coordinates = `${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
+      const label = state.geographyStatus === "ready" ? "海上・国未判定"
+        : state.geographyStatus === "loading" ? "地名を確認中" : "地名情報を取得できませんでした";
       return {
-        countryName: "海上",
+        countryName: label,
         areaLabel: coordinates,
-        placeName: "海上",
-        headerLabel: `海上｜${coordinates}`,
+        placeName: label,
+        headerLabel: `${label}｜${coordinates}`,
       };
     }
     const nearest = nearestPlace(cell, country);
     if (!nearest) {
       return {
         countryName: country.properties.name,
-        areaLabel: country.properties.capital ? `${country.properties.capital}方面` : "地点情報なし",
-        placeName: country.properties.capital || country.properties.name,
-        headerLabel: `${country.properties.name}｜${country.properties.capital || "地点情報なし"}`,
+        areaLabel: "周辺都市の情報なし",
+        placeName: country.properties.name,
+        headerLabel: `${country.properties.name}｜周辺都市の情報なし`,
       };
     }
     const localizedName = nearest.place.q === "c" && country.properties.capital
@@ -723,6 +755,7 @@
   function updateLocation(cell) {
     const location = describeLocation(cell);
     const previous = state.currentRecord;
+    if (!sameCell(previous?.cell, cell)) state.dataStatus = null;
     state.currentRecord = {
       cell,
       location,
@@ -730,7 +763,7 @@
       daily: sameCell(previous?.cell, cell) ? previous.daily : null,
     };
     const strong = document.createElement("strong");
-    strong.textContent = "気象格子：約0.5°×0.625°（橙枠）";
+    strong.textContent = "気象格子：約0.5°×0.625°（地図の枠）";
     const span = document.createElement("span");
     span.textContent = `格子中心：${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
     const country = countryAt(cell.longitude, cell.latitude);
@@ -738,10 +771,8 @@
     place.className = "place-summary";
     place.textContent = `国・地域：${location.countryName}｜周辺：${location.areaLabel}`;
     const note = document.createElement("small");
-    note.textContent = "気温・降水・相対湿度は橙枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
+    note.textContent = "気温・降水・相対湿度は選択した枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
     elements.locationSummary.replaceChildren(strong, span, place, note);
-    elements.resultTitle.textContent = location.headerLabel;
-    elements.resultTitle.title = location.headerLabel;
     updateComparisonControls();
   }
 
@@ -792,7 +823,7 @@
 
   function setMetricComparison(noteElement, current, reference, unit, digits, defaultText) {
     noteElement.textContent = validNumber(reference) && validNumber(current)
-      ? `基準 ${numberText(reference, digits)}｜差 ${signedNumberText(current - reference, digits)} ${unit}`
+      ? `A ${numberText(reference, digits)}｜B−A ${signedNumberText(current - reference, digits)} ${unit}`
       : defaultText;
   }
 
@@ -801,105 +832,413 @@
     return series && typeof series === "object" ? series : {};
   }
 
-  function renderChart(svg, values, referenceValues, color, type) {
-    svg.replaceChildren();
-    const validValues = [...values, ...(referenceValues || [])].filter(validNumber);
-    if (!validValues.length) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
-      empty.textContent = "データを取得しています";
-      svg.append(empty);
-      return;
+  const interactiveCharts = new Map();
+  const dailyChartWindow = { start: 0, end: 365 };
+  let temperatureChartMode = "both";
+
+  function boundedChartWindow(start, end) {
+    const span = Math.max(6, Math.min(365, end - start));
+    const first = Math.max(0, Math.min(365 - span, start));
+    return { start: first, end: first + span };
+  }
+
+  function chartDateLabel(index, short = false) {
+    const day = calendarDays()[Math.max(0, Math.min(365, Math.round(index)))];
+    return Number(day.slice(0, 2)) + (short ? "/" : "月") + Number(day.slice(2)) + (short ? "" : "日");
+  }
+
+  function chartLocationGroups(referenceAvailable) {
+    const isReference = Boolean(state.referenceRecord && state.currentRecord
+      && sameCell(state.referenceRecord.cell, state.currentRecord.cell));
+    const current = {
+      key: "current",
+      role: isReference ? "基準 A" : (state.referenceRecord ? "比較 B" : "選択地点 B"),
+      name: state.currentRecord?.location?.headerLabel || "地点を選択",
+      tone: isReference ? "reference" : "current",
+      colors: isReference ? ["#2463b4", "#4c8fc5"] : ["#bd4818", "#cf8537"],
+    };
+    return referenceAvailable ? [{
+      key: "reference", role: "基準 A",
+      name: state.referenceRecord?.location?.headerLabel || "基準地点",
+      tone: "reference", colors: ["#2463b4", "#4c8fc5"],
+    }, current] : [current];
+  }
+
+  function chartElement(tag, className, text) {
+    const element = document.createElement(tag);
+    element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  function visibleChartSeries(model) {
+    return model.series.filter((series) => model.kind !== "temperature"
+      || temperatureChartMode === "both" || temperatureChartMode === series.measure);
+  }
+
+  function setDailyChartWindow(start, end) {
+    Object.assign(dailyChartWindow, boundedChartWindow(start, end));
+    for (const model of interactiveCharts.values()) {
+      if (!model.daily) continue;
+      model.cursor = null;
+      drawInteractiveChart(model);
     }
+  }
 
-    const left = 34;
-    const right = 8;
-    const top = 8;
-    const bottom = 23;
-    const width = 360 - left - right;
-    const height = 126 - top - bottom;
-    let minimum = type === "bar" ? 0 : Math.min(...validValues);
-    let maximum = Math.max(...validValues);
-    if (type !== "bar") {
-      const padding = Math.max((maximum - minimum) * 0.12, 0.5);
-      minimum -= padding;
-      maximum += padding;
-    } else {
-      maximum = maximum > 0 ? maximum * 1.12 : 1;
-    }
-    if (maximum === minimum) maximum = minimum + 1;
+  function zoomDailyChart(model, factor, anchor = 0.5) {
+    const span = dailyChartWindow.end - dailyChartWindow.start;
+    const nextSpan = Math.max(6, Math.min(365, span * factor));
+    const point = dailyChartWindow.start + span * anchor;
+    setDailyChartWindow(point - nextSpan * anchor, point + nextSpan * (1 - anchor));
+  }
 
-    const x = (index) => left + (index / 11) * width;
-    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
+  function chartPointerFraction(model, event) {
+    const rect = model.svg.getBoundingClientRect();
+    const localX = (event.clientX - rect.left) * model.geometry.canvasWidth / Math.max(1, rect.width);
+    return Math.max(0, Math.min(1, (localX - model.geometry.left) / model.geometry.width));
+  }
 
-    for (let index = 0; index <= 2; index += 1) {
-      const fraction = index / 2;
-      const lineY = top + fraction * height;
-      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
-      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
-      label.textContent = (maximum - fraction * (maximum - minimum)).toFixed(1);
-      svg.append(gridline, label);
-    }
+  function updateChartCursor(model, index) {
+    model.cursor = Math.max(0, Math.min(model.daily ? 365 : 11, Math.round(index)));
+    drawChartReadout(model);
+  }
 
-    [0, 2, 5, 8, 11].forEach((monthIndex) => {
-      const label = svgElement("text", { x: x(monthIndex), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
-      label.textContent = `${monthIndex + 1}月`;
-      svg.append(label);
-    });
-
-    if (type === "bar") {
-      const comparing = Array.isArray(referenceValues) && referenceValues.some(validNumber);
-      const barWidth = Math.max(5, width / (comparing ? 24 : 17));
-      if (comparing) {
-        referenceValues.forEach((value, index) => {
-          if (!validNumber(value)) return;
-          svg.append(svgElement("rect", {
-            x: x(index) + 1,
-            y: y(value),
-            width: barWidth,
-            height: Math.max(1, y(0) - y(value)),
-            rx: 1,
-            stroke: color,
-            class: "chart-reference-bar",
-          }));
+  function prepareInteractiveChart(svg, options) {
+    let model = interactiveCharts.get(svg);
+    if (!model) {
+      const card = svg.closest(".chart-card");
+      const caption = card.querySelector("figcaption");
+      caption.querySelectorAll(".chart-caption-tools, .comparison-key, .temperature-legend").forEach((item) => item.remove());
+      const legend = chartElement("div", "chart-location-legend");
+      const toolbar = chartElement("div", "chart-toolbar");
+      const readout = chartElement("div", "chart-readout");
+      readout.id = svg.id + "Readout";
+      readout.setAttribute("aria-live", "off");
+      caption.after(legend, toolbar);
+      svg.after(readout);
+      card.classList.add("interactive-chart-card");
+      svg.classList.add("interactive-chart");
+      svg.setAttribute("tabindex", "0");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-describedby", readout.id);
+      model = { svg, card, legend, toolbar, readout, cursor: null, pointers: new Map(), geometry: null };
+      interactiveCharts.set(svg, model);
+      svg.addEventListener("wheel", (event) => {
+        if (!model.daily || !model.hasData) return;
+        event.preventDefault();
+        event.stopPropagation();
+        zoomDailyChart(model, Math.exp(Math.max(-160, Math.min(160, event.deltaY)) * 0.003), chartPointerFraction(model, event));
+      }, { passive: false });
+      svg.addEventListener("pointerdown", (event) => {
+        if (!model.hasData || (event.pointerType === "mouse" && event.button !== 0)) return;
+        event.stopPropagation();
+        model.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        svg.setPointerCapture(event.pointerId);
+        model.drag = { x: event.clientX, start: dailyChartWindow.start, end: dailyChartWindow.end, moved: false };
+        if (model.pointers.size === 2) {
+          const points = [...model.pointers.values()];
+          model.pinch = { distance: Math.max(1, Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y)), start: dailyChartWindow.start, end: dailyChartWindow.end,
+            fraction: chartPointerFraction(model, { clientX: (points[0].x + points[1].x) / 2 }) };
+        }
+        updateChartCursor(model, model.daily
+          ? dailyChartWindow.start + chartPointerFraction(model, event) * (dailyChartWindow.end - dailyChartWindow.start)
+          : chartPointerFraction(model, event) * 12 - 0.5);
+      });
+      svg.addEventListener("pointermove", (event) => {
+        if (!model.hasData) return;
+        if (model.pointers.has(event.pointerId)) {
+          model.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+          if (model.daily && model.pointers.size === 2 && model.pinch) {
+            const points = [...model.pointers.values()];
+            const distance = Math.max(1, Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y));
+            const nextSpan = Math.max(6, Math.min(365, (model.pinch.end - model.pinch.start) * model.pinch.distance / distance));
+            const center = model.pinch.start + (model.pinch.end - model.pinch.start) * model.pinch.fraction;
+            const fraction = chartPointerFraction(model, { clientX: (points[0].x + points[1].x) / 2 });
+            setDailyChartWindow(center - nextSpan * fraction, center + nextSpan * (1 - fraction));
+            return;
+          }
+          if (model.daily && model.drag) {
+            const rect = svg.getBoundingClientRect();
+            const delta = (event.clientX - model.drag.x) * model.geometry.canvasWidth / Math.max(1, rect.width)
+              / model.geometry.width * (model.drag.end - model.drag.start);
+            if (Math.abs(event.clientX - model.drag.x) > 3) model.drag.moved = true;
+            if (model.drag.moved) {
+              setDailyChartWindow(model.drag.start - delta, model.drag.end - delta);
+              svg.classList.add("is-panning");
+              return;
+            }
+          }
+        }
+        updateChartCursor(model, model.daily
+          ? dailyChartWindow.start + chartPointerFraction(model, event) * (dailyChartWindow.end - dailyChartWindow.start)
+          : chartPointerFraction(model, event) * 12 - 0.5);
+      });
+      const finishPointer = (event) => {
+        model.pointers.delete(event.pointerId);
+        model.pinch = null;
+        model.drag = null;
+        svg.classList.remove("is-panning");
+        if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+        if (model.pointers.size === 1) {
+          const point = [...model.pointers.values()][0];
+          model.drag = { x: point.x, start: dailyChartWindow.start, end: dailyChartWindow.end, moved: false };
+        }
+      };
+      svg.addEventListener("pointerup", finishPointer);
+      svg.addEventListener("pointercancel", finishPointer);
+      svg.addEventListener("pointerleave", () => {
+        if (model.pointers.size) return;
+        model.cursor = null;
+        drawChartReadout(model);
+      });
+      svg.addEventListener("keydown", (event) => {
+        if (!model.hasData) return;
+        if (model.daily && ["+", "=", "-", "Home"].includes(event.key)) {
+          event.preventDefault();
+          if (event.key === "Home") setDailyChartWindow(0, 365);
+          else zoomDailyChart(model, event.key === "-" ? 1.5 : 1 / 1.5);
+        } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          event.preventDefault();
+          const current = model.cursor ?? (model.daily ? Math.round((dailyChartWindow.start + dailyChartWindow.end) / 2) : 0);
+          const next = Math.max(0, Math.min(model.daily ? 365 : 11, current + (event.key === "ArrowRight" ? 1 : -1)));
+          if (model.daily && (next < dailyChartWindow.start || next > dailyChartWindow.end)) {
+            const span = dailyChartWindow.end - dailyChartWindow.start;
+            setDailyChartWindow(next < dailyChartWindow.start ? next : next - span, next < dailyChartWindow.start ? next + span : next);
+          }
+          model.readout.setAttribute("aria-live", "polite");
+          updateChartCursor(model, next);
+        }
+      });
+      svg.addEventListener("blur", () => model.readout.setAttribute("aria-live", "off"));
+      if (typeof ResizeObserver !== "undefined") {
+        const observer = new ResizeObserver(() => {
+          if (svg.clientWidth > 0 && svg.clientHeight > 0) drawInteractiveChart(model);
         });
+        observer.observe(svg);
       }
-      values.forEach((value, index) => {
-        if (!validNumber(value)) return;
-        svg.append(svgElement("rect", {
-          x: x(index) - (comparing ? barWidth + 1 : barWidth / 2),
-          y: y(value),
-          width: barWidth,
-          height: Math.max(1, y(0) - y(value)),
-          rx: 2,
-          fill: color,
-          class: "chart-bar",
-        }));
-      });
+    }
+    Object.assign(model, options);
+    model.cursor = null;
+    model.pointers.clear();
+    model.drag = null;
+    model.pinch = null;
+    model.legend.replaceChildren();
+    for (const group of model.groups) {
+      const row = chartElement("div", "chart-location-key chart-key-" + group.tone);
+      const name = chartElement("span", "chart-key-name", group.role + "  " + group.name);
+      name.title = name.textContent;
+      if (group.status) name.append(chartElement("span", "chart-key-status", "（" + group.status + "）"));
+      const swatches = chartElement("span", "chart-series-keys");
+      for (const series of model.series.filter((item) => item.group === group.key)) {
+        const key = chartElement("span", "chart-series-key");
+        const swatch = chartElement("i", "chart-series-swatch");
+        swatch.style.backgroundColor = series.color;
+        key.append(swatch, document.createTextNode(series.label));
+        swatches.append(key);
+      }
+      row.append(name, swatches);
+      model.legend.append(row);
+    }
+    model.toolbar.replaceChildren();
+    if (model.daily) {
+      const ranges = chartElement("div", "chart-range-buttons");
+      ranges.setAttribute("aria-label", "グラフの表示期間");
+      for (const [label, span] of [["全年", 365], ["3か月", 89], ["1か月", 30]]) {
+        const button = chartElement("button", "chart-range-button", label);
+        button.type = "button";
+        button.dataset.span = String(span);
+        button.addEventListener("click", () => {
+          const center = model.cursor ?? (dailyChartWindow.start + dailyChartWindow.end) / 2;
+          setDailyChartWindow(center - span / 2, center + span / 2);
+        });
+        ranges.append(button);
+      }
+      for (const [label, factor, title] of [["−", 1.5, "グラフを縮小"], ["＋", 1 / 1.5, "グラフを拡大"]]) {
+        const button = chartElement("button", "chart-zoom-button", label);
+        button.type = "button";
+        button.setAttribute("aria-label", title);
+        button.addEventListener("click", () => zoomDailyChart(model, factor));
+        ranges.append(button);
+      }
+      model.toolbar.append(ranges);
+      if (model.kind === "temperature") {
+        const modes = chartElement("div", "chart-temperature-modes");
+        modes.setAttribute("aria-label", "表示する気温");
+        for (const [mode, label] of [["both", "最高・最低"], ["high", "最高"], ["low", "最低"]]) {
+          const button = chartElement("button", "chart-mode-button", label);
+          button.type = "button";
+          button.dataset.mode = mode;
+          button.addEventListener("click", () => { temperatureChartMode = mode; drawInteractiveChart(model); });
+          modes.append(button);
+        }
+        model.toolbar.append(modes);
+      }
+    }
+    model.rangeLabel = chartElement("span", "chart-range-label");
+    model.toolbar.append(model.rangeLabel);
+    drawInteractiveChart(model);
+  }
+
+  function drawChartReadout(model) {
+    model.svg.querySelector(".chart-cursor")?.remove();
+    model.readout.replaceChildren();
+    if (!model.hasData || model.cursor === null) {
+      if (model.groups.some((group) => group.status)) {
+        model.readout.append(chartElement("strong", "chart-readout-date", "状態"));
+        for (const group of model.groups) {
+          const row = chartElement("div", "chart-readout-location chart-key-" + group.tone);
+          row.append(chartElement("span", "chart-readout-name", group.role + "  " + group.name),
+            chartElement("strong", "chart-readout-values", group.status || "表示中：線に触れると日別の値"));
+          model.readout.append(row);
+        }
+        return;
+      }
+      model.readout.append(chartElement("span", "chart-readout-hint", model.hasData
+        ? (model.daily ? "線に触れると日別の値｜ホイール・2本指で拡大、拡大後にドラッグで期間移動" : "棒に触れると月別の値｜← → キーでも選択")
+        : model.emptyMessage));
       return;
     }
-
-    if (Array.isArray(referenceValues) && referenceValues.some(validNumber)) {
-      const referenceCommands = [];
-      referenceValues.forEach((value, index) => {
-        if (!validNumber(value)) return;
-        referenceCommands.push(`${referenceCommands.length ? "L" : "M"}${x(index).toFixed(2)},${y(value).toFixed(2)}`);
-      });
-      svg.append(svgElement("path", {
-        d: referenceCommands.join(" "),
-        stroke: color,
-        class: "chart-line chart-reference-series",
-      }));
+    if (!model.geometry) return;
+    const index = model.cursor;
+    model.readout.append(chartElement("strong", "chart-readout-date", model.daily ? chartDateLabel(index) : (index + 1) + "月"));
+    const visibleSeries = visibleChartSeries(model);
+    const cursor = svgElement("g", { class: "chart-cursor", "aria-hidden": "true" });
+    const x = model.geometry.x(index);
+    cursor.append(svgElement("line", { x1: x, x2: x, y1: model.geometry.top, y2: model.geometry.bottom, class: "chart-cursor-line" }));
+    for (const group of model.groups) {
+      const row = chartElement("div", "chart-readout-location chart-key-" + group.tone);
+      const name = chartElement("span", "chart-readout-name", group.role + "  " + group.name);
+      name.title = name.textContent;
+      const values = chartElement("strong", "chart-readout-values");
+      values.textContent = group.status || visibleSeries.filter((series) => series.group === group.key)
+        .map((series) => series.label + " " + (validNumber(series.values[index])
+          ? numberText(series.values[index], model.kind === "solar" ? 2 : 1) + " " + model.unit : "データなし")).join("　");
+      row.append(name, values);
+      model.readout.append(row);
     }
+    for (const series of visibleSeries) {
+      const value = series.values[index];
+      if (validNumber(value)) cursor.append(svgElement("circle", { cx: x, cy: model.geometry.y(value), r: 3.5, fill: series.color, class: "chart-point" }));
+    }
+    model.svg.append(cursor);
+  }
 
-    const commands = [];
-    values.forEach((value, index) => {
-      if (!validNumber(value)) return;
-      commands.push(`${commands.length ? "L" : "M"}${x(index).toFixed(2)},${y(value).toFixed(2)}`);
+  function drawInteractiveChart(model) {
+    if (!model.series) return;
+    const svg = model.svg;
+    const width = Math.max(240, svg.clientWidth || 700);
+    const height = Math.max(85, svg.clientHeight || 200);
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.replaceChildren();
+    const series = visibleChartSeries(model);
+    const values = series.flatMap((item) => item.values).filter(validNumber);
+    model.hasData = values.length > 0;
+    const start = model.daily ? dailyChartWindow.start : 0;
+    const end = model.daily ? dailyChartWindow.end : 11;
+    svg.dataset.rangeStart = String(start);
+    svg.dataset.rangeEnd = String(end);
+    model.rangeLabel.textContent = model.daily ? chartDateLabel(start, true) + " – " + chartDateLabel(end, true) : "1月 – 12月";
+    model.toolbar.querySelectorAll("[data-span]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(Math.abs(Number(button.dataset.span) - (end - start)) < 0.5));
+      button.disabled = !model.hasData;
     });
-    svg.append(svgElement("path", { d: commands.join(" "), stroke: color, class: "chart-line" }));
-    values.forEach((value, index) => {
-      if (!validNumber(value)) return;
-      svg.append(svgElement("circle", { cx: x(index), cy: y(value), r: 3, fill: color, class: "chart-point" }));
+    model.toolbar.querySelectorAll("[data-mode]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.mode === temperatureChartMode)));
+    model.toolbar.querySelectorAll(".chart-zoom-button").forEach((button, index) => {
+      button.disabled = !model.hasData || (index === 0 ? end - start >= 365 : end - start <= 6);
+    });
+    model.legend.querySelectorAll(".chart-series-key").forEach((key) => {
+      key.classList.toggle("series-muted", model.kind === "temperature" && temperatureChartMode !== "both"
+        && !key.textContent.includes(temperatureChartMode === "high" ? "最高" : "最低"));
+    });
+    svg.setAttribute("aria-label", model.title + "。" + model.groups.map((group) => group.role + " " + group.name).join("、")
+      + "。左右キーで日付と数値を確認" + (model.daily ? "、プラスとマイナスで拡縮、Homeで全年。" : "。"));
+    if (!model.hasData) {
+      model.geometry = null;
+      const text = svgElement("text", { x: width / 2, y: height / 2, class: "chart-empty" });
+      text.textContent = model.emptyMessage;
+      svg.append(text);
+      drawChartReadout(model);
+      return;
+    }
+    const step = model.kind === "temperature" ? 5 : model.kind === "solar" ? 5 : model.kind === "humidity" ? 10
+      : Math.max(1, Math.pow(10, Math.floor(Math.log10(Math.max(...values) || 1))) / 2);
+    const minimum = model.kind === "temperature" ? Math.min(0, Math.floor(Math.min(...values) / 5) * 5)
+      : model.kind === "humidity" ? Math.max(0, Math.floor((Math.min(...values) - 3) / 10) * 10) : 0;
+    const maximum = model.kind === "temperature" ? Math.max(35, Math.ceil(Math.max(...values) / 5) * 5)
+      : model.kind === "humidity" ? Math.max(minimum + 10, Math.min(100, Math.ceil((Math.max(...values) + 3) / 10) * 10))
+        : Math.max(step, Math.ceil(Math.max(...values) / step) * step);
+    const left = model.kind === "precipitation" ? 42 : 32;
+    const right = 12;
+    const top = 9;
+    const bottom = height - 24;
+    const plotWidth = width - left - right;
+    const plotHeight = Math.max(20, bottom - top);
+    const x = (index) => left + (model.daily ? (index - start) / (end - start) : (index + 0.5) / 12) * plotWidth;
+    const y = (value) => top + (maximum - value) / (maximum - minimum) * plotHeight;
+    model.geometry = { x, y, left, top, bottom, width: plotWidth, canvasWidth: width };
+    const maxTicks = Math.max(2, Math.floor(plotHeight / 22));
+    const tickStep = step * Math.max(1, Math.ceil((maximum - minimum) / step / maxTicks));
+    const ticks = [];
+    for (let tick = Math.ceil(minimum / tickStep) * tickStep; tick <= maximum; tick += tickStep) ticks.push(tick);
+    if (model.kind === "temperature") for (const tick of [0, 30]) if (!ticks.includes(tick)) ticks.push(tick);
+    for (const tick of ticks) {
+      const emphasized = model.kind === "temperature" && (tick === 0 || tick === 30);
+      svg.append(svgElement("line", { x1: left, x2: width - right, y1: y(tick), y2: y(tick), class: "chart-gridline" + (emphasized ? " chart-gridline-emphasis" : "") }));
+      const label = svgElement("text", { x: left - 6, y: y(tick) + 4, class: "chart-axis-label" + (emphasized ? " chart-axis-label-emphasis" : ""), "text-anchor": "end" });
+      label.textContent = String(tick);
+      svg.append(label);
+    }
+    let lastLabelX = -Infinity;
+    const days = calendarDays();
+    for (let index = Math.ceil(start); index <= Math.floor(end); index++) {
+      const day = model.daily ? days[index] : null;
+      const candidate = !model.daily || (end - start > 100 ? day.endsWith("01") : end - start > 35 ? ["01", "15"].includes(day.slice(2)) : true);
+      if (!candidate || x(index) - lastLabelX < (width < 400 ? 42 : 48)) continue;
+      const label = svgElement("text", { x: x(index), y: height - 6, class: "chart-axis-label", "text-anchor": "middle" });
+      label.textContent = !model.daily ? (index + 1) + "月" : end - start > 100 ? Number(day.slice(0, 2)) + "月" : chartDateLabel(index, true);
+      svg.append(label);
+      lastLabelX = x(index);
+    }
+    const clipId = svg.id + "PlotClip";
+    const defs = svgElement("defs");
+    const clip = svgElement("clipPath", { id: clipId });
+    clip.append(svgElement("rect", { x: left, y: top - 2, width: plotWidth, height: plotHeight + 4 }));
+    defs.append(clip);
+    const plot = svgElement("g", { "clip-path": "url(#" + clipId + ")" });
+    svg.append(defs, plot);
+    series.forEach((item, seriesIndex) => {
+      if (model.kind === "precipitation") {
+        const groupWidth = plotWidth / 12 * 0.7;
+        const barWidth = groupWidth / series.length;
+        item.values.forEach((value, index) => {
+          if (!validNumber(value)) return;
+          plot.append(svgElement("rect", { x: x(index) - groupWidth / 2 + seriesIndex * barWidth, y: y(value),
+            width: Math.max(2, barWidth - 1), height: Math.max(0, y(0) - y(value)), rx: 1, fill: item.color,
+            class: item.group === "reference" ? "chart-bar chart-reference-bar" : "chart-bar" }));
+        });
+      } else {
+        const commands = [];
+        let open = false;
+        for (let index = Math.max(0, Math.floor(start) - 1); index <= Math.min(365, Math.ceil(end) + 1); index++) {
+          const value = item.values[index];
+          if (!validNumber(value)) { open = false; continue; }
+          commands.push((open ? "L" : "M") + x(index).toFixed(2) + "," + y(value).toFixed(2));
+          open = true;
+        }
+        plot.append(svgElement("path", { d: commands.join(" "), stroke: item.color, class: "chart-line"
+          + (item.group === "reference" ? " chart-reference-series" : ""), "data-series": item.group + "-" + item.measure }));
+      }
+    });
+    drawChartReadout(model);
+  }
+
+  function renderChart(svg, values, referenceValues, color, type) {
+    const groups = chartLocationGroups(Boolean(referenceValues));
+    prepareInteractiveChart(svg, {
+      kind: "precipitation", daily: false, groups, title: "月降水量", unit: "mm", emptyMessage: "月降水量のデータがありません",
+      series: groups.map((group) => ({ group: group.key, measure: "precipitation", label: "月降水量", color: group.colors[0],
+        values: group.key === "reference" ? referenceValues : values })),
     });
   }
 
@@ -954,231 +1293,43 @@
     return sums.map((sum, index) => (counts[index] ? sum / counts[index] : FILL_VALUE));
   }
 
+  function renderDailyClimateChart(svg, payload, referencePayload, options) {
+    const reference = activeReferenceRecord();
+    const referenceSource = referencePayload || reference?.daily || null;
+    const groups = chartLocationGroups(Boolean(referencePayload || reference));
+    const loading = !payload && /取得しています|問い合わせ中/.test(options.emptyMessage);
+    const series = [];
+    for (const group of groups) {
+      const source = group.key === "reference" ? referenceSource : payload;
+      options.parameters.forEach(([key, measure, label], index) => {
+        series.push({ group: group.key, measure, label, color: group.colors[index] || group.colors[0],
+          values: averageByCalendarDay(source, key).map((item) => item.value) });
+      });
+      group.status = series.some((item) => item.group === group.key && item.values.some(validNumber))
+        ? "" : (group.key === "current" && loading ? "取得中" : "データなし");
+    }
+    prepareInteractiveChart(svg, { ...options, daily: true, groups, series });
+  }
+
   function renderDailyTemperatureChart(payload, referencePayload = null, emptyMessage = "日別最高・最低を取得できませんでした") {
-    const svg = elements.temperatureChart;
-    const chartHeight = 156;
-    svg.replaceChildren();
-    if (!payload) {
-      const empty = svgElement("text", { x: 180, y: chartHeight / 2, class: "chart-empty" });
-      empty.textContent = emptyMessage;
-      svg.append(empty);
-      return;
-    }
-
-    const maximumSeries = averageByCalendarDay(payload, "T2M_MAX");
-    const minimumSeries = averageByCalendarDay(payload, "T2M_MIN");
-    const referenceMaximumSeries = referencePayload ? averageByCalendarDay(referencePayload, "T2M_MAX") : [];
-    const referenceMinimumSeries = referencePayload ? averageByCalendarDay(referencePayload, "T2M_MIN") : [];
-    const values = [...maximumSeries, ...minimumSeries, ...referenceMaximumSeries, ...referenceMinimumSeries]
-      .map((item) => item.value)
-      .filter(validNumber);
-    if (!values.length) {
-      const empty = svgElement("text", { x: 180, y: chartHeight / 2, class: "chart-empty" });
-      empty.textContent = "データを取得しています";
-      svg.append(empty);
-      return;
-    }
-
-    const left = 34;
-    const right = 8;
-    const top = 8;
-    const bottom = 23;
-    const width = 360 - left - right;
-    const height = chartHeight - top - bottom;
-    const rawMinimum = Math.min(...values);
-    const rawMaximum = Math.max(...values);
-    const minimum = Math.min(0, Math.floor(rawMinimum / 5) * 5);
-    const maximum = Math.max(35, Math.ceil(rawMaximum / 5) * 5);
-    const x = (index) => left + (index / (maximumSeries.length - 1)) * width;
-    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
-
-    for (let tick = minimum; tick <= maximum; tick += 5) {
-      const lineY = y(tick);
-      const emphasized = tick === 0 || tick === 30;
-      const gridline = svgElement("line", {
-        x1: left,
-        y1: lineY,
-        x2: left + width,
-        y2: lineY,
-        class: emphasized ? "chart-gridline chart-gridline-emphasis" : "chart-gridline",
-      });
-      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
-      if (emphasized) label.classList.add("chart-axis-label-emphasis");
-      const withinCoreRange = tick >= 0 && tick <= 35;
-      label.textContent = withinCoreRange || tick % 10 === 0 ? String(tick) : "";
-      svg.append(gridline, label);
-    }
-
-    ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
-      const index = maximumSeries.findIndex((item) => item.calendarDay === calendarDay);
-      const label = svgElement("text", { x: x(index), y: chartHeight - 5, class: "chart-axis-label", "text-anchor": "middle" });
-      label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
-      svg.append(label);
+    renderDailyClimateChart(elements.temperatureChart, payload, referencePayload, {
+      kind: "temperature", title: "日ごとの気温", unit: "℃", emptyMessage,
+      parameters: [["T2M_MAX", "high", "最高"], ["T2M_MIN", "low", "最低"]],
     });
-
-    const appendSeries = (series, color, reference = false) => {
-      if (!series.some((item) => validNumber(item.value))) return;
-      const commands = [];
-      let pathOpen = false;
-      series.forEach((item, index) => {
-        if (!validNumber(item.value)) {
-          pathOpen = false;
-          return;
-        }
-        commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
-        pathOpen = true;
-      });
-      svg.append(svgElement("path", {
-        d: commands.join(" "),
-        stroke: color,
-        class: `chart-line daily-temperature-line${reference ? " chart-reference-series" : ""}`,
-      }));
-    };
-
-    appendSeries(referenceMaximumSeries, "#d4513e", true);
-    appendSeries(referenceMinimumSeries, "#287bb5", true);
-    appendSeries(maximumSeries, "#d4513e");
-    appendSeries(minimumSeries, "#287bb5");
   }
 
   function renderDailySolarChart(payload, referencePayload = null, emptyMessage = "日別日射量を取得できませんでした") {
-    const svg = elements.solarChart;
-    svg.replaceChildren();
-    if (!payload) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
-      empty.textContent = emptyMessage;
-      svg.append(empty);
-      return;
-    }
-
-    const series = averageByCalendarDay(payload, "ALLSKY_SFC_SW_DWN");
-    const referenceSeries = referencePayload ? averageByCalendarDay(referencePayload, "ALLSKY_SFC_SW_DWN") : [];
-    const values = [...series, ...referenceSeries].map((item) => item.value).filter(validNumber);
-    if (!values.length) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
-      empty.textContent = "日別日射量を取得できませんでした";
-      svg.append(empty);
-      return;
-    }
-
-    const left = 34;
-    const right = 8;
-    const top = 8;
-    const bottom = 23;
-    const width = 360 - left - right;
-    const height = 126 - top - bottom;
-    const minimum = 0;
-    const maximum = Math.ceil(Math.max(...values) / 5) * 5 || 5;
-    const x = (index) => left + (index / (series.length - 1)) * width;
-    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
-
-    for (let index = 0; index <= 2; index += 1) {
-      const value = maximum - (index / 2) * maximum;
-      const lineY = y(value);
-      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
-      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
-      label.textContent = value.toFixed(0);
-      svg.append(gridline, label);
-    }
-
-    ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
-      const index = series.findIndex((item) => item.calendarDay === calendarDay);
-      const label = svgElement("text", { x: x(index), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
-      label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
-      svg.append(label);
+    renderDailyClimateChart(elements.solarChart, payload, referencePayload, {
+      kind: "solar", title: "日ごとの日射量", unit: "MJ/㎡/日", emptyMessage,
+      parameters: [["ALLSKY_SFC_SW_DWN", "solar", "日射量"]],
     });
-
-    const appendSeries = (items, reference = false) => {
-      if (!items.some((item) => validNumber(item.value))) return;
-      const commands = [];
-      let pathOpen = false;
-      items.forEach((item, index) => {
-        if (!validNumber(item.value)) {
-          pathOpen = false;
-          return;
-        }
-        commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
-        pathOpen = true;
-      });
-      svg.append(svgElement("path", {
-        d: commands.join(" "),
-        stroke: "#d99516",
-        class: `chart-line daily-solar-line${reference ? " chart-reference-series" : ""}`,
-      }));
-    };
-    appendSeries(referenceSeries, true);
-    appendSeries(series);
   }
 
   function renderDailyHumidityChart(payload, referencePayload = null, emptyMessage = "日別相対湿度を取得できませんでした") {
-    const svg = elements.humidityChart;
-    svg.replaceChildren();
-    if (!payload) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
-      empty.textContent = emptyMessage;
-      svg.append(empty);
-      return;
-    }
-
-    const series = averageByCalendarDay(payload, "RH2M");
-    const referenceSeries = referencePayload ? averageByCalendarDay(referencePayload, "RH2M") : [];
-    const values = [...series, ...referenceSeries].map((item) => item.value).filter(validNumber);
-    if (!values.length) {
-      const empty = svgElement("text", { x: 180, y: 66, class: "chart-empty" });
-      empty.textContent = "日別相対湿度を取得できませんでした";
-      svg.append(empty);
-      return;
-    }
-
-    const left = 34;
-    const right = 8;
-    const top = 8;
-    const bottom = 23;
-    const width = 360 - left - right;
-    const height = 126 - top - bottom;
-    const rawMinimum = Math.min(...values);
-    const rawMaximum = Math.max(...values);
-    const minimum = Math.max(0, Math.floor((rawMinimum - 3) / 5) * 5);
-    const maximum = Math.min(100, Math.ceil((rawMaximum + 3) / 5) * 5);
-    const x = (index) => left + (index / (series.length - 1)) * width;
-    const y = (value) => top + ((maximum - value) / (maximum - minimum)) * height;
-
-    for (let index = 0; index <= 2; index += 1) {
-      const value = maximum - (index / 2) * (maximum - minimum);
-      const lineY = y(value);
-      const gridline = svgElement("line", { x1: left, y1: lineY, x2: left + width, y2: lineY, class: "chart-gridline" });
-      const label = svgElement("text", { x: left - 5, y: lineY + 3, class: "chart-axis-label", "text-anchor": "end" });
-      label.textContent = value.toFixed(0);
-      svg.append(gridline, label);
-    }
-
-    ["0101", "0301", "0501", "0701", "0901", "1101"].forEach((calendarDay) => {
-      const index = series.findIndex((item) => item.calendarDay === calendarDay);
-      const label = svgElement("text", { x: x(index), y: 121, class: "chart-axis-label", "text-anchor": "middle" });
-      label.textContent = `${Number(calendarDay.slice(0, 2))}月`;
-      svg.append(label);
+    renderDailyClimateChart(elements.humidityChart, payload, referencePayload, {
+      kind: "humidity", title: "日ごとの相対湿度", unit: "%", emptyMessage,
+      parameters: [["RH2M", "humidity", "相対湿度"]],
     });
-
-    const appendSeries = (items, reference = false) => {
-      if (!items.some((item) => validNumber(item.value))) return;
-      const commands = [];
-      let pathOpen = false;
-      items.forEach((item, index) => {
-        if (!validNumber(item.value)) {
-          pathOpen = false;
-          return;
-        }
-        commands.push(`${pathOpen ? "L" : "M"}${x(index).toFixed(2)},${y(item.value).toFixed(2)}`);
-        pathOpen = true;
-      });
-      svg.append(svgElement("path", {
-        d: commands.join(" "),
-        stroke: "#398d7c",
-        class: `chart-line daily-humidity-line${reference ? " chart-reference-series" : ""}`,
-      }));
-    };
-    appendSeries(referenceSeries, true);
-    appendSeries(series);
   }
 
   function activeReferenceRecord() {
@@ -1192,14 +1343,32 @@
     const currentIsReference = hasReference && sameCell(state.currentRecord?.cell, state.referenceRecord.cell);
     elements.setReference.disabled = !currentReady;
     elements.setReference.hidden = currentIsReference;
-    elements.setReference.title = hasReference ? "現在の比較先を新しい基準地点に変更" : "現在の地点を比較基準に固定";
+    elements.setReference.textContent = hasReference ? "Bを新しい基準に" : "この地点を基準に固定";
+    elements.setReference.title = hasReference ? "現在の比較地点Bで、基準地点Aを置き換える" : "この地点を基準地点Aに固定する";
     elements.toggleComparison.hidden = !hasReference;
     elements.clearReference.hidden = !hasReference;
     elements.toggleComparison.setAttribute("aria-pressed", String(state.comparisonEnabled));
-    elements.selectionState.textContent = currentIsReference ? "基準地点" : "比較先";
+    elements.swapLocations.hidden = !hasReference || currentIsReference;
+    elements.swapLocations.disabled = !currentReady;
+    elements.selectionState.textContent = hasReference ? "比較地点" : "選択地点";
+    elements.referenceCard.classList.toggle("is-empty", !hasReference);
+    elements.referenceCard.classList.toggle("overlay-off", hasReference && !state.comparisonEnabled);
+    elements.currentCard.classList.toggle("is-empty", currentIsReference);
+    const coordinates = (record) => `格子中心 ${coordinateLabel(record.cell.latitude, "N", "S")} · ${coordinateLabel(record.cell.longitude, "E", "W")}`;
+    elements.referenceLocation.textContent = hasReference ? state.referenceRecord.location.headerLabel : "まだ設定されていません";
+    elements.referenceDetail.textContent = hasReference ? coordinates(state.referenceRecord) : "比べたい地点を選び「基準に固定」";
+    if (hasReference && !state.referenceRecord.daily) elements.referenceDetail.textContent += "｜日別データなし";
+    elements.currentLocation.textContent = currentIsReference ? "次に、地図で比べたい地点を選択" : state.currentRecord?.location.headerLabel || "地図で地点を選択";
+    elements.currentDetail.textContent = currentIsReference ? "Aの地点・データはそのまま保持します" : state.currentRecord ? coordinates(state.currentRecord) : "国と周辺地域を表示します";
+    elements.currentDetail.dataset.state = "idle";
+    if (["loading", "error"].includes(state.dataStatus?.kind)) {
+      elements.currentDetail.textContent = state.dataStatus.message;
+      elements.currentDetail.dataset.state = state.dataStatus.kind;
+    }
+    elements.referenceLocation.title = elements.referenceLocation.textContent;
+    elements.currentLocation.title = elements.currentLocation.textContent;
     if (hasReference) {
-      const label = state.referenceRecord.location.placeName;
-      elements.referenceShortLabel.textContent = label;
+      elements.referenceShortLabel.textContent = state.comparisonEnabled ? "重ね表示 ON" : "重ね表示 OFF";
       const mode = state.comparisonEnabled ? "重ね表示中" : "重ね表示なし";
       elements.toggleComparison.title = `基準：${state.referenceRecord.location.headerLabel}｜${mode}`;
       elements.toggleComparison.setAttribute("aria-label", `${elements.toggleComparison.title}。クリックして切り替え`);
@@ -1237,7 +1406,7 @@
     const comparing = Boolean(referenceClimatePayload);
     const fragment = document.createDocumentFragment();
     elements.monthlyHeading.textContent = comparing
-      ? "月別の数値（比較先｜括弧内は基準との差）"
+      ? "月別｜上段 B比較・下段 A基準（括弧内は B−A の差）"
       : "月別の数値表（平均日最高・平均日最低）";
 
     MONTHS.forEach((month, index) => {
@@ -1270,7 +1439,7 @@
           if (comparing && validNumber(value) && validNumber(referenceValue)) {
             const delta = document.createElement("small");
             delta.className = "monthly-delta";
-            delta.textContent = `(${signedNumberText(value - referenceValue, digits[cellIndex])})`;
+            delta.textContent = `A ${numberText(referenceValue, digits[cellIndex])} (${signedNumberText(value - referenceValue, digits[cellIndex])})`;
             cell.append(delta);
             cell.title = `比較先 ${numberText(value, digits[cellIndex])}｜基準 ${numberText(referenceValue, digits[cellIndex])}｜差 ${signedNumberText(value - referenceValue, digits[cellIndex])}`;
           }
@@ -1310,8 +1479,8 @@
   }
 
   function renderCurrentPayload() {
-    if (!state.currentRecord?.climate) return;
     updateComparisonControls();
+    if (!state.currentRecord?.climate) return;
     const reference = activeReferenceRecord();
     renderPayload(
       state.currentRecord.climate,
@@ -1346,6 +1515,19 @@
     else updateComparisonControls();
   }
 
+  function swapLocations() {
+    if (!state.currentRecord?.climate || !state.referenceRecord?.climate) return;
+    // Cancel any older request before changing which record is the live selection.
+    state.requestSerial += 1;
+    state.controller?.abort();
+    const previous = state.currentRecord;
+    state.currentRecord = state.referenceRecord;
+    state.referenceRecord = previous;
+    state.selectedCell = state.currentRecord.cell;
+    updateLocation(state.currentRecord.cell);
+    renderCurrentPayload();
+  }
+
   function resetValues(message) {
     for (const element of [elements.annualTemperature, elements.annualPrecipitation, elements.annualSolar, elements.annualHumidity]) {
       element.textContent = "—";
@@ -1356,9 +1538,9 @@
     elements.annualHumidityNote.textContent = "地上2m";
     elements.monthlyHeading.textContent = "月別の数値表（平均日最高・平均日最低）";
     elements.comparisonKeys.forEach((element) => { element.hidden = true; });
-    renderDailyTemperatureChart(null, null, "データを取得しています");
-    renderDailySolarChart(null, null, "データを取得しています");
-    renderDailyHumidityChart(null, null, "データを取得しています");
+    renderDailyTemperatureChart(null, null, message);
+    renderDailySolarChart(null, null, message);
+    renderDailyHumidityChart(null, null, message);
     renderChart(elements.precipitationChart, [], null, "#71827e", "line");
     const row = document.createElement("tr");
     const cell = document.createElement("td");
@@ -1375,7 +1557,7 @@
     const requestSerial = state.requestSerial;
     if (state.controller) state.controller.abort();
     state.controller = null;
-    if (state.cache.has(cacheKey)) {
+    if (state.cache.get(cacheKey)?.daily) {
       const cached = state.cache.get(cacheKey);
       state.currentRecord = { ...state.currentRecord, cell, climate: cached.climate, daily: cached.daily };
       renderCurrentPayload();
@@ -1415,7 +1597,7 @@
       state.currentRecord = { ...state.currentRecord, cell, climate: climatePayload, daily: dailyPayload };
       renderCurrentPayload();
       const version = climatePayload?.header?.api?.version;
-      const status = dailyPayload ? "取得完了" : "月別値を表示｜日別最高・最低は取得できませんでした";
+      const status = dailyPayload ? "取得完了" : "日別データを取得できませんでした。同じ地点の再選択で再試行できます";
       setStatus(version ? `${status}｜API ${version}` : status, dailyPayload ? "ready" : "error");
     } catch (error) {
       if (error.name === "AbortError" || requestSerial !== state.requestSerial) return;
@@ -1441,7 +1623,7 @@
     state.selectedCell = cell;
     updateLocation(cell);
     drawSelections();
-    setResultPanelPage("overview");
+    if (!state.referenceRecord) setResultPanelPage("overview");
     openResultPanel();
     loadClimate(cell);
   }
@@ -1558,6 +1740,7 @@
   elements.setReference.addEventListener("click", setReferenceFromCurrent);
   elements.toggleComparison.addEventListener("click", toggleComparison);
   elements.clearReference.addEventListener("click", clearReference);
+  elements.swapLocations.addEventListener("click", swapLocations);
   elements.closeResults.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
   elements.resultTabs.forEach((button) => {

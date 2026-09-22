@@ -18,8 +18,8 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260922-climatecompare1">
-  <script src="./app.js?v=20260922-climatecompare1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260922-climatecompare2">
+  <script src="./app.js?v=20260922-climatecompare2" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -189,17 +189,31 @@
         <aside id="resultPanel" class="result-panel" aria-labelledby="resultHeading" hidden>
           <div class="result-heading">
             <div class="result-heading-copy">
-              <span id="selectionState" class="eyebrow">比較先</span>
-              <h2 id="resultHeading">地点を選択</h2>
+              <h2 id="resultHeading">気候を比較</h2>
+              <span class="result-period">1991–2020年の気候平均</span>
             </div>
             <span class="result-drag-hint">つまんで移動</span>
-            <div class="result-header-actions" aria-label="気候の比較操作">
-              <button id="setReference" class="header-action set-reference" type="button" disabled><span class="wide-label">この地点を</span>基準に</button>
-              <button id="toggleComparison" class="header-action compare-toggle" type="button" aria-pressed="true" hidden><span class="wide-label">基準：</span><span id="referenceShortLabel">—</span></button>
-              <button id="clearReference" class="header-action reference-clear" type="button" aria-label="比較基準を解除" hidden>解除</button>
-            </div>
+            <button id="swapLocations" class="header-action" type="button" hidden>A・Bを入れ替え</button>
             <button id="closeResults" class="drawer-close" type="button" aria-controls="resultPanel" aria-expanded="true" aria-label="気候データを閉じる">×</button>
           </div>
+
+          <section class="comparison-locations" aria-label="基準地点と比較地点">
+            <div id="referenceCard" class="location-card reference-location">
+              <div class="location-card-top"><strong class="location-role"><b>A</b> 基準地点 <span>固定</span></strong><div class="location-actions">
+                <button id="toggleComparison" class="header-action compare-toggle" type="button" aria-pressed="true" hidden><span id="referenceShortLabel">重ね表示 ON</span></button>
+                <button id="clearReference" class="header-action reference-clear" type="button" aria-label="基準地点を解除" hidden>解除</button>
+              </div></div>
+              <strong id="referenceLocation" class="location-name">まだ設定されていません</strong>
+              <span id="referenceDetail" class="location-detail">比べたい地点を選び「基準に固定」</span>
+            </div>
+            <div id="currentCard" class="location-card current-location">
+              <div class="location-card-top"><strong class="location-role"><b>B</b> <span id="selectionState">選択地点</span></strong><div class="location-actions">
+                <button id="setReference" class="header-action set-reference" type="button" disabled>この地点を基準に固定</button>
+              </div></div>
+              <strong id="currentLocation" class="location-name">地図で地点を選択</strong>
+              <span id="currentDetail" class="location-detail">国と周辺地域を表示します</span>
+            </div>
+          </section>
 
           <div class="result-tabs" role="tablist" aria-label="表示する気候情報">
             <button id="resultTabOverview" type="button" role="tab" aria-selected="true" aria-controls="resultPageOverview" data-result-tab="overview">概要</button>
@@ -215,10 +229,10 @@
               <span id="requestStatus" class="status" role="status" aria-live="polite">地図をクリックしてください</span>
 
               <div id="locationSummary" class="location-summary">
-                <strong>気象格子：約0.5°×0.625°（橙枠）</strong>
+                <strong>気象格子：約0.5°×0.625°（地図の枠）</strong>
                 <span>格子中心：—</span>
                 <span class="place-summary">国・地域：—｜周辺：—</span>
-                <small>気温・降水・相対湿度は橙枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。</small>
+                <small>気温・降水・相対湿度は選択した枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。</small>
               </div>
 
               <div class="metric-grid" aria-label="年平均値">
@@ -315,7 +329,7 @@
     <section>
       <h2>データと利用上の注意</h2>
       <p>気候データ：<a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA Langley Research Center POWER Project</a>。全球分布図は公開AWS Zarrの月別データから1991年1月〜2020年12月を独自集計し、地点詳細はClimatology API / Daily APIから取得しています。降水量は日平均量に各月・年の日数を掛けて月降水量・年降水量へ換算しています。NASAは本ツールを承認または推奨するものではありません。</p>
-      <p>橙枠は、クリック位置に最も近いNASA POWER気象格子の中心に合わせた約0.5°×0.625°の範囲です。白い小点は格子中心です。気温・降水量・相対湿度は橙枠に対応する元格子の空間平均を示します。日射量は同じ中心点に対応する別の1°×1°格子の値で、橙枠とは範囲が異なります。</p>
+      <p>地図の枠（基準Aは青・比較Bは橙）は、クリック位置に最も近いNASA POWER気象格子の中心に合わせた約0.5°×0.625°の範囲です。白い小点は格子中心です。気温・降水量・相対湿度は選択した枠に対応する元格子の空間平均を示します。日射量は同じ中心点に対応する別の1°×1°格子の値で、この枠とは範囲が異なります。</p>
       <p>気候区分：<a href="https://doi.org/10.6084/m9.figshare.c.6395666" target="_blank" rel="noopener noreferrer">Beckほか（2023）ケッペン＝ガイガー気候区分</a>の1991–2020年・0.1°版（CC0）をWebメルカトルへ再投影しています。区分境界付近には不確実性があります。</p>
       <p>地図境界・国名・周辺都市：<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a> 1:50m Admin 0 Countries / 1:10m Populated Places Simple v5.1.2（Public Domain）。格子中心が属する国・地域と、主要都市・行政中心点からの概算位置を表示します。行政区画の判定ではなく、境界・名称表示は法的立場を示すものではありません。</p>
       <p>本ツールは広域の気候傾向を確認する試作版です。局地的な地形、都市、沿岸、標高、品種、栽培環境の差は表現しません。栽培可否の断定には使用しないでください。</p>
