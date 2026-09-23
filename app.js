@@ -766,8 +766,67 @@
     if (!bounds) return;
     const centerX = (bounds.minX + bounds.maxX) / 2;
     const centerY = (bounds.minY + bounds.maxY) / 2;
-    const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
-    setView(clamp(MAP_SIZE / (span * 1.8), 1, 8), centerX, centerY);
+    setView(state.zoom, centerX, centerY);
+  }
+
+  function nativeOuterRings(features) {
+    // The bundled Natural Earth polygons share identical, oppositely directed border segments.
+    // Cancel shared segments so adjacent native countries have one outside boundary.
+    const edges = new Map();
+    for (const feature of features) {
+      const geometry = feature.geometry;
+      const polygons = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+      for (const polygon of polygons) {
+        for (const ring of polygon) {
+          for (let index = 1; index < ring.length; index += 1) {
+            const from = ring[index - 1];
+            const to = ring[index];
+            const fromKey = JSON.stringify(from);
+            const toKey = JSON.stringify(to);
+            const edgeKey = [fromKey, toKey].sort().join("|");
+            const previous = edges.get(edgeKey);
+            if (!previous) {
+              edges.set(edgeKey, { fromKey, toKey, from });
+            } else {
+              if (previous.toKey !== fromKey || previous.fromKey !== toKey) {
+                throw new Error("原産国の境界が一致しません");
+              }
+              edges.delete(edgeKey);
+            }
+          }
+        }
+      }
+    }
+    const next = new Map();
+    for (const edge of edges.values()) {
+      if (next.has(edge.fromKey)) throw new Error("原産国の外周が分岐しています");
+      next.set(edge.fromKey, edge);
+    }
+    const visited = new Set();
+    const rings = [];
+    for (const start of next.keys()) {
+      if (visited.has(start)) continue;
+      const ring = [];
+      let current = start;
+      while (!visited.has(current)) {
+        const edge = next.get(current);
+        if (!edge) throw new Error("原産国の外周が閉じていません");
+        visited.add(current);
+        ring.push(edge.from);
+        current = edge.toKey;
+      }
+      if (current !== start) throw new Error("原産国の外周が交差しています");
+      let signedArea = 0;
+      for (let index = 0; index < ring.length; index += 1) {
+        const from = ring[index];
+        const to = ring[(index + 1) % ring.length];
+        signedArea += from[0] * to[1] - to[0] * from[1];
+      }
+      // Natural Earth exterior rings are clockwise; ignore its near-zero seam artifact.
+      if (signedArea < -0.002) rings.push(ring);
+    }
+    if (visited.size !== next.size || !rings.length) throw new Error("原産国の外周を作れません");
+    return rings;
   }
 
   function nativeBounds(features) {
@@ -814,16 +873,18 @@
       elements.border.replaceChildren(borderFragment);
       const nativeFeatures = collection.features.filter((feature) => SANSEVIERIA_NATIVE_CODES.has(feature.properties?.code));
       if (nativeFeatures.length === SANSEVIERIA_NATIVE_CODES.size) {
-        const originFragment = document.createDocumentFragment();
-        for (const feature of nativeFeatures) {
-          const pathData = geometryToPath(feature.geometry);
-          originFragment.append(svgElement("path", { d: pathData, class: "plant-origin-halo", "fill-rule": "evenodd" }));
-          originFragment.append(svgElement("path", { d: pathData, class: "plant-origin-outline", "fill-rule": "evenodd" }));
+        try {
+          const pathData = nativeOuterRings(nativeFeatures).map(ringToPath).join(" ");
+          elements.plantOrigin.replaceChildren(
+            svgElement("path", { d: pathData, class: "plant-origin-halo" }),
+            svgElement("path", { d: pathData, class: "plant-origin-outline" }),
+          );
+          state.plantOriginBounds = nativeBounds(nativeFeatures);
+          elements.toggleSansevieria.disabled = false;
+          updatePlantOrigin();
+        } catch (error) {
+          elements.plantChoiceState.textContent = "表示できません";
         }
-        elements.plantOrigin.replaceChildren(originFragment);
-        state.plantOriginBounds = nativeBounds(nativeFeatures);
-        elements.toggleSansevieria.disabled = false;
-        updatePlantOrigin();
       } else {
         elements.plantChoiceState.textContent = "表示できません";
       }
@@ -2214,7 +2275,6 @@
     if (!state.plantOriginBounds) return;
     state.plantVisible = !state.plantVisible;
     updatePlantOrigin();
-    if (state.plantVisible) focusPlantOrigin();
   });
   elements.focusSansevieria.addEventListener("click", focusPlantOrigin);
   elements.map.addEventListener("pointerdown", beginDrag);

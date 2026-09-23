@@ -159,7 +159,7 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260923-sansevieria\" defer></script>" in index, "versioned local deferred script missing")
+    require("<script src=\"./app.js?v=20260923-native-outline\" defer></script>" in index, "versioned local deferred script missing")
     require('href="./styles.css?v=20260923-sansevieria"' in index, "versioned local stylesheet missing")
     require('id="toggleSansevieria"' in index and 'id="plantOriginLayer"' in index, "plant selection or native-country layer missing")
     require("国全域の自生を示す線ではありません" in index, "native-country boundary caveat missing")
