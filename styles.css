@@ -235,6 +235,98 @@ a { color: var(--green-dark); }
   font-weight: 900;
 }
 
+.plant-picker {
+  padding: 12px;
+  border-bottom: 1px solid #d1dfdc;
+  background: #eef5f1;
+}
+
+.plant-picker-heading span {
+  color: #426d5a;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+}
+
+.plant-picker-heading h3 {
+  margin: 2px 0 8px;
+  color: #234a3d;
+  font-size: 0.86rem;
+}
+
+.plant-choice {
+  width: 100%;
+  min-height: 60px;
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  border: 1px solid #91b1a0;
+  border-radius: 8px;
+  color: #173f31;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plant-choice span { display: grid; gap: 2px; }
+.plant-choice strong { font-size: 0.75rem; }
+.plant-choice small { color: #61766b; font-size: 0.59rem; font-style: italic; }
+.plant-choice b {
+  flex: none;
+  padding: 5px 7px;
+  border-radius: 5px;
+  color: #2b604a;
+  background: #e7f2eb;
+  font-size: 0.59rem;
+}
+
+.plant-choice[aria-pressed="true"] {
+  border-color: #183f30;
+  box-shadow: inset 4px 0 #183f30;
+}
+
+.plant-choice[aria-pressed="true"] b { color: #fff; background: #183f30; }
+.plant-choice:disabled { opacity: 0.65; cursor: wait; }
+.plant-choice:hover:not(:disabled),
+.plant-choice:focus-visible,
+.plant-origin-actions button:hover,
+.plant-origin-actions button:focus-visible { outline: 2px solid #4a876c; outline-offset: 2px; }
+
+.plant-origin-info {
+  margin-top: 9px;
+  padding: 9px;
+  border: 1px solid #b9d0c2;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.plant-origin-info p { margin: 0; color: #274635; font-size: 0.65rem; line-height: 1.45; }
+.plant-origin-info .origin-caveat { margin-top: 5px; color: #5e6d62; font-size: 0.6rem; }
+.origin-line-key {
+  width: 23px;
+  display: inline-block;
+  margin: 0 6px 3px 0;
+  border-top: 4px solid #111;
+  vertical-align: middle;
+}
+
+.plant-origin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
+.plant-origin-actions button {
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid #648b75;
+  border-radius: 5px;
+  color: #194630;
+  background: #ecf5ee;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.plant-origin-actions a { color: #246449; font-size: 0.62rem; font-weight: 800; }
+
 .layer-panel-body {
   padding: 12px;
   display: grid;
@@ -521,6 +613,18 @@ a { color: var(--green-dark); }
   vector-effect: non-scaling-stroke;
 }
 
+.plant-origin-halo,
+.plant-origin-outline {
+  fill: none;
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.plant-origin-halo { stroke: rgba(255, 255, 255, 0.9); stroke-width: 7; }
+.plant-origin-outline { stroke: #111; stroke-width: 3.5; }
+
 .selection-cell {
   fill: rgba(227, 107, 53, 0.18);
   stroke: var(--accent);
@@ -611,6 +715,24 @@ a { color: var(--green-dark); }
   white-space: nowrap;
   pointer-events: none;
 }
+
+.plant-map-badge {
+  position: absolute;
+  z-index: 3;
+  top: 59px;
+  left: 12px;
+  max-width: min(340px, calc(100% - 24px));
+  padding: 6px 9px;
+  border: 1px solid rgba(32, 49, 37, 0.35);
+  border-radius: 6px;
+  color: #1c382a;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 0.68rem;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.plant-map-badge .origin-line-key { margin-bottom: 2px; }
 
 .climate-legend {
   position: absolute;
@@ -1375,6 +1497,9 @@ footer p + p { margin-top: 5px; }
   .layer-panel-heading span { display: none; }
   .layer-panel-heading h2 { margin: 0; font-size: 0.9rem; }
   #toggleLayerPanel { display: block; }
+  .plant-picker { padding: 8px 10px; }
+  .plant-picker-heading { display: none; }
+  .plant-choice { min-height: 46px; }
   .layer-panel-body { display: none; max-height: 58svh; overflow-y: auto; }
   .layer-panel.is-open .layer-panel-body { display: grid; }
   .layer-panel.is-open #toggleLayerPanel { transform: rotate(180deg); }
@@ -1400,6 +1525,8 @@ footer p + p { margin-top: 5px; }
     max-width: calc(100% - 16px);
     font-size: 0.66rem;
   }
+
+  .plant-map-badge { top: 85px; left: 8px; font-size: 0.6rem; }
 
   .map-controls button {
     min-width: 37px;

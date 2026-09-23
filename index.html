@@ -18,8 +18,8 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260923-season-align">
-  <script src="./app.js?v=20260923-season-align" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260923-sansevieria">
+  <script src="./app.js?v=20260923-sansevieria" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -73,6 +73,24 @@
         </div>
         <button id="toggleLayerPanel" type="button" aria-controls="layerPanelBody" aria-expanded="false" aria-label="地図レイヤー設定を開閉">⌄</button>
       </div>
+
+      <section class="plant-picker" aria-labelledby="plantPickerHeading">
+        <div class="plant-picker-heading">
+          <div><span>PLANT GUIDE · 試験表示</span><h3 id="plantPickerHeading">植物から探す</h3></div>
+        </div>
+        <button id="toggleSansevieria" class="plant-choice" type="button" aria-pressed="false" aria-controls="plantOriginInfo" disabled>
+          <span><strong>サンスベリア（トラノオ）</strong><small>Dracaena trifasciata</small></span>
+          <b id="plantChoiceState">地図読込中</b>
+        </button>
+        <div id="plantOriginInfo" class="plant-origin-info" hidden>
+          <p><span class="origin-line-key" aria-hidden="true"></span>黒い太線：Kewが記す原産国の目安</p>
+          <p class="origin-caveat">国全域の自生を示す線ではありません。囲み内の地点を選んで気候を比べられます。</p>
+          <div class="plant-origin-actions">
+            <button id="focusSansevieria" type="button">原産国へ移動</button>
+            <a href="https://powo.science.kew.org/taxon/77164235-1" target="_blank" rel="noopener noreferrer">分布の出典：Kew</a>
+          </div>
+        </div>
+      </section>
 
       <div id="layerPanelBody" class="layer-panel-body">
         <section class="layer-control-group" aria-labelledby="elementHeading">
@@ -162,6 +180,7 @@
                 <image id="climateImage" class="climate-raster" x="0" y="0" width="1000" height="1000" preserveAspectRatio="none" data-src="./data/koppen-geiger-1991-2020.png"></image>
               </g>
               <g id="borderLayer" aria-hidden="true"></g>
+              <g id="plantOriginLayer" aria-hidden="true"></g>
             </g>
           </defs>
           <use href="#worldLayer" x="-1000" aria-hidden="true"></use>
@@ -176,6 +195,7 @@
           <button id="resetView" type="button">全体</button>
         </div>
         <div id="mapLayerLabel" class="map-layer-label">年平均｜平均気温</div>
+        <div id="plantMapBadge" class="plant-map-badge" hidden><span class="origin-line-key" aria-hidden="true"></span>サンスベリア｜黒太線＝原産国の目安</div>
         <section id="climateLegend" class="climate-legend" aria-label="ケッペン＝ガイガー気候区分の凡例" hidden>
           <div class="climate-legend-heading">
             <strong>ケッペン＝ガイガー気候区分</strong>

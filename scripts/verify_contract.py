@@ -159,8 +159,12 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260923-season-align\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260923-season-align"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260923-sansevieria\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260923-sansevieria"' in index, "versioned local stylesheet missing")
+    require('id="toggleSansevieria"' in index and 'id="plantOriginLayer"' in index, "plant selection or native-country layer missing")
+    require("国全域の自生を示す線ではありません" in index, "native-country boundary caveat missing")
+    require("https://powo.science.kew.org/taxon/77164235-1" in index, "Kew species source missing")
+    require(".plant-origin-outline" in styles and "stroke-width: 3.5" in styles, "native-country outline style missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -307,6 +311,11 @@ def main() -> None:
     require(collection.get("type") == "FeatureCollection", "world map is not a FeatureCollection")
     features = collection.get("features")
     require(isinstance(features, list) and 230 <= len(features) <= 270, "unexpected Natural Earth feature count")
+    native_codes = {"CMR", "CAF", "COG", "COD", "GNQ", "GAB", "NGA", "TZA"}
+    require(native_codes <= {feature.get("properties", {}).get("code") for feature in features}, "Kew native-country boundaries missing")
+    native_mapping = re.search(r"const SANSEVIERIA_NATIVE_CODES = new Set\(\[([^]]+)\]\);", app)
+    require(native_mapping is not None, "Kew native-country mapping missing")
+    require(set(re.findall(r'"([A-Z]{3})"', native_mapping.group(1))) == native_codes, "Kew native-country mapping mismatch")
     coordinate_count = 0
     capital_count = 0
     for feature in features:

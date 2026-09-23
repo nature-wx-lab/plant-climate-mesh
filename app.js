@@ -61,6 +61,8 @@
     ["Dfa", "高温・乾季なし"], ["Dfb", "温暖・乾季なし"], ["Dfc", "冷涼・乾季なし"], ["Dfd", "厳冬・乾季なし"],
     ["ET", "ツンドラ"], ["EF", "氷雪"],
   ];
+  // Kew POWO, Dracaena trifasciata (including both accepted subspecies): native countries.
+  const SANSEVIERIA_NATIVE_CODES = new Set(["CMR", "CAF", "COG", "COD", "GNQ", "GAB", "NGA", "TZA"]);
 
   const elements = {
     map: document.getElementById("worldMap"),
@@ -68,6 +70,13 @@
     graticule: document.getElementById("graticuleLayer"),
     land: document.getElementById("landLayer"),
     border: document.getElementById("borderLayer"),
+    plantOrigin: document.getElementById("plantOriginLayer"),
+    toggleSansevieria: document.getElementById("toggleSansevieria"),
+    plantChoiceState: document.getElementById("plantChoiceState"),
+    plantOriginInfo: document.getElementById("plantOriginInfo"),
+    focusSansevieria: document.getElementById("focusSansevieria"),
+    plantMapBadge: document.getElementById("plantMapBadge"),
+    mapDescription: document.getElementById("mapDescription"),
     weather: document.getElementById("weatherLayer"),
     weatherImage: document.getElementById("weatherImage"),
     japanOcclusion: document.getElementById("japanOcclusion"),
@@ -153,6 +162,8 @@
     countries: [],
     places: [],
     geographyStatus: "loading",
+    plantVisible: false,
+    plantOriginBounds: null,
     currentRecord: null,
     referenceRecord: null,
     comparisonEnabled: true,
@@ -738,6 +749,44 @@
     return "";
   }
 
+  function updatePlantOrigin() {
+    const visible = state.plantVisible && Boolean(state.plantOriginBounds);
+    elements.plantOrigin.toggleAttribute("hidden", !visible);
+    elements.plantOriginInfo.toggleAttribute("hidden", !visible);
+    elements.plantMapBadge.toggleAttribute("hidden", !visible);
+    elements.toggleSansevieria.setAttribute("aria-pressed", String(visible));
+    elements.plantChoiceState.textContent = visible ? "表示中" : "表示する";
+    elements.mapDescription.textContent = visible
+      ? "日本の気温・降水・日射・湿度は約1kmの独自推定、日本以外はNASA POWERの気候平均を表示します。サンスベリア（Dracaena trifasciata）のKew掲載原産国を黒い太線で概略表示します。線は実際の自生域境界ではありません。"
+      : "日本の気温・降水・日射・湿度は約1kmの独自推定、日本以外はNASA POWERの気候平均を表示します。";
+  }
+
+  function focusPlantOrigin() {
+    const bounds = state.plantOriginBounds;
+    if (!bounds) return;
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+    const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
+    setView(clamp(MAP_SIZE / (span * 1.8), 1, 8), centerX, centerY);
+  }
+
+  function nativeBounds(features) {
+    const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+    const visit = (coordinates) => {
+      if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+        const [x, y] = project(coordinates[0], coordinates[1]);
+        bounds.minX = Math.min(bounds.minX, x);
+        bounds.maxX = Math.max(bounds.maxX, x);
+        bounds.minY = Math.min(bounds.minY, y);
+        bounds.maxY = Math.max(bounds.maxY, y);
+        return;
+      }
+      for (const coordinate of coordinates) visit(coordinate);
+    };
+    for (const feature of features) visit(feature.geometry.coordinates);
+    return bounds;
+  }
+
   async function loadWorldMap() {
     try {
       const response = await fetch("./data/world-50m.geojson", {
@@ -763,12 +812,28 @@
       }
       elements.land.replaceChildren(fragment);
       elements.border.replaceChildren(borderFragment);
+      const nativeFeatures = collection.features.filter((feature) => SANSEVIERIA_NATIVE_CODES.has(feature.properties?.code));
+      if (nativeFeatures.length === SANSEVIERIA_NATIVE_CODES.size) {
+        const originFragment = document.createDocumentFragment();
+        for (const feature of nativeFeatures) {
+          const pathData = geometryToPath(feature.geometry);
+          originFragment.append(svgElement("path", { d: pathData, class: "plant-origin-halo", "fill-rule": "evenodd" }));
+          originFragment.append(svgElement("path", { d: pathData, class: "plant-origin-outline", "fill-rule": "evenodd" }));
+        }
+        elements.plantOrigin.replaceChildren(originFragment);
+        state.plantOriginBounds = nativeBounds(nativeFeatures);
+        elements.toggleSansevieria.disabled = false;
+        updatePlantOrigin();
+      } else {
+        elements.plantChoiceState.textContent = "表示できません";
+      }
       if (state.referenceRecord?.cell) {
         state.referenceRecord.location = describeLocation(state.referenceRecord.cell);
       }
       if (state.selectedCell) updateLocation(state.selectedCell);
     } catch (error) {
       state.geographyStatus = "error";
+      elements.plantChoiceState.textContent = "地図を読めません";
       if (state.referenceRecord?.cell) state.referenceRecord.location = describeLocation(state.referenceRecord.cell);
       if (state.selectedCell) updateLocation(state.selectedCell);
     }
@@ -2145,6 +2210,13 @@
     const expanded = elements.layerPanel.classList.toggle("is-open");
     elements.toggleLayerPanel.setAttribute("aria-expanded", String(expanded));
   });
+  elements.toggleSansevieria.addEventListener("click", () => {
+    if (!state.plantOriginBounds) return;
+    state.plantVisible = !state.plantVisible;
+    updatePlantOrigin();
+    if (state.plantVisible) focusPlantOrigin();
+  });
+  elements.focusSansevieria.addEventListener("click", focusPlantOrigin);
   elements.map.addEventListener("pointerdown", beginDrag);
   elements.map.addEventListener("pointermove", moveDrag);
   elements.map.addEventListener("pointerup", endDrag);

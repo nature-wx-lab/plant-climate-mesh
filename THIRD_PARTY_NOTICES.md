@@ -32,6 +32,15 @@ The world boundary layer and country names are derived from Natural Earth 1:50m 
 
 Country boundaries are shown only as geographic context and do not express a legal position.
 
+## Sansevieria native-country guide
+
+The experimental plant guide refers to *Dracaena trifasciata* (synonym *Sansevieria trifasciata*), not every plant commonly called Sansevieria. Its native-country list is adapted from the Royal Botanic Gardens, Kew, Plants of the World Online / Kew Backbone Distributions: Cameroon, Central African Republic, Congo, DR Congo, Equatorial Guinea, Gabon, Nigeria, and Tanzania. The source lists two accepted subspecies, including one in Tanzania. The map draws the entire Natural Earth country boundary for each listed country; those lines are **not** observed or modelled wild-range boundaries, and do not imply that the species occurs throughout each country. No occurrence points or habitat polygons are distributed.
+
+- Species and distribution: <https://powo.science.kew.org/taxon/77164235-1>
+- Kew Backbone Distributions / World Checklist of Vascular Plants: CC BY 3.0, <https://creativecommons.org/licenses/by/3.0/>
+
+The native-country list was checked on 2026-09-23. The cartographic outline is our own visual adaptation of that list using the Natural Earth boundary layer credited above. Kew does not endorse this site.
+
 ## Köppen–Geiger climate classification
 
 The optional climate-classification overlay is derived from the 1991–2020, 0.1-degree map in Beck et al. (2023). The distributed raster is reprojected to Web Mercator with nearest-neighbour sampling and retains the source class colors. The Figshare dataset is distributed under CC0 1.0.
