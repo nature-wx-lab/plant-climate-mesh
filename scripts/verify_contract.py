@@ -40,6 +40,7 @@ SOURCE_FILES = {
     "scripts/build_deployment_manifest.py",
     "scripts/build_climate_layers.py",
     "scripts/build_japan_1km.py",
+    "scripts/build_japan_humidity.py",
     "scripts/climate_layers_requirements.txt",
     "scripts/privacy_gate.py",
     "scripts/verify_contract.py",
@@ -149,8 +150,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260923-japan1km\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260923-japan1km"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260923-humidity1km\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260923-humidity1km"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -195,7 +196,8 @@ def main() -> None:
     require('id="layerPeriod"' in index and index.count('<option value=') == 13, "annual and monthly period selector missing")
     require('id="weatherLayerToggle"' in index and 'id="weatherLayerOpacity"' in index, "weather-layer display controls missing")
     require('id="weatherLayer"' in index and 'id="weatherImage"' in index, "weather raster layer missing")
-    require("日本の気温・降水・日射は約1kmの独自推定" in index, "map-layer provenance missing")
+    require("日本の気温・降水・日射・湿度は約1kmの独自推定" in index, "map-layer provenance missing")
+    require("日本のメッシュをクリックしてもNASA POWERへは接続しません" in index, "Japan privacy disclosure missing")
     require('id="japanImage"' in index and 'id="japanOcclusion"' in index, "Japan map overlay missing")
     for chart_id in ("temperatureChart", "precipitationChart", "solarChart", "humidityChart"):
         require(f'id="{chart_id}"' in index, f"chart missing: {chart_id}")
@@ -240,6 +242,9 @@ def main() -> None:
     require("function averageByCalendarDay(payload, key)" in app, "daily calendar aggregation missing")
     require("function loadJapanClimate(cell, requestSerial)" in app and "function updateJapanMap()" in app,
             "Japan point or map integration missing")
+    require("function loadJapanHumidityMapChunk(prefix)" in app, "Japan humidity map integration missing")
+    require('"humidity", "RH2M"' in app and 'RH2M: japanMonthlySeries(perCell.humidity, "humidity")' in app,
+            "Japan humidity point integration missing")
     require("function averageDailyValuesByMonth(payload, key)" in app, "monthly daily-extreme aggregation missing")
     require("function renderDailySolarChart(payload" in app, "daily solar chart missing")
     require("各暦日の平均全天日射量" in index, "daily solar chart label missing")
@@ -367,7 +372,13 @@ def main() -> None:
         codes = struct.unpack_from(f"<{count}I", raw)
         require(all(code // 10000 == int(prefix) for code in codes), f"Japan mesh prefix mismatch: {prefix}")
         require(all(first < second for first, second in zip(codes, codes[1:])), f"Japan mesh order mismatch: {prefix}")
-    for layer in ("temperature", "precipitation", "solar"):
+        humidity_raw = gzip.decompress((ROOT / f"data/japan-1km/map-humidity-{prefix}.bin.gz").read_bytes())
+        require(len(humidity_raw) == count * (4 + 13 * 2), f"Japan humidity map chunk length mismatch: {prefix}")
+        require(struct.unpack_from(f"<{count}I", humidity_raw) == codes,
+                f"Japan humidity map mesh order mismatch: {prefix}")
+        daily_humidity = gzip.decompress((ROOT / f"data/japan-1km/daily-humidity-{prefix}.bin.gz").read_bytes())
+        require(len(daily_humidity) == count * 366 * 2, f"Japan daily humidity chunk length mismatch: {prefix}")
+    for layer in ("temperature", "precipitation", "solar", "humidity"):
         for period in CLIMATE_LAYER_PERIODS:
             raw = (ROOT / f"data/japan-1km/overview-{layer}-{period}.png").read_bytes()
             require(raw.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", raw[16:24]) == (2048, 2048),

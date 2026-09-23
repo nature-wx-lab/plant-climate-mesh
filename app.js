@@ -167,6 +167,7 @@
     selectionSerial: 0,
     japanCatalog: null,
     japanMapCache: new Map(),
+    japanHumidityMapCache: new Map(),
     japanDailyCache: new Map(),
     japanMapSerial: 0,
   };
@@ -479,9 +480,7 @@
     const path = `./data/climate-layers/${state.weatherLayer}-${state.weatherPeriod}.png`;
     elements.activeLayerPeriod.textContent = label;
     elements.activeLayerName.textContent = config.name;
-    elements.activeLayerMeta.textContent = state.weatherLayer === "humidity"
-      ? `1991–2020年の気候平均｜全球 ${config.grid}（日本も同じ）`
-      : `1991–2020年の気候平均｜日本は1km独自推定、その他は${config.grid}`;
+    elements.activeLayerMeta.textContent = `1991–2020年の気候平均｜日本は1km独自推定、その他は${config.grid}`;
     elements.mapLayerLabel.textContent = state.weatherVisible ? `${label}｜${config.name}` : "気象レイヤー非表示";
     elements.layerStatus.textContent = "読み込み中";
     elements.layerStatus.dataset.state = "loading";
@@ -555,6 +554,20 @@
     return state.japanMapCache.get(prefix);
   }
 
+  function loadJapanHumidityMapChunk(prefix) {
+    if (!state.japanHumidityMapCache.has(prefix)) {
+      const promise = Promise.all([loadJapanMapChunk(prefix), fetchJapanBinary(`map-humidity-${prefix}.bin.gz`)]).then(([base, buffer]) => {
+        const length = base.codes.length;
+        if (buffer.byteLength !== length * (4 + 13 * 2)) throw new Error("日本1km湿度地図データの長さが不正です");
+        const codes = new Uint32Array(buffer, 0, length);
+        if (!codes.every((code, index) => code === base.codes[index])) throw new Error("日本1km湿度格子が一致しません");
+        return { codes, humidity: new Int16Array(buffer, length * 4, length * 13) };
+      }).catch((error) => { state.japanHumidityMapCache.delete(prefix); throw error; });
+      state.japanHumidityMapCache.set(prefix, promise);
+    }
+    return state.japanHumidityMapCache.get(prefix);
+  }
+
   function binarySearchCode(codes, code) {
     let low = 0;
     let high = codes.length;
@@ -615,7 +628,7 @@
 
   async function updateJapanMap() {
     const serial = ++state.japanMapSerial;
-    if (!state.weatherVisible || state.weatherLayer === "humidity") {
+    if (!state.weatherVisible) {
       elements.japanImage.removeAttribute("href");
       elements.japanOcclusion.removeAttribute("href");
       return;
@@ -643,7 +656,8 @@
         elements.japanOcclusion.removeAttribute("href");
         return;
       }
-      const chunks = await Promise.all(prefixes.map(loadJapanMapChunk));
+      const chunks = await Promise.all(prefixes.map(state.weatherLayer === "humidity"
+        ? loadJapanHumidityMapChunk : loadJapanMapChunk));
       if (serial !== state.japanMapSerial) return;
       const canvas = document.createElement("canvas");
       canvas.width = 1024;
@@ -655,7 +669,7 @@
       const maskContext = maskCanvas.getContext("2d", { alpha: true });
       maskContext.fillStyle = "#f8faf8";
       const period = state.weatherPeriod === "annual" ? 12 : Number(state.weatherPeriod) - 1;
-      const name = { temperature: "tmean", precipitation: "precip", solar: "solar" }[state.weatherLayer];
+      const name = { temperature: "tmean", precipitation: "precip", humidity: "humidity", solar: "solar" }[state.weatherLayer];
       const stops = weatherStops();
       for (const chunk of chunks) {
         const values = chunk[name];
@@ -999,7 +1013,7 @@
     place.textContent = `国・地域：${location.countryName}｜周辺：${location.areaLabel}`;
     const note = document.createElement("small");
     note.textContent = cell.kind?.startsWith("japan-")
-      ? "気温・降水・日射は気象庁の日別平年値と既存の月別1kmメッシュから独自推定。相対湿度だけNASA POWERの粗い格子です。公式な1km日別平年値ではありません。"
+      ? "気温・降水・日射・相対湿度は観測値を基にした約1kmの独自推定です。気象庁が公表する公式な1km日別平年値ではなく、欠測をNASA値で埋めません。"
       : "気温・降水・相対湿度は選択した枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
     elements.locationSummary.replaceChildren(strong, span, place, note);
     updateComparisonControls();
@@ -1607,7 +1621,7 @@
     elements.referenceCard.classList.toggle("is-empty", !state.currentRecord && !hasReference);
     elements.referenceCard.classList.toggle("overlay-off", hasReference && !state.comparisonEnabled);
     elements.currentCard.classList.toggle("is-empty", currentIsReference);
-    const coordinates = (record) => `格子中心 ${coordinateLabel(record.cell.latitude, "N", "S")} · ${coordinateLabel(record.cell.longitude, "E", "W")}｜${record.cell.kind === "japan-1km" ? "日本1km独自推定（湿度はNASA）" : "NASA POWER"}`;
+    const coordinates = (record) => `格子中心 ${coordinateLabel(record.cell.latitude, "N", "S")} · ${coordinateLabel(record.cell.longitude, "E", "W")}｜${record.cell.kind === "japan-1km" ? "日本1km独自推定" : "NASA POWER"}`;
     const firstRecord = state.referenceRecord || state.currentRecord;
     elements.referenceLocation.textContent = firstRecord?.location.headerLabel || "地図で地点Aを選択";
     elements.referenceDetail.textContent = firstRecord ? coordinates(firstRecord) : "Aを基準に固定すると、比較地点Bを選べます";
@@ -1845,8 +1859,7 @@
     if (cached) {
       state.currentRecord = { ...state.currentRecord, cell, climate: cached.climate, daily: cached.daily };
       renderCurrentPayload();
-      setStatus(cached.humidityAvailable ? "日本1kmデータ取得完了｜湿度はNASA POWER" : "日本1kmデータ取得完了｜湿度は取得できませんでした",
-        cached.humidityAvailable ? "ready" : "error");
+      setStatus(cached.humidityAvailable ? "日本1kmデータ取得完了" : "日本1kmデータ取得完了｜湿度はこのメッシュで欠測", "ready");
       return;
     }
     state.controller = new AbortController();
@@ -1857,19 +1870,8 @@
       const map = await loadJapanMapChunk(prefix);
       const position = binarySearchCode(map.codes, cell.code);
       if (position < 0) throw new Error("選択した1kmメッシュが見つかりません");
-      const variables = ["tmin", "tmean", "tmax", "precip", "solar"];
-      const humidityCell = selectedCell(cell.longitude, cell.latitude);
-      const requestHumidity = (url) => fetch(url, { mode: "cors", credentials: "omit",
-        referrerPolicy: "no-referrer", cache: "force-cache", signal: state.controller.signal,
-      }).then((response) => {
-        if (!response.ok) throw new Error(`湿度 HTTP ${response.status}`);
-        return response.json();
-      });
-      const [values, humidityClimate, humidityDaily] = await Promise.all([
-        Promise.all(variables.map((variable) => loadJapanDaily(prefix, variable, map.codes.length))),
-        requestHumidity(powerUrl(humidityCell, ["RH2M"])).catch(() => null),
-        requestHumidity(dailyPowerUrl(humidityCell, ["RH2M"])).catch(() => null),
-      ]);
+      const variables = ["tmin", "tmean", "tmax", "precip", "solar", "humidity"];
+      const values = await Promise.all(variables.map((variable) => loadJapanDaily(prefix, variable, map.codes.length)));
       if (requestSerial !== state.requestSerial) return;
       const perCell = Object.fromEntries(variables.map((variable, index) => [variable,
         values[index].subarray(position * 366, (position + 1) * 366)]));
@@ -1877,25 +1879,24 @@
         T2M: japanMonthlySeries(perCell.tmean, "tmean"),
         PRECTOTCORR: japanMonthlySeries(perCell.precip, "precip"),
         ALLSKY_SFC_SW_DWN: japanMonthlySeries(perCell.solar, "solar"),
-        RH2M: humidityClimate?.properties?.parameter?.RH2M || {},
+        RH2M: japanMonthlySeries(perCell.humidity, "humidity"),
       };
       const dates = calendarDays();
       const dailyParameter = {};
       for (const [variable, name] of [["tmean", "T2M"], ["tmax", "T2M_MAX"],
-        ["tmin", "T2M_MIN"], ["precip", "PRECTOTCORR"], ["solar", "ALLSKY_SFC_SW_DWN"]]) {
+        ["tmin", "T2M_MIN"], ["precip", "PRECTOTCORR"], ["solar", "ALLSKY_SFC_SW_DWN"],
+        ["humidity", "RH2M"]]) {
         dailyParameter[name] = Object.fromEntries(dates.map((date, index) => [
           `2000${date}`, perCell[variable][index] === JAPAN_MISSING ? FILL_VALUE : perCell[variable][index] / 10,
         ]));
       }
-      dailyParameter.RH2M = humidityDaily?.properties?.parameter?.RH2M || {};
       const climate = { sourceKind: "japan-1km", properties: { parameter } };
       const daily = { sourceKind: "japan-1km", properties: { parameter: dailyParameter } };
-      const humidityAvailable = Boolean(parameter.RH2M.ANN && Object.keys(dailyParameter.RH2M).length);
+      const humidityAvailable = validNumber(parameter.RH2M.ANN);
       state.cache.set(cacheKey, { climate, daily, humidityAvailable });
       state.currentRecord = { ...state.currentRecord, cell, climate, daily };
       renderCurrentPayload();
-      setStatus(humidityAvailable ? "日本1kmデータ取得完了｜湿度はNASA POWER" : "日本1kmデータ取得完了｜湿度は取得できませんでした",
-        humidityAvailable ? "ready" : "error");
+      setStatus(humidityAvailable ? "日本1kmデータ取得完了" : "日本1kmデータ取得完了｜湿度はこのメッシュで欠測", "ready");
     } catch (error) {
       if (error.name === "AbortError" || requestSerial !== state.requestSerial) return;
       resetValues("日本の1kmデータを読み込めませんでした。再度選択してください");

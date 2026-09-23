@@ -40,11 +40,12 @@ def japan_files(root: Path) -> tuple[str, ...]:
     periods = ("annual",) + tuple(f"{month:02}" for month in range(1, 13))
     files = ["data/japan-1km/catalog.json", "data/japan-1km/overview-mask.png"]
     files += [f"data/japan-1km/overview-{variable}-{period}.png"
-              for variable in ("temperature", "precipitation", "solar") for period in periods]
+              for variable in ("temperature", "precipitation", "solar", "humidity") for period in periods]
     for prefix in prefixes:
         files.append(f"data/japan-1km/map-{prefix}.bin.gz")
+        files.append(f"data/japan-1km/map-humidity-{prefix}.bin.gz")
         files += [f"data/japan-1km/daily-{variable}-{prefix}.bin.gz"
-                  for variable in ("tmin", "tmean", "tmax", "precip", "solar")]
+                  for variable in ("tmin", "tmean", "tmax", "precip", "solar", "humidity")]
     return tuple(files)
 
 

@@ -104,9 +104,9 @@ def path_problem(path: Path) -> str | None:
         return "forbidden-file"
     if any(part in FORBIDDEN_PARTS for part in path.parts):
         return "forbidden-directory"
-    japan_daily = re.fullmatch(r"data/japan-1km/daily-(?:tmin|tmean|tmax|precip|solar)-\d{4}\.bin\.gz", path.as_posix())
-    japan_map = re.fullmatch(r"data/japan-1km/map-\d{4}\.bin\.gz", path.as_posix())
-    japan_overview = re.fullmatch(r"data/japan-1km/overview-(?:temperature|precipitation|solar)-(?:annual|\d{2})\.png", path.as_posix())
+    japan_daily = re.fullmatch(r"data/japan-1km/daily-(?:tmin|tmean|tmax|precip|solar|humidity)-\d{4}\.bin\.gz", path.as_posix())
+    japan_map = re.fullmatch(r"data/japan-1km/map-(?:humidity-)?\d{4}\.bin\.gz", path.as_posix())
+    japan_overview = re.fullmatch(r"data/japan-1km/overview-(?:temperature|precipitation|solar|humidity)-(?:annual|\d{2})\.png", path.as_posix())
     if path.suffix.lower() in FORBIDDEN_SUFFIXES and path not in ALLOWED_BINARY_PATHS and path != Path("data/japan-1km/overview-mask.png") and not any((japan_daily, japan_map, japan_overview)):
         return "forbidden-suffix"
     if path.suffix.lower() == ".map":
