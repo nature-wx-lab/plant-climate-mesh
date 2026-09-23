@@ -1187,6 +1187,10 @@ a { color: var(--green-dark); }
 .chart-series-swatch { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
 .chart-series-swatch.swatch-outlined { box-shadow: 0 0 0 1px #202b33; }
 .chart-line-treatment { margin-left: 3px; color: #3f515b; font-size: 10px; font-weight: 500; white-space: nowrap; }
+.season-shift-status { display: block; color: #744210; background: #fff1d9; border: 1px solid #edcb8d; border-radius: 3px; padding: 3px 5px; font-size: 11px; line-height: 1.3; }
+.season-shift-status[hidden] { display: none; }
+.season-shift-toggle[aria-pressed="true"] { color: #6b3c08; background: #fff1d9; border-color: #d6a856; }
+.chart-season-label { color: #744210; font-size: 10px; font-weight: 700; }
 .temperature-chart .chart-key-reference,
 .temperature-chart .chart-key-current { color: #29463f; }
 .chart-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }

@@ -81,7 +81,8 @@ def verify_comparison_math() -> None:
 const assert = require("node:assert/strict");
 const app = require("node:fs").readFileSync(process.argv[1], "utf8");
 const names = ["boundedChartWindow", "validNumber", "calendarDays", "dataSeries",
-  "averageByCalendarDay", "sameCell", "chartLocationGroups", "chartSeriesStyle"];
+  "averageByCalendarDay", "sameCell", "chartLocationGroups", "chartSeriesStyle",
+  "oppositeHemispheres", "shiftedDailyValues", "shiftedMonthIndex"];
 const functions = names.map(name => {
   const match = app.match(new RegExp("^  function " + name + "\\([\\s\\S]*?^  }", "m"));
   assert.ok(match, name + " missing");
@@ -95,6 +96,14 @@ assert.deepEqual(api.boundedChartWindow(100, 101), {start:100,end:106});
 assert.deepEqual(api.boundedChartWindow(0, 999), {start:0,end:365});
 assert.equal(api.calendarDays().length, 366);
 assert.equal(api.calendarDays()[59], "0229");
+const numberedDays = Array.from({length:366}, (_, index) => index);
+assert.equal(api.shiftedDailyValues(numberedDays)[0], 183);
+assert.equal(api.shiftedDailyValues(numberedDays)[183], 0);
+assert.equal(api.shiftedDailyValues(numberedDays)[365], 182);
+assert.equal(api.shiftedMonthIndex(0), 6);
+assert.equal(api.shiftedMonthIndex(6), 0);
+assert.equal(api.oppositeHemispheres({cell:{latitude:35}}, {cell:{latitude:-18}}), true);
+assert.equal(api.oppositeHemispheres({cell:{latitude:35}}, {cell:{latitude:18}}), false);
 const series = api.averageByCalendarDay({properties:{parameter:{T:{"19910101":0,"19920101":2,"19910102":-999,"19920229":8}}}}, "T");
 assert.equal(series[0].value, 1);
 assert.equal(series[0].count, 2);
@@ -150,8 +159,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260923-humidity1km\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260923-humidity1km"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260923-season-align\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260923-season-align"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -270,6 +279,8 @@ def main() -> None:
     require("function setReferenceFromCurrent(" in app, "reference-location action missing")
     require("function toggleComparison(" in app and "function clearReference(" in app, "comparison toggle or clear action missing")
     require("function activeReferenceRecord(" in app and "chart-reference-series" in app, "comparison overlay rendering missing")
+    require('id="toggleSeasonShift"' in index and 'id="seasonShiftStatus"' in index, "season alignment controls missing")
+    require("function seasonShiftActive(" in app and "Bの元の日付" in app and "seasonShifted" in app, "season alignment/readout missing")
     require("referenceRecord" in app and "comparisonEnabled" in app, "comparison state missing")
     require("function boundedChartWindow(" in app and "function setDailyChartWindow(" in app, "shared chart viewport missing")
     require("function chartLocationGroups(" in app and "group.name" in app, "named chart legends missing")

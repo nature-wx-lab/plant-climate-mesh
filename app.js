@@ -103,6 +103,8 @@
     referenceShortLabel: document.getElementById("referenceShortLabel"),
     clearReference: document.getElementById("clearReference"),
     swapLocations: document.getElementById("swapLocations"),
+    toggleSeasonShift: document.getElementById("toggleSeasonShift"),
+    seasonShiftStatus: document.getElementById("seasonShiftStatus"),
     referenceCard: document.getElementById("referenceCard"),
     referenceRole: document.getElementById("referenceRole"),
     referenceState: document.getElementById("referenceState"),
@@ -154,6 +156,7 @@
     currentRecord: null,
     referenceRecord: null,
     comparisonEnabled: true,
+    seasonShiftEnabled: false,
     climateVisible: false,
     weatherLayer: "temperature",
     weatherPeriod: "annual",
@@ -1090,6 +1093,23 @@
     return Number(day.slice(0, 2)) + (short ? "/" : "月") + Number(day.slice(2)) + (short ? "" : "日");
   }
 
+  function oppositeHemispheres(reference, current) {
+    return Boolean(reference && current && reference.cell.latitude * current.cell.latitude < 0);
+  }
+
+  function seasonShiftActive() {
+    return state.seasonShiftEnabled && Boolean(state.currentRecord?.climate) && Boolean(activeReferenceRecord())
+      && oppositeHemispheres(state.referenceRecord, state.currentRecord);
+  }
+
+  function shiftedDailyValues(values) {
+    return values.map((_, index) => values[(index + 183) % 366]);
+  }
+
+  function shiftedMonthIndex(index) {
+    return (index + 6) % 12;
+  }
+
   function chartLocationGroups(referenceAvailable) {
     const isReference = Boolean(state.referenceRecord && state.currentRecord
       && sameCell(state.referenceRecord.cell, state.currentRecord.cell));
@@ -1282,6 +1302,8 @@
       name.title = name.textContent;
       if (model.kind === "temperature" && state.referenceRecord) name.append(chartElement("span", "chart-line-treatment",
         group.isBaseline ? "［黒縁］" : "［縁なし］"));
+      if (model.seasonShifted && group.key === "current") name.append(chartElement("span", "chart-season-label",
+        model.daily ? "［Bを183日ずらし］" : "［Bを6か月ずらし］"));
       if (group.status) name.append(chartElement("span", "chart-key-status", "（" + group.status + "）"));
       const swatches = chartElement("span", "chart-series-keys");
       for (const series of model.series.filter((item) => item.group === group.key)) {
@@ -1356,14 +1378,18 @@
     }
     if (!model.geometry) return;
     const index = model.cursor;
-    model.readout.append(chartElement("strong", "chart-readout-date", model.daily ? chartDateLabel(index) : (index + 1) + "月"));
+    model.readout.append(chartElement("strong", "chart-readout-date", (model.seasonShifted ? "A " : "")
+      + (model.daily ? chartDateLabel(index) : (index + 1) + "月")));
     const visibleSeries = visibleChartSeries(model);
     const cursor = svgElement("g", { class: "chart-cursor", "aria-hidden": "true" });
     const x = model.geometry.x(index);
     cursor.append(svgElement("line", { x1: x, x2: x, y1: model.geometry.top, y2: model.geometry.bottom, class: "chart-cursor-line" }));
     for (const group of model.groups) {
       const row = chartElement("div", "chart-readout-location chart-key-" + group.tone);
-      const name = chartElement("span", "chart-readout-name", group.role + "  " + group.name);
+      const actualDate = model.seasonShifted && group.key === "current"
+        ? "｜Bの元の日付 " + (model.daily ? chartDateLabel((index + 183) % 366) : (shiftedMonthIndex(index) + 1) + "月")
+        : "";
+      const name = chartElement("span", "chart-readout-name", group.role + "  " + group.name + actualDate);
       name.title = name.textContent;
       const values = chartElement("strong", "chart-readout-values");
       values.textContent = group.status || visibleSeries.filter((series) => series.group === group.key)
@@ -1395,7 +1421,8 @@
     const end = model.daily ? dailyChartWindow.end : 11;
     svg.dataset.rangeStart = String(start);
     svg.dataset.rangeEnd = String(end);
-    model.rangeLabel.textContent = model.daily ? chartDateLabel(start, true) + " – " + chartDateLabel(end, true) : "1月 – 12月";
+    model.rangeLabel.textContent = (model.seasonShifted ? "Aの暦 " : "")
+      + (model.daily ? chartDateLabel(start, true) + " – " + chartDateLabel(end, true) : "1月 – 12月");
     model.toolbar.querySelectorAll("[data-span]").forEach((button) => {
       button.setAttribute("aria-pressed", String(Math.abs(Number(button.dataset.span) - (end - start)) < 0.5));
       button.disabled = !model.hasData;
@@ -1410,6 +1437,7 @@
     });
     svg.setAttribute("aria-label", model.title + "。" + model.groups.map((group) => group.role + " " + group.name).join("、")
       + (model.kind === "temperature" ? "。最高は赤、最低は青" + (state.referenceRecord ? "。基準Aは黒縁、比較Bは縁なしの実線" : "") : "")
+      + (model.seasonShifted ? (model.daily ? "。Bの日別値を183日ずらし、横軸はAの日付" : "。Bの月別値を6か月ずらし、横軸はAの月") : "")
       + "。左右キーで日付と数値を確認" + (model.daily ? "、プラスとマイナスで拡縮、Homeで全年。" : "。"));
     if (!model.hasData) {
       model.geometry = null;
@@ -1496,10 +1524,11 @@
 
   function renderChart(svg, values, referenceValues, color, type) {
     const groups = chartLocationGroups(Boolean(referenceValues));
+    const seasonShifted = seasonShiftActive();
     prepareInteractiveChart(svg, {
-      kind: "precipitation", daily: false, groups, title: "月降水量", unit: "mm", emptyMessage: "月降水量のデータがありません",
+      kind: "precipitation", daily: false, groups, seasonShifted, title: "月降水量", unit: "mm", emptyMessage: "月降水量のデータがありません",
       series: groups.map((group) => ({ group: group.key, measure: "precipitation", label: "月降水量", color: group.colors[0],
-        values: group.key === "reference" ? referenceValues : values })),
+        values: group.key === "reference" ? referenceValues : (seasonShifted ? values.map((_, index) => values[shiftedMonthIndex(index)]) : values) })),
     });
   }
 
@@ -1560,17 +1589,20 @@
     const referenceSource = referencePayload || reference?.daily || null;
     const groups = chartLocationGroups(Boolean(referencePayload || reference));
     const loading = !payload && /取得しています|問い合わせ中/.test(options.emptyMessage);
+    const seasonShifted = seasonShiftActive();
     const series = [];
     for (const group of groups) {
       const source = group.key === "reference" ? referenceSource : payload;
       options.parameters.forEach(([key, measure, label], index) => {
         series.push({ group: group.key, measure, label, ...chartSeriesStyle(options.kind, group, index),
-          values: averageByCalendarDay(source, key).map((item) => item.value) });
+          values: group.key === "current" && seasonShifted
+            ? shiftedDailyValues(averageByCalendarDay(source, key).map((item) => item.value))
+            : averageByCalendarDay(source, key).map((item) => item.value) });
       });
       group.status = series.some((item) => item.group === group.key && item.values.some(validNumber))
         ? "" : (group.key === "current" && loading ? "取得中" : "データなし");
     }
-    prepareInteractiveChart(svg, { ...options, daily: true, groups, series });
+    prepareInteractiveChart(svg, { ...options, daily: true, groups, series, seasonShifted });
   }
 
   function renderDailyTemperatureChart(payload, referencePayload = null, emptyMessage = "日別最高・最低を取得できませんでした") {
@@ -1603,6 +1635,14 @@
     const currentReady = Boolean(state.currentRecord?.climate);
     const hasReference = Boolean(state.referenceRecord?.climate);
     const currentIsReference = hasReference && sameCell(state.currentRecord?.cell, state.referenceRecord.cell);
+    const canShiftSeason = hasReference && currentReady && !currentIsReference
+      && oppositeHemispheres(state.referenceRecord, state.currentRecord);
+    if (hasReference && currentReady && !canShiftSeason) state.seasonShiftEnabled = false;
+    elements.toggleSeasonShift.hidden = !canShiftSeason || !state.comparisonEnabled;
+    elements.toggleSeasonShift.setAttribute("aria-pressed", String(seasonShiftActive()));
+    elements.toggleSeasonShift.textContent = seasonShiftActive() ? "季節合わせ ON" : "季節を合わせる";
+    elements.toggleSeasonShift.title = "南北半球の比較で、Bの日別値を183日・月別値を6か月ずらしてAの季節に合わせる";
+    elements.seasonShiftStatus.hidden = !seasonShiftActive();
     elements.setReference.disabled = !currentReady;
     elements.setReference.hidden = currentIsReference;
     elements.setReference.textContent = hasReference ? "Bを新しい基準に" : "Aを基準に固定";
@@ -1674,20 +1714,24 @@
     const referenceSolar = referenceClimatePayload ? dataSeries(referenceClimatePayload, "ALLSKY_SFC_SW_DWN") : {};
     const referenceHumidity = referenceClimatePayload ? dataSeries(referenceClimatePayload, "RH2M") : {};
     const comparing = Boolean(referenceClimatePayload);
+    const seasonShifted = seasonShiftActive();
     const fragment = document.createDocumentFragment();
     elements.monthlyHeading.textContent = comparing
-      ? "月別｜上段 B比較・下段 A基準（括弧内は B−A の差）"
+      ? (seasonShifted ? "季節合わせ中｜Aの月にBの6か月後を対応（上段B、下段A・差）"
+        : "月別｜上段 B比較・下段 A基準（括弧内は B−A の差）")
       : "月別の数値表（平均日最高・平均日最低）";
 
     MONTHS.forEach((month, index) => {
       const row = document.createElement("tr");
+      const currentIndex = seasonShifted ? shiftedMonthIndex(index) : index;
+      const currentMonth = MONTHS[currentIndex];
       const values = [
-        MONTH_LABELS[index],
-        averageHigh[index],
-        averageLow[index],
-        precipitation[index],
-        solar[month],
-        humidity[month],
+        seasonShifted ? `A ${MONTH_LABELS[index]} / B ${MONTH_LABELS[currentIndex]}` : MONTH_LABELS[index],
+        averageHigh[currentIndex],
+        averageLow[currentIndex],
+        precipitation[currentIndex],
+        solar[currentMonth],
+        humidity[currentMonth],
       ];
       const referenceValues = [
         null,
@@ -1711,7 +1755,7 @@
             delta.className = "monthly-delta";
             delta.textContent = `A ${numberText(referenceValue, digits[cellIndex])} (${signedNumberText(value - referenceValue, digits[cellIndex])})`;
             cell.append(delta);
-            cell.title = `比較先 ${numberText(value, digits[cellIndex])}｜基準 ${numberText(referenceValue, digits[cellIndex])}｜差 ${signedNumberText(value - referenceValue, digits[cellIndex])}`;
+            cell.title = `比較先B ${MONTH_LABELS[currentIndex]} ${numberText(value, digits[cellIndex])}｜基準A ${MONTH_LABELS[index]} ${numberText(referenceValue, digits[cellIndex])}｜差 ${signedNumberText(value - referenceValue, digits[cellIndex])}`;
           }
         }
         row.append(cell);
@@ -1769,6 +1813,7 @@
       daily: state.currentRecord.daily,
     };
     state.comparisonEnabled = true;
+    state.seasonShiftEnabled = false;
     renderCurrentPayload();
   }
 
@@ -1781,6 +1826,7 @@
   function clearReference() {
     state.referenceRecord = null;
     state.comparisonEnabled = true;
+    state.seasonShiftEnabled = false;
     if (state.currentRecord?.climate) renderCurrentPayload();
     else updateComparisonControls();
   }
@@ -2110,6 +2156,11 @@
   elements.climateToggle.addEventListener("click", toggleClimateLayer);
   elements.setReference.addEventListener("click", setReferenceFromCurrent);
   elements.toggleComparison.addEventListener("click", toggleComparison);
+  elements.toggleSeasonShift.addEventListener("click", () => {
+    if (!oppositeHemispheres(state.referenceRecord, state.currentRecord) || !activeReferenceRecord()) return;
+    state.seasonShiftEnabled = !state.seasonShiftEnabled;
+    renderCurrentPayload();
+  });
   elements.clearReference.addEventListener("click", clearReference);
   elements.swapLocations.addEventListener("click", swapLocations);
   elements.closeResults.addEventListener("click", closeResultPanel);

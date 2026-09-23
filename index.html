@@ -18,8 +18,8 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260923-humidity1km">
-  <script src="./app.js?v=20260923-humidity1km" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260923-season-align">
+  <script src="./app.js?v=20260923-season-align" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -210,9 +210,10 @@
               <span id="referenceDetail" class="location-detail">Aを基準に固定すると、比較地点Bを選べます</span>
             </div>
             <div id="currentCard" class="location-card current-location" hidden>
-              <div class="location-card-top"><strong class="location-role"><b>B</b> <span id="selectionState">比較地点</span></strong><div id="currentActions" class="location-actions"></div></div>
+              <div class="location-card-top"><strong class="location-role"><b>B</b> <span id="selectionState">比較地点</span></strong><div id="currentActions" class="location-actions"><button id="toggleSeasonShift" class="header-action season-shift-toggle" type="button" aria-pressed="false" hidden>季節を合わせる</button></div></div>
               <strong id="currentLocation" class="location-name">次に、地図で比べたい地点Bを選択</strong>
               <span id="currentDetail" class="location-detail">国と周辺地域を表示します</span>
+              <span id="seasonShiftStatus" class="season-shift-status" hidden>季節合わせ中：Bの日別を183日、月別を6か月移動。横軸はAの日付。年平均はそのまま。</span>
             </div>
           </section>
 
