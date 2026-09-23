@@ -48,6 +48,8 @@
   const AVERAGE_DAYS_PER_MONTH = [31, 28 + 8 / 30, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   const AVERAGE_DAYS_PER_YEAR = AVERAGE_DAYS_PER_MONTH.reduce((sum, days) => sum + days, 0);
   const FILL_VALUE = -999;
+  const JAPAN_MISSING = -32768;
+  const JAPAN_GRID_ROOT = "./data/japan-1km";
   const KOPPEN_CLASSES = [
     ["Af", "熱帯雨林"], ["Am", "熱帯モンスーン"], ["Aw", "サバナ"],
     ["BWh", "高温砂漠"], ["BWk", "低温砂漠"], ["BSh", "高温ステップ"], ["BSk", "低温ステップ"],
@@ -68,6 +70,8 @@
     border: document.getElementById("borderLayer"),
     weather: document.getElementById("weatherLayer"),
     weatherImage: document.getElementById("weatherImage"),
+    japanOcclusion: document.getElementById("japanOcclusion"),
+    japanImage: document.getElementById("japanImage"),
     climate: document.getElementById("climateLayer"),
     climateImage: document.getElementById("climateImage"),
     climateToggle: document.getElementById("climateToggle"),
@@ -160,6 +164,11 @@
     resultPanelDragging: false,
     resultPanelDragStart: null,
     resultPanelResizeStart: null,
+    selectionSerial: 0,
+    japanCatalog: null,
+    japanMapCache: new Map(),
+    japanDailyCache: new Map(),
+    japanMapSerial: 0,
   };
 
   function clamp(value, minimum, maximum) {
@@ -201,14 +210,15 @@
   }
 
   function setView(zoom, centerX = state.centerX, centerY = state.centerY) {
-    state.zoom = clamp(zoom, 1, 16);
+    state.zoom = clamp(zoom, 1, 2048);
     const size = MAP_SIZE / state.zoom;
     state.centerX = wrapWorldX(centerX);
     state.centerY = clamp(centerY, size / 2, MAP_SIZE - size / 2);
     elements.map.setAttribute("viewBox", `${state.centerX - size / 2} ${state.centerY - size / 2} ${size} ${size}`);
     elements.zoomOut.disabled = state.zoom <= 1;
-    elements.zoomIn.disabled = state.zoom >= 16;
+    elements.zoomIn.disabled = state.zoom >= 2048;
     if (state.selectedCell) drawSelections();
+    updateJapanMap();
   }
 
   function openResultPanel() {
@@ -469,7 +479,9 @@
     const path = `./data/climate-layers/${state.weatherLayer}-${state.weatherPeriod}.png`;
     elements.activeLayerPeriod.textContent = label;
     elements.activeLayerName.textContent = config.name;
-    elements.activeLayerMeta.textContent = `1991–2020年の気候平均｜${config.grid}`;
+    elements.activeLayerMeta.textContent = state.weatherLayer === "humidity"
+      ? `1991–2020年の気候平均｜全球 ${config.grid}（日本も同じ）`
+      : `1991–2020年の気候平均｜日本は1km独自推定、その他は${config.grid}`;
     elements.mapLayerLabel.textContent = state.weatherVisible ? `${label}｜${config.name}` : "気象レイヤー非表示";
     elements.layerStatus.textContent = "読み込み中";
     elements.layerStatus.dataset.state = "loading";
@@ -478,6 +490,7 @@
       button.setAttribute("aria-pressed", String(button.dataset.weatherLayer === state.weatherLayer));
     });
     renderWeatherLegend();
+    updateJapanMap();
   }
 
   function setWeatherVisibility(visible) {
@@ -485,6 +498,195 @@
     elements.weather.toggleAttribute("hidden", !visible);
     const config = weatherLayerConfig();
     elements.mapLayerLabel.textContent = visible ? `${periodLabel()}｜${config.name}` : "気象レイヤー非表示";
+    updateJapanMap();
+  }
+
+  async function fetchJapanBinary(path) {
+    const response = await fetch(`${JAPAN_GRID_ROOT}/${path}`, { credentials: "same-origin", referrerPolicy: "no-referrer" });
+    if (!response.ok) throw new Error(`日本1kmデータ HTTP ${response.status}`);
+    if (typeof DecompressionStream !== "function") throw new Error("このブラウザは1kmデータの展開に対応していません");
+    return new Response(response.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  }
+
+  async function loadJapanCatalog() {
+    if (state.japanCatalog) return state.japanCatalog;
+    if (!state.japanCatalogPromise) {
+      state.japanCatalogPromise = fetch(`${JAPAN_GRID_ROOT}/catalog.json`, {
+        credentials: "same-origin", referrerPolicy: "no-referrer",
+      }).then((response) => {
+        if (!response.ok) throw new Error(`日本1km目録 HTTP ${response.status}`);
+        return response.json();
+      }).then((catalog) => {
+        if (catalog.schema !== 1 || catalog.cells !== 387717 || catalog.days !== 366 || !catalog.prefixes) {
+          throw new Error("日本1km目録の形式が不正です");
+        }
+        state.japanCatalog = catalog;
+        return catalog;
+      }).catch((error) => {
+        state.japanCatalogPromise = null;
+        throw error;
+      });
+    }
+    return state.japanCatalogPromise;
+  }
+
+  function loadJapanMapChunk(prefix) {
+    if (!state.japanMapCache.has(prefix)) {
+      const promise = Promise.all([loadJapanCatalog(), fetchJapanBinary(`map-${prefix}.bin.gz`)]).then(([catalog, buffer]) => {
+        const length = catalog.prefixes[prefix];
+        if (!Number.isInteger(length) || buffer.byteLength !== length * (4 + 13 * 3 * 2)) {
+          throw new Error("日本1km地図データの長さが不正です");
+        }
+        const codes = new Uint32Array(buffer, 0, length);
+        for (let i = 1; i < length; i++) {
+          if (codes[i] <= codes[i - 1] || Math.floor(codes[i] / 10000) !== Number(prefix)) {
+            throw new Error("日本1km格子コードが不正です");
+          }
+        }
+        return {
+          codes,
+          tmean: new Int16Array(buffer, length * 4, length * 13),
+          precip: new Int16Array(buffer, length * (4 + 13 * 2), length * 13),
+          solar: new Int16Array(buffer, length * (4 + 13 * 4), length * 13),
+        };
+      }).catch((error) => { state.japanMapCache.delete(prefix); throw error; });
+      state.japanMapCache.set(prefix, promise);
+    }
+    return state.japanMapCache.get(prefix);
+  }
+
+  function binarySearchCode(codes, code) {
+    let low = 0;
+    let high = codes.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (codes[middle] < code) low = middle + 1;
+      else high = middle;
+    }
+    return low < codes.length && codes[low] === code ? low : -1;
+  }
+
+  function meshCodeAt(longitude, latitude) {
+    if (longitude < 120 || longitude >= 155 || latitude < 20 || latitude >= 47) return null;
+    const latIndex = Math.floor(latitude * 120);
+    const lonIndex = Math.floor((longitude - 100) * 80);
+    const first = Math.floor(latIndex / 80);
+    const second = Math.floor(lonIndex / 80);
+    const third = Math.floor((latIndex % 80) / 10);
+    const fourth = Math.floor((lonIndex % 80) / 10);
+    return first * 1e6 + second * 1e4 + third * 1e3 + fourth * 1e2
+      + (latIndex % 10) * 10 + lonIndex % 10;
+  }
+
+  function japanCell(code) {
+    const latitudeIndex = Math.floor(code / 1e6) * 80 + Math.floor(code / 1e3) % 10 * 10 + Math.floor(code / 10) % 10;
+    const longitudeIndex = Math.floor(code / 1e4) % 100 * 80 + Math.floor(code / 1e2) % 10 * 10 + code % 10;
+    const latMin = latitudeIndex / 120;
+    const lonMin = 100 + longitudeIndex / 80;
+    return { kind: "japan-1km", code, latMin, latMax: latMin + 1 / 120,
+      lonMin, lonMax: lonMin + 1 / 80, latitude: latMin + 1 / 240, longitude: lonMin + 1 / 160 };
+  }
+
+  function mapColor(value, stops) {
+    let before = stops[0];
+    let after = stops[stops.length - 1];
+    for (let i = 1; i < stops.length; i++) {
+      if (value <= stops[i][0]) { after = stops[i]; before = stops[i - 1]; break; }
+    }
+    const ratio = clamp((value - before[0]) / (after[0] - before[0] || 1), 0, 1);
+    const channels = [1, 3, 5].map((offset) => Math.round(
+      parseInt(before[1].slice(offset, offset + 2), 16) * (1 - ratio)
+      + parseInt(after[1].slice(offset, offset + 2), 16) * ratio));
+    return `rgb(${channels.join(",")})`;
+  }
+
+  function visibleJapanPrefixes(catalog, left, top, size) {
+    const right = left + size;
+    const bottom = top + size;
+    return Object.keys(catalog.prefixes).filter((prefix) => {
+      const number = Number(prefix);
+      const latIndex = Math.floor(number / 100);
+      const lonIndex = number % 100;
+      const [x1, y1] = project(lonIndex + 100, (latIndex + 1) / 1.5);
+      const [x2, y2] = project(lonIndex + 101, latIndex / 1.5);
+      return x2 >= left && x1 <= right && y2 >= top && y1 <= bottom;
+    });
+  }
+
+  async function updateJapanMap() {
+    const serial = ++state.japanMapSerial;
+    if (!state.weatherVisible || state.weatherLayer === "humidity") {
+      elements.japanImage.removeAttribute("href");
+      elements.japanOcclusion.removeAttribute("href");
+      return;
+    }
+    const applyImage = (href, maskHref, box) => {
+      for (const [image, source] of [[elements.japanOcclusion, maskHref], [elements.japanImage, href]]) {
+        for (const [attribute, value] of Object.entries(box)) image.setAttribute(attribute, String(value));
+        image.setAttribute("href", source);
+      }
+    };
+    const base = `${JAPAN_GRID_ROOT}/overview-${state.weatherLayer}-${state.weatherPeriod}.png`;
+    const baseMask = `${JAPAN_GRID_ROOT}/overview-mask.png`;
+    if (state.zoom < 32) {
+      applyImage(base, baseMask, { x: 0, y: 0, width: 1000, height: 1000 });
+      return;
+    }
+    try {
+      const catalog = await loadJapanCatalog();
+      const size = MAP_SIZE / state.zoom;
+      const left = state.centerX - size / 2;
+      const top = state.centerY - size / 2;
+      const prefixes = visibleJapanPrefixes(catalog, left, top, size);
+      if (!prefixes.length) {
+        elements.japanImage.removeAttribute("href");
+        elements.japanOcclusion.removeAttribute("href");
+        return;
+      }
+      const chunks = await Promise.all(prefixes.map(loadJapanMapChunk));
+      if (serial !== state.japanMapSerial) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const context = canvas.getContext("2d", { alpha: true });
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = canvas.width;
+      maskCanvas.height = canvas.height;
+      const maskContext = maskCanvas.getContext("2d", { alpha: true });
+      maskContext.fillStyle = "#f8faf8";
+      const period = state.weatherPeriod === "annual" ? 12 : Number(state.weatherPeriod) - 1;
+      const name = { temperature: "tmean", precipitation: "precip", solar: "solar" }[state.weatherLayer];
+      const stops = weatherStops();
+      for (const chunk of chunks) {
+        const values = chunk[name];
+        const length = chunk.codes.length;
+        for (let i = 0; i < length; i++) {
+          const raw = values[period * length + i];
+          const cell = japanCell(chunk.codes[i]);
+          const [x1, y1] = project(cell.lonMin, cell.latMax);
+          const [x2, y2] = project(cell.lonMax, cell.latMin);
+          if (x2 < left || x1 > left + size || y2 < top || y1 > top + size) continue;
+          const pixelX = (x1 - left) / size * canvas.width;
+          const pixelY = (y1 - top) / size * canvas.height;
+          const pixelWidth = Math.max(1, (x2 - x1) / size * canvas.width);
+          const pixelHeight = Math.max(1, (y2 - y1) / size * canvas.height);
+          maskContext.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
+          if (raw !== JAPAN_MISSING) {
+            const factor = name === "precip" ? 1 : 0.1;
+            context.fillStyle = mapColor(raw * factor, stops);
+            context.fillRect(pixelX, pixelY, pixelWidth, pixelHeight);
+          }
+        }
+      }
+      if (serial !== state.japanMapSerial) return;
+      applyImage(canvas.toDataURL("image/png"), maskCanvas.toDataURL("image/png"),
+        { x: left, y: top, width: size, height: size });
+    } catch (error) {
+      if (serial !== state.japanMapSerial) return;
+      applyImage(base, baseMask, { x: 0, y: 0, width: 1000, height: 1000 });
+      elements.layerStatus.textContent = "日本の1km表示を読み込めませんでした";
+      elements.layerStatus.dataset.state = "error";
+    }
   }
 
   function toggleClimateLayer() {
@@ -570,6 +772,22 @@
       longitude: clean(gridLongitude),
       latitude: clean(gridLatitude),
     };
+  }
+
+  async function resolveSelectedCell(longitude, latitude) {
+    const code = meshCodeAt(longitude, latitude);
+    if (code === null) return selectedCell(longitude, latitude);
+    const catalog = await loadJapanCatalog();
+    const prefix = String(Math.floor(code / 10000));
+    if (catalog.prefixes[prefix]) {
+      const chunk = await loadJapanMapChunk(prefix);
+      if (binarySearchCode(chunk.codes, code) >= 0) return japanCell(code);
+    }
+    // Land inside Japan without a source mesh must not silently become NASA data.
+    if (countryAt(longitude, latitude)?.properties?.code === "JPN") {
+      return { ...japanCell(code), kind: "japan-missing" };
+    }
+    return selectedCell(longitude, latitude);
   }
 
   function cellCopies(cell, cellClass, pointClass) {
@@ -770,7 +988,9 @@
       daily: sameCell(previous?.cell, cell) ? previous.daily : null,
     };
     const strong = document.createElement("strong");
-    strong.textContent = "気象格子：約0.5°×0.625°（地図の枠）";
+    strong.textContent = cell.kind?.startsWith("japan-")
+      ? "日本の約1kmメッシュ（1991–2020年・独自推定）"
+      : "気象格子：約0.5°×0.625°（地図の枠）";
     const span = document.createElement("span");
     span.textContent = `格子中心：${coordinateLabel(cell.latitude, "N", "S")}, ${coordinateLabel(cell.longitude, "E", "W")}`;
     const country = countryAt(cell.longitude, cell.latitude);
@@ -778,14 +998,16 @@
     place.className = "place-summary";
     place.textContent = `国・地域：${location.countryName}｜周辺：${location.areaLabel}`;
     const note = document.createElement("small");
-    note.textContent = "気温・降水・相対湿度は選択した枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
+    note.textContent = cell.kind?.startsWith("japan-")
+      ? "気温・降水・日射は気象庁の日別平年値と既存の月別1kmメッシュから独自推定。相対湿度だけNASA POWERの粗い格子です。公式な1km日別平年値ではありません。"
+      : "気温・降水・相対湿度は選択した枠に対応する元格子の空間平均です。日射は中心点に対応する別の1°×1°格子です。";
     elements.locationSummary.replaceChildren(strong, span, place, note);
     updateComparisonControls();
   }
 
-  function powerUrl(cell) {
+  function powerUrl(cell, parameters = PARAMETERS) {
     const query = new URLSearchParams({
-      parameters: PARAMETERS.join(","),
+      parameters: parameters.join(","),
       community: "AG",
       longitude: cell.longitude.toFixed(2),
       latitude: cell.latitude.toFixed(2),
@@ -796,9 +1018,9 @@
     return `${POWER_CLIMATOLOGY_ENDPOINT}?${query.toString()}`;
   }
 
-  function dailyPowerUrl(cell) {
+  function dailyPowerUrl(cell, parameters = DAILY_PARAMETERS) {
     const query = new URLSearchParams({
-      parameters: DAILY_PARAMETERS.join(","),
+      parameters: parameters.join(","),
       community: "AG",
       longitude: cell.longitude.toFixed(2),
       latitude: cell.latitude.toFixed(2),
@@ -1310,6 +1532,7 @@
     const counts = Array(12).fill(0);
     for (const [date, value] of Object.entries(dataSeries(payload, key))) {
       if (!/^\d{8}$/.test(date) || !validNumber(value)) continue;
+      if (payload?.sourceKind === "japan-1km" && date.endsWith("0229")) continue;
       const monthIndex = Number(date.slice(4, 6)) - 1;
       if (monthIndex < 0 || monthIndex > 11) continue;
       sums[monthIndex] += value;
@@ -1384,7 +1607,7 @@
     elements.referenceCard.classList.toggle("is-empty", !state.currentRecord && !hasReference);
     elements.referenceCard.classList.toggle("overlay-off", hasReference && !state.comparisonEnabled);
     elements.currentCard.classList.toggle("is-empty", currentIsReference);
-    const coordinates = (record) => `格子中心 ${coordinateLabel(record.cell.latitude, "N", "S")} · ${coordinateLabel(record.cell.longitude, "E", "W")}`;
+    const coordinates = (record) => `格子中心 ${coordinateLabel(record.cell.latitude, "N", "S")} · ${coordinateLabel(record.cell.longitude, "E", "W")}｜${record.cell.kind === "japan-1km" ? "日本1km独自推定（湿度はNASA）" : "NASA POWER"}`;
     const firstRecord = state.referenceRecord || state.currentRecord;
     elements.referenceLocation.textContent = firstRecord?.location.headerLabel || "地図で地点Aを選択";
     elements.referenceDetail.textContent = firstRecord ? coordinates(firstRecord) : "Aを基準に固定すると、比較地点Bを選べます";
@@ -1584,12 +1807,117 @@
     elements.monthlyBody.replaceChildren(row);
   }
 
+  function loadJapanDaily(prefix, variable, length) {
+    const key = `${variable}-${prefix}`;
+    if (!state.japanDailyCache.has(key)) {
+      const promise = fetchJapanBinary(`daily-${variable}-${prefix}.bin.gz`).then((buffer) => {
+        if (buffer.byteLength !== length * 366 * 2) throw new Error(`日本1km日別${variable}の長さが不正です`);
+        return new Int16Array(buffer);
+      }).catch((error) => { state.japanDailyCache.delete(key); throw error; });
+      state.japanDailyCache.set(key, promise);
+      if (state.japanDailyCache.size > 20) state.japanDailyCache.delete(state.japanDailyCache.keys().next().value);
+    }
+    return state.japanDailyCache.get(key);
+  }
+
+  function japanMonthlySeries(values, variable) {
+    const series = {};
+    const dates = calendarDays();
+    const annual = [];
+    for (let month = 0; month < 12; month++) {
+      const indices = dates.flatMap((day, index) => Number(day.slice(0, 2)) === month + 1 && day !== "0229" ? [index] : []);
+      const selected = indices.map((index) => values[index]);
+      const valid = selected.length && selected.every((value) => value !== JAPAN_MISSING);
+      const total = valid ? selected.reduce((sum, value) => sum + value, 0) / 10 : FILL_VALUE;
+      series[MONTHS[month]] = valid ? (variable === "precip" ? total / AVERAGE_DAYS_PER_MONTH[month]
+        : total / selected.length) : FILL_VALUE;
+      if (valid) annual.push(...selected);
+    }
+    series.ANN = annual.length === 365
+      ? annual.reduce((sum, value) => sum + value, 0) / 10 / (variable === "precip" ? AVERAGE_DAYS_PER_YEAR : 365)
+      : FILL_VALUE;
+    return series;
+  }
+
+  async function loadJapanClimate(cell, requestSerial) {
+    const cacheKey = `japan:${cell.code}`;
+    const cached = state.cache.get(cacheKey);
+    if (cached) {
+      state.currentRecord = { ...state.currentRecord, cell, climate: cached.climate, daily: cached.daily };
+      renderCurrentPayload();
+      setStatus(cached.humidityAvailable ? "日本1kmデータ取得完了｜湿度はNASA POWER" : "日本1kmデータ取得完了｜湿度は取得できませんでした",
+        cached.humidityAvailable ? "ready" : "error");
+      return;
+    }
+    state.controller = new AbortController();
+    resetValues("日本の1kmデータを読み込んでいます");
+    setStatus("日本の1kmデータを読み込み中", "loading");
+    try {
+      const prefix = String(Math.floor(cell.code / 10000));
+      const map = await loadJapanMapChunk(prefix);
+      const position = binarySearchCode(map.codes, cell.code);
+      if (position < 0) throw new Error("選択した1kmメッシュが見つかりません");
+      const variables = ["tmin", "tmean", "tmax", "precip", "solar"];
+      const humidityCell = selectedCell(cell.longitude, cell.latitude);
+      const requestHumidity = (url) => fetch(url, { mode: "cors", credentials: "omit",
+        referrerPolicy: "no-referrer", cache: "force-cache", signal: state.controller.signal,
+      }).then((response) => {
+        if (!response.ok) throw new Error(`湿度 HTTP ${response.status}`);
+        return response.json();
+      });
+      const [values, humidityClimate, humidityDaily] = await Promise.all([
+        Promise.all(variables.map((variable) => loadJapanDaily(prefix, variable, map.codes.length))),
+        requestHumidity(powerUrl(humidityCell, ["RH2M"])).catch(() => null),
+        requestHumidity(dailyPowerUrl(humidityCell, ["RH2M"])).catch(() => null),
+      ]);
+      if (requestSerial !== state.requestSerial) return;
+      const perCell = Object.fromEntries(variables.map((variable, index) => [variable,
+        values[index].subarray(position * 366, (position + 1) * 366)]));
+      const parameter = {
+        T2M: japanMonthlySeries(perCell.tmean, "tmean"),
+        PRECTOTCORR: japanMonthlySeries(perCell.precip, "precip"),
+        ALLSKY_SFC_SW_DWN: japanMonthlySeries(perCell.solar, "solar"),
+        RH2M: humidityClimate?.properties?.parameter?.RH2M || {},
+      };
+      const dates = calendarDays();
+      const dailyParameter = {};
+      for (const [variable, name] of [["tmean", "T2M"], ["tmax", "T2M_MAX"],
+        ["tmin", "T2M_MIN"], ["precip", "PRECTOTCORR"], ["solar", "ALLSKY_SFC_SW_DWN"]]) {
+        dailyParameter[name] = Object.fromEntries(dates.map((date, index) => [
+          `2000${date}`, perCell[variable][index] === JAPAN_MISSING ? FILL_VALUE : perCell[variable][index] / 10,
+        ]));
+      }
+      dailyParameter.RH2M = humidityDaily?.properties?.parameter?.RH2M || {};
+      const climate = { sourceKind: "japan-1km", properties: { parameter } };
+      const daily = { sourceKind: "japan-1km", properties: { parameter: dailyParameter } };
+      const humidityAvailable = Boolean(parameter.RH2M.ANN && Object.keys(dailyParameter.RH2M).length);
+      state.cache.set(cacheKey, { climate, daily, humidityAvailable });
+      state.currentRecord = { ...state.currentRecord, cell, climate, daily };
+      renderCurrentPayload();
+      setStatus(humidityAvailable ? "日本1kmデータ取得完了｜湿度はNASA POWER" : "日本1kmデータ取得完了｜湿度は取得できませんでした",
+        humidityAvailable ? "ready" : "error");
+    } catch (error) {
+      if (error.name === "AbortError" || requestSerial !== state.requestSerial) return;
+      resetValues("日本の1kmデータを読み込めませんでした。再度選択してください");
+      setStatus(error.message || "日本の1kmデータ取得に失敗しました", "error");
+    }
+  }
+
   async function loadClimate(cell) {
     const cacheKey = `${cell.latitude.toFixed(1)},${cell.longitude.toFixed(1)}`;
     state.requestSerial += 1;
     const requestSerial = state.requestSerial;
     if (state.controller) state.controller.abort();
     state.controller = null;
+    if (cell.kind === "japan-missing") {
+      resetValues("この地点には日本の1kmメッシュ値がありません");
+      setStatus("この地点には日本の1kmメッシュ値がありません", "error");
+      return;
+    }
+    if (cell.kind === "japan-1km") {
+      await loadJapanClimate(cell, requestSerial);
+      return;
+    }
     if (state.cache.get(cacheKey)?.daily) {
       const cached = state.cache.get(cacheKey);
       state.currentRecord = { ...state.currentRecord, cell, climate: cached.climate, daily: cached.daily };
@@ -1648,11 +1976,19 @@
     return point.matrixTransform(matrix.inverse());
   }
 
-  function selectFromEvent(event) {
+  async function selectFromEvent(event) {
     const point = eventPoint(event);
     if (!point || point.y < 0 || point.y > MAP_SIZE) return;
     const [longitude, latitude] = unproject(point.x, point.y);
-    const cell = selectedCell(longitude, latitude);
+    const serial = ++state.selectionSerial;
+    let cell;
+    try {
+      cell = await resolveSelectedCell(longitude, latitude);
+    } catch (error) {
+      if (serial === state.selectionSerial) setStatus("日本の1kmメッシュを確認できませんでした。再度クリックしてください", "error");
+      return;
+    }
+    if (serial !== state.selectionSerial) return;
     state.selectedCell = cell;
     updateLocation(cell);
     drawSelections();
@@ -1755,6 +2091,7 @@
   elements.weatherLayerOpacity.addEventListener("input", () => {
     const opacity = clamp(Number(elements.weatherLayerOpacity.value) / 100, 0.2, 1);
     elements.weatherImage.style.opacity = String(opacity);
+    elements.japanImage.style.opacity = String(opacity);
     elements.weatherLayerOpacityValue.textContent = `${Math.round(opacity * 100)}%`;
   });
   elements.toggleLayerPanel.addEventListener("click", () => {
@@ -1790,5 +2127,6 @@
   window.addEventListener("pointercancel", endResultPanelResize);
   window.addEventListener("resize", applyResultPanelPosition);
   elements.weatherImage.style.opacity = String(Number(elements.weatherLayerOpacity.value) / 100);
+  elements.japanImage.style.opacity = String(Number(elements.weatherLayerOpacity.value) / 100);
   updateWeatherLayer();
 })();

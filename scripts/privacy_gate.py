@@ -25,7 +25,7 @@ FORBIDDEN_PARTS = {
 FORBIDDEN_SUFFIXES = {
     ".db", ".dmg", ".env", ".gif", ".heic", ".jpeg", ".jpg", ".key",
     ".log", ".mov", ".mp4", ".p12", ".pdf", ".pem", ".pfx", ".png",
-    ".sqlite", ".tiff", ".xls", ".xlsx", ".zip",
+    ".sqlite", ".tiff", ".xls", ".xlsx", ".zip", ".gz",
 }
 ALLOWED_BINARY_PATHS = {
     Path("data/koppen-geiger-1991-2020.png"),
@@ -104,7 +104,10 @@ def path_problem(path: Path) -> str | None:
         return "forbidden-file"
     if any(part in FORBIDDEN_PARTS for part in path.parts):
         return "forbidden-directory"
-    if path.suffix.lower() in FORBIDDEN_SUFFIXES and path not in ALLOWED_BINARY_PATHS:
+    japan_daily = re.fullmatch(r"data/japan-1km/daily-(?:tmin|tmean|tmax|precip|solar)-\d{4}\.bin\.gz", path.as_posix())
+    japan_map = re.fullmatch(r"data/japan-1km/map-\d{4}\.bin\.gz", path.as_posix())
+    japan_overview = re.fullmatch(r"data/japan-1km/overview-(?:temperature|precipitation|solar)-(?:annual|\d{2})\.png", path.as_posix())
+    if path.suffix.lower() in FORBIDDEN_SUFFIXES and path not in ALLOWED_BINARY_PATHS and path != Path("data/japan-1km/overview-mask.png") and not any((japan_daily, japan_map, japan_overview)):
         return "forbidden-suffix"
     if path.suffix.lower() == ".map":
         return "source-map"

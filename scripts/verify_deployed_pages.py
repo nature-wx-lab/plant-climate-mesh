@@ -11,6 +11,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
+
+from build_deployment_manifest import japan_files
 
 
 CLIMATE_LAYER_FILES = {
@@ -18,6 +21,7 @@ CLIMATE_LAYER_FILES = {
     for key in ("temperature", "precipitation", "humidity", "solar")
     for period in (("annual",) + tuple(f"{month:02d}" for month in range(1, 13)))
 }
+ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_FILES = {
     "404.html",
     "app.js",
@@ -28,7 +32,7 @@ EXPECTED_FILES = {
     "sitemap.xml",
     "styles.css",
     "data/climate-layers/manifest.json",
-} | CLIMATE_LAYER_FILES
+} | CLIMATE_LAYER_FILES | set(japan_files(ROOT))
 
 
 def request(url: str) -> urllib.request.Request:

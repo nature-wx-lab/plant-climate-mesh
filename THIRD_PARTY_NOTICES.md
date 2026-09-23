@@ -1,8 +1,17 @@
 # Third-party data notices
 
+## Japan 1 km estimated climate values
+
+The Japan-only temperature (daily mean, maximum and minimum), precipitation, and all-sky solar irradiance values are derived from the Japan Meteorological Agency (JMA) 1991–2020 station daily normals and existing independently estimated monthly 1 km meshes. They are **not** official JMA daily 1 km normals or observations at every mesh. The public tiles contain only derived mesh values; they do not include station records or source archives. Solar estimates have particularly sparse supporting observations. Relative humidity has no Japan 1 km source in this product and remains NASA POWER data.
+
+- JMA 1991–2020 normals: <https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html>
+- Japan's Standard Regional Mesh: <https://www.stat.go.jp/data/mesh/m_tuite.html>
+
+The 1 km descriptor is the output grid spacing, not a claim of 1 km observational accuracy. This product is not endorsed by JMA.
+
 ## NASA POWER
 
-Climate values are retrieved at runtime from the NASA Langley Research Center POWER Project Climatology and Daily APIs. The site requests temperature, corrected precipitation, all-sky surface shortwave downward irradiance, relative humidity, daily maximum temperature, and daily minimum temperature for January 1991 through December 2020. Daily maximum temperature, daily minimum temperature, daily all-sky surface shortwave downward irradiance, and daily mean relative humidity are averaged by calendar day in the browser.
+Outside Japan, climate values are retrieved at runtime from the NASA Langley Research Center POWER Project Climatology and Daily APIs. The site requests temperature, corrected precipitation, all-sky surface shortwave downward irradiance, relative humidity, daily maximum temperature, and daily minimum temperature for January 1991 through December 2020. Daily maximum temperature, daily minimum temperature, daily all-sky surface shortwave downward irradiance, and daily mean relative humidity are averaged by calendar day in the browser. In Japan, only relative humidity is requested from NASA POWER; the remaining fields use the derived 1 km values above.
 
 The global annual and monthly map layers are derived from the public POWER Data v10 monthly Zarr datasets in the NASA POWER AWS Open Data store. Meteorological layers use the MERRA-2 monthly LST source grid. Solar layers combine SRB for 1991–2000 and SYN1deg for 2001–2020, following the source periods used by POWER for the selected 1991–2020 climatology. Source-grid values are aggregated to monthly climatologies and day-weighted annual values, colorized, and reprojected to Web Mercator without smoothing between source cells.
 

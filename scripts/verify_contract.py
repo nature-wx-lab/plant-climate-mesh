@@ -4,14 +4,18 @@
 from __future__ import annotations
 
 import hashlib
+import gzip
 import json
 import re
 import struct
 import subprocess
 from pathlib import Path
 
+from build_deployment_manifest import japan_files
+
 
 ROOT = Path(__file__).resolve().parents[1]
+JAPAN_FILES = set(japan_files(ROOT))
 CLIMATE_LAYER_KEYS = ("temperature", "precipitation", "humidity", "solar")
 CLIMATE_LAYER_PERIODS = ("annual",) + tuple(f"{month:02d}" for month in range(1, 13))
 CLIMATE_LAYER_FILES = {
@@ -35,6 +39,7 @@ SOURCE_FILES = {
     "robots.txt",
     "scripts/build_deployment_manifest.py",
     "scripts/build_climate_layers.py",
+    "scripts/build_japan_1km.py",
     "scripts/climate_layers_requirements.txt",
     "scripts/privacy_gate.py",
     "scripts/verify_contract.py",
@@ -42,7 +47,7 @@ SOURCE_FILES = {
     "sitemap.xml",
     "styles.css",
     "data/climate-layers/manifest.json",
-} | CLIMATE_LAYER_FILES
+} | CLIMATE_LAYER_FILES | JAPAN_FILES
 DEPLOY_FILES = {
     "404.html",
     "app.js",
@@ -53,7 +58,7 @@ DEPLOY_FILES = {
     "sitemap.xml",
     "styles.css",
     "data/climate-layers/manifest.json",
-} | CLIMATE_LAYER_FILES
+} | CLIMATE_LAYER_FILES | JAPAN_FILES
 
 
 def require(condition: bool, message: str) -> None:
@@ -144,8 +149,8 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260922-climatecompare3\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260922-climatecompare3"' in index, "versioned local stylesheet missing")
+    require("<script src=\"./app.js?v=20260923-japan1km\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260923-japan1km"' in index, "versioned local stylesheet missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
         not re.search(r"<link[^>]+rel=[\"']stylesheet[\"'][^>]+href=[\"']https?://", index),
@@ -155,14 +160,14 @@ def main() -> None:
     require("Cookie、アクセス解析、現在地取得" in index, "privacy disclosure missing")
     require("通常の通信情報" in index and "NASA POWERへ送信" in index, "external transmission disclosure missing")
     require("1991–2020年の気候平均" in index, "independent climate-average label missing")
-    require("平年値" not in index, "official-normal terminology must not be used")
+    require("公式の1km日別平年値ではありません" in index, "Japan estimate caveat missing")
     require("Webメルカトル" in index, "projection disclosure missing")
     require("<title id=\"mapTitle\">" not in index, "hover map tooltip must stay absent")
     require('aria-label="世界地図"' in index, "accessible map label missing")
     require(index.count('href="#worldLayer"') == 3, "three wrapped world copies are required")
     require('x="-1000"' in index and 'x="1000"' in index, "east-west world copies missing")
     require("0.5°×0.625°" in index and "1°×1°格子" in index, "native resolution disclosure missing")
-    require("気温・降水量・相対湿度は選択した枠に対応する元格子の空間平均" in index, "meteorology-grid disclosure missing")
+    require("日本以外の気温・降水量・相対湿度は選択した枠に対応する元格子の空間平均" in index, "meteorology-grid disclosure missing")
     require("日射量は同じ中心点に対応する別の1°×1°格子" in index, "solar-grid distinction missing")
     require("通常日は30年分、2月29日は8年分" in index, "daily aggregation sample disclosure missing")
     require("月降水量" in index and "mm/月" in index and "年降水量" in index, "precipitation total labels missing")
@@ -190,7 +195,8 @@ def main() -> None:
     require('id="layerPeriod"' in index and index.count('<option value=') == 13, "annual and monthly period selector missing")
     require('id="weatherLayerToggle"' in index and 'id="weatherLayerOpacity"' in index, "weather-layer display controls missing")
     require('id="weatherLayer"' in index and 'id="weatherImage"' in index, "weather raster layer missing")
-    require("NASA POWERの月別データから独自算出" in index, "map-layer provenance missing")
+    require("日本の気温・降水・日射は約1kmの独自推定" in index, "map-layer provenance missing")
+    require('id="japanImage"' in index and 'id="japanOcclusion"' in index, "Japan map overlay missing")
     for chart_id in ("temperatureChart", "precipitationChart", "solarChart", "humidityChart"):
         require(f'id="{chart_id}"' in index, f"chart missing: {chart_id}")
     require("月別の数値表" in index, "monthly table disclosure missing")
@@ -232,6 +238,8 @@ def main() -> None:
     require("if (state.zoom < 8)" not in app, "point selection must not change zoom")
     require("r: 2.2 / state.zoom" in app and "selection-cross" not in app, "selection point must stay visually small")
     require("function averageByCalendarDay(payload, key)" in app, "daily calendar aggregation missing")
+    require("function loadJapanClimate(cell, requestSerial)" in app and "function updateJapanMap()" in app,
+            "Japan point or map integration missing")
     require("function averageDailyValuesByMonth(payload, key)" in app, "monthly daily-extreme aggregation missing")
     require("function renderDailySolarChart(payload" in app, "daily solar chart missing")
     require("各暦日の平均全天日射量" in index, "daily solar chart label missing")
@@ -350,6 +358,23 @@ def main() -> None:
             require(len(raw) < 500_000, f"climate-layer file is unexpectedly large: {relative}")
             manifest_files.add(relative)
     require(manifest_files == CLIMATE_LAYER_FILES, "climate-layer manifest coverage mismatch")
+
+    japan_catalog = json.loads((ROOT / "data/japan-1km/catalog.json").read_text(encoding="utf-8"))
+    require(len(japan_catalog["prefixes"]) == 176, "Japan mesh prefix coverage mismatch")
+    for prefix, count in japan_catalog["prefixes"].items():
+        raw = gzip.decompress((ROOT / f"data/japan-1km/map-{prefix}.bin.gz").read_bytes())
+        require(len(raw) == count * (4 + 13 * 3 * 2), f"Japan map chunk length mismatch: {prefix}")
+        codes = struct.unpack_from(f"<{count}I", raw)
+        require(all(code // 10000 == int(prefix) for code in codes), f"Japan mesh prefix mismatch: {prefix}")
+        require(all(first < second for first, second in zip(codes, codes[1:])), f"Japan mesh order mismatch: {prefix}")
+    for layer in ("temperature", "precipitation", "solar"):
+        for period in CLIMATE_LAYER_PERIODS:
+            raw = (ROOT / f"data/japan-1km/overview-{layer}-{period}.png").read_bytes()
+            require(raw.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", raw[16:24]) == (2048, 2048),
+                    f"Japan overview image mismatch: {layer}/{period}")
+    mask = (ROOT / "data/japan-1km/overview-mask.png").read_bytes()
+    require(mask.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", mask[16:24]) == (2048, 2048),
+            "Japan missing-data mask mismatch")
 
     require("plant-climate-mesh/sitemap.xml" in robots, "robots sitemap mismatch")
     require("plant-climate-mesh/" in sitemap, "sitemap URL mismatch")

@@ -29,6 +29,25 @@ DEPLOY_FILES = (
 ) + CLIMATE_LAYER_FILES
 
 
+def japan_files(root: Path) -> tuple[str, ...]:
+    catalog = json.loads((root / "data/japan-1km/catalog.json").read_text(encoding="utf-8"))
+    prefixes = catalog.get("prefixes", {})
+    if (catalog.get("schema") != 1 or catalog.get("cells") != 387717 or catalog.get("days") != 366
+            or len(prefixes) != 176 or sum(prefixes.values()) != 387717
+            or any(not re.fullmatch(r"\d{4}", prefix) or not isinstance(count, int) or count < 1
+                   for prefix, count in prefixes.items())):
+        raise SystemExit("invalid public Japan 1 km catalog")
+    periods = ("annual",) + tuple(f"{month:02}" for month in range(1, 13))
+    files = ["data/japan-1km/catalog.json", "data/japan-1km/overview-mask.png"]
+    files += [f"data/japan-1km/overview-{variable}-{period}.png"
+              for variable in ("temperature", "precipitation", "solar") for period in periods]
+    for prefix in prefixes:
+        files.append(f"data/japan-1km/map-{prefix}.bin.gz")
+        files += [f"data/japan-1km/daily-{variable}-{prefix}.bin.gz"
+                  for variable in ("tmin", "tmean", "tmax", "precip", "solar")]
+    return tuple(files)
+
+
 def sha256(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
@@ -51,7 +70,7 @@ def main() -> None:
     destination.mkdir(parents=True)
 
     files: dict[str, dict[str, int | str]] = {}
-    for relative in DEPLOY_FILES:
+    for relative in DEPLOY_FILES + japan_files(root):
         source = root / relative
         if not source.is_file() or source.is_symlink():
             raise SystemExit(f"invalid deploy source: {relative}")

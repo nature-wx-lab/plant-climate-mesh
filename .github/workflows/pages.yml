@@ -14,7 +14,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
     outputs:
@@ -43,7 +43,7 @@ jobs:
           python scripts/verify_contract.py
           python scripts/build_deployment_manifest.py --destination _site --source-commit "${{ steps.source.outputs.sha }}"
           python scripts/privacy_gate.py --root _site --skip-history
-          test "$(find _site -type f | wc -l | tr -d ' ')" = "62"
+          python -c 'import json,pathlib; p=pathlib.Path("_site"); m=json.loads((p/"deployment.json").read_text()); assert {x.relative_to(p).as_posix() for x in p.rglob("*") if x.is_file()} == set(m["files"]) | {"deployment.json"}'
           git diff --check
 
       - name: Upload exact verified Pages artifact
@@ -76,7 +76,7 @@ jobs:
   verify-public:
     needs: [build, deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:

@@ -496,6 +496,17 @@ a { color: var(--green-dark); }
   image-rendering: pixelated;
 }
 
+.japan-occlusion {
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.japan-raster {
+  opacity: 0.82;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
 .climate-raster {
   opacity: 0.66;
   pointer-events: none;
