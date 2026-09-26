@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 
 from build_deployment_manifest import japan_files
+from verify_deployed_pages import EXPECTED_FILES as PUBLIC_FILES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -205,6 +206,7 @@ def verify_plant_catalog(app: str) -> None:
 
 
 def main() -> None:
+    require(PUBLIC_FILES == DEPLOY_FILES, 'public verifier file allowlist differs from deployment')
     actual_files = {
         path.relative_to(ROOT).as_posix()
         for path in ROOT.rglob("*")
