@@ -759,9 +759,40 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 
 .overview-page {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(58px, auto) minmax(260px, 1fr) auto;
   gap: 6px;
+  overflow-y: auto;
 }
+
+.overview-page .status { padding: 0 2px; background: transparent; font-weight: 400; font-size: 0.58rem; }
+.overview-page .metric { justify-content: flex-start; padding: 5px 8px; }
+.overview-page .metric strong { font-size: 0.95rem; }
+.climate-profile { min-height: 260px; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto auto; gap: 4px; padding: 7px 8px; border: 1px solid #d8e2df; border-radius: 6px; background: #fff; }
+.profile-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.profile-heading h3 { margin: 0; font-size: 0.75rem; }
+.overview-legend { color: #657971; font-size: 0.58rem; }
+.climate-headline { margin: 0; color: #305748; font-weight: 700; font-size: 0.67rem; line-height: 1.4; }
+.climate-strips { min-height: 0; display: grid; grid-template-rows: repeat(4, minmax(36px, 1fr)); gap: 3px; }
+.climate-strip { min-height: 0; margin: 0; display: grid; grid-template-columns: 165px minmax(0, 1fr); gap: 5px; border-bottom: 1px solid #edf1ef; }
+.climate-strip figcaption { align-self: center; min-width: 0; display: grid; gap: 1px; font-size: 0.67rem; line-height: 1.35; }
+.climate-strip figcaption strong { color: #a84b32; }
+.climate-strip.precipitation figcaption strong { color: #287bb5; }
+.climate-strip.solar figcaption strong { color: #9a6a13; }
+.climate-strip.humidity figcaption strong { color: #25816f; }
+.climate-strip figcaption small { font-size: 0.55rem; font-weight: 400; }
+.climate-strip figcaption span { color: #60726b; font-size: 0.57rem; }
+.climate-strip svg { display: block; width: 100%; height: 100%; min-height: 36px; overflow: visible; touch-action: pan-y; }
+.climate-strip svg:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.overview-axis-label { font-size: 10px; fill: #63766e; }
+.overview-gridline { stroke: #dae3de; stroke-width: 0.7; }
+.overview-month-line { stroke: #e7eeea; stroke-width: 0.7; }
+.overview-cursor { stroke: #304d42; stroke-width: 1; stroke-dasharray: 3 2; }
+.overview-month-axis { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); padding-left: 199px; padding-right: 10px; font-size: 0.57rem; color: #5e7168; text-align: center; }
+.overview-month-axis .active { background: #e4eee7; color: #18472e; font-weight: 800; border-radius: 2px; }
+.overview-readout { min-height: 20px; padding: 3px 5px; display: grid; gap: 1px; background: #f0f5f2; border-radius: 3px; color: #345649; font-size: 0.59rem; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.overview-chart-note { margin: 0; color: #718078; font-size: 0.53rem; line-height: 1.35; }
+.overview-source summary { color: #65776d; font-size: 0.58rem; cursor: pointer; }
+.overview-source[open] summary { margin-bottom: 4px; }
 
 .chart-page { display: block; }
 
@@ -1263,6 +1294,21 @@ footer p + p { margin-top: 5px; }
   .result-tabs button { min-height: 40px; padding: 2px; font-size: 0.68rem; }
   .result-pages { padding: 4px 5px 5px; }
   .overview-page { gap: 3px; }
+  .overview-page { grid-template-rows: auto minmax(120px, auto) minmax(285px, 1fr) auto; }
+  .climate-profile { min-height: 285px; padding: 5px 4px; gap: 3px; }
+  .profile-heading { flex-wrap: wrap; gap: 1px; }
+  .profile-heading h3 { font-size: 0.7rem; }
+  .overview-legend { font-size: 0.54rem; }
+  .climate-headline { font-size: 0.63rem; }
+  .climate-strip { grid-template-columns: 1fr; grid-template-rows: auto minmax(30px, 1fr); gap: 0; }
+  .climate-strip figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
+  .climate-strip figcaption span { font-size: 0.55rem; }
+  .climate-strip svg { min-height: 30px; }
+  .climate-strips { grid-template-rows: repeat(4, minmax(46px, 1fr)); }
+  .overview-month-axis { padding-left: 29px; font-size: 0.51rem; }
+  .overview-readout { font-size: 0.57rem; }
+  .overview-chart-note { font-size: 0.51rem; }
+  .overview-source summary { min-height: 32px; display: flex; align-items: center; }
   .status { padding: 3px 5px; font-size: 0.56rem; }
   .location-summary { padding: 4px 5px; font-size: 0.56rem; }
   .location-summary small { display: none; }
@@ -1282,6 +1328,10 @@ footer p + p { margin-top: 5px; }
   .metric span { font-size: 0.52rem; }
   .metric strong { margin: 0; font-size: clamp(0.68rem, 2.7vw, 0.9rem); white-space: nowrap; }
   .metric small { display: none; }
+  .overview-page .metric { padding: 4px 5px; display: grid; grid-template-columns: 1fr; gap: 0; }
+  .overview-page .metric span { font-size: 0.57rem; }
+  .overview-page .metric strong { font-size: 0.8rem; }
+  .overview-page .metric small { display: block; font-size: 0.52rem; }
   .chart-card { padding: 4px 5px 2px; }
   .chart-card figcaption { font-size: 0.6rem; }
   .chart-card figcaption small { font-size: 0.52rem; }

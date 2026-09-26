@@ -111,6 +111,10 @@
     annualSolarNote: document.getElementById("annualSolarNote"),
     annualHumidity: document.getElementById("annualHumidity"),
     annualHumidityNote: document.getElementById("annualHumidityNote"),
+    climateHeadline: document.getElementById("climateHeadline"),
+    overviewLegend: document.getElementById("overviewLegend"),
+    overviewReadout: document.getElementById("overviewReadout"),
+    overviewMonthAxis: document.getElementById("overviewMonthAxis"),
     monthlyBody: document.getElementById("monthlyBody"),
     monthlyHeading: document.getElementById("monthlyHeading"),
     temperatureChart: document.getElementById("temperatureChart"),
@@ -1955,6 +1959,200 @@
     elements.monthlyBody.replaceChildren(fragment);
   }
 
+  // These are descriptions of the displayed monthly values, not a climate
+  // classification or estimates of plant tolerance or weather extremes.
+  function monthlyExtent(values) {
+    const available = values.map((value, index) => ({ value, index })).filter((item) => validNumber(item.value));
+    if (!available.length) return null;
+    return {
+      minimum: available.reduce((a, b) => b.value < a.value ? b : a),
+      maximum: available.reduce((a, b) => b.value > a.value ? b : a),
+      complete: available.length === 12,
+    };
+  }
+
+  function overviewValues(climate, daily) {
+    return {
+      temperature: monthlyValues(climate, "T2M"),
+      high: averageDailyValuesByMonth(daily, "T2M_MAX"),
+      low: averageDailyValuesByMonth(daily, "T2M_MIN"),
+      precipitation: monthlyPrecipitationTotals(climate),
+      solar: monthlyValues(climate, "ALLSKY_SFC_SW_DWN"),
+      humidity: monthlyValues(climate, "RH2M"),
+    };
+  }
+
+  function climateOverviewDescription(values) {
+    const temperature = monthlyExtent(values.temperature);
+    const rain = monthlyExtent(values.precipitation);
+    const parts = [];
+    if (temperature?.complete) {
+      const low = temperature.minimum.value, high = temperature.maximum.value;
+      parts.push(low >= 20 ? "一年を通して暖かい（月平均20℃以上）"
+        : high <= 10 ? "一年を通して冷涼（月平均10℃以下）"
+          : high - low <= 5 ? "気温の季節差が小さい（月平均の差5℃以下）"
+            : low < 10 && high >= 20 ? "暖かい季節と寒い季節が明瞭"
+              : "季節によって気温が変化");
+    }
+    if (rain?.complete) {
+      parts.push(rain.maximum.value <= 20 ? "年間を通して少雨（各月20mm以下）"
+        : rain.minimum.value >= 100 ? "毎月100mm以上の雨"
+          : rain.maximum.value >= Math.max(1, rain.minimum.value) * 3 && rain.maximum.value - rain.minimum.value >= 50
+            ? "雨の多い月・少ない月が明瞭" : "降水の月ごとの差は比較的小さい");
+    }
+    if (!parts.length) return "月別データが不足しています。取得できた要素を下に表示します。";
+    return parts.join(" · ") + (temperature?.complete && rain?.complete ? "" : " · 一部の月別データなし");
+  }
+
+  const overviewKinds = [
+    { key: "temperature", stem: "Temperature", title: "気温", unit: "℃", digits: 1, color: "#a84b32" },
+    { key: "precipitation", stem: "Precipitation", title: "降水", unit: "mm", digits: 0, color: "#287bb5" },
+    { key: "solar", stem: "Solar", title: "日射", unit: "MJ/㎡/日", digits: 1, color: "#b97b08" },
+    { key: "humidity", stem: "Humidity", title: "湿度", unit: "%", digits: 1, color: "#25816f" },
+  ];
+  let overviewModel = null;
+  let overviewCursor = null;
+
+  function renderClimateOverview(climate, daily, referenceClimate, referenceDaily, message = "") {
+    const current = overviewValues(climate, daily);
+    const reference = referenceClimate ? overviewValues(referenceClimate, referenceDaily) : null;
+    const shifted = Boolean(reference && seasonShiftActive());
+    overviewModel = { current, reference, shifted, message };
+    overviewCursor = null;
+    if (climate && !reference) {
+      const temperature = monthlyExtent(current.temperature), rain = monthlyExtent(current.precipitation);
+      const humidity = monthlyExtent(current.humidity);
+      elements.annualTemperatureNote.textContent = temperature?.complete
+        ? `月平均の年較差 ${numberText(temperature.maximum.value - temperature.minimum.value)}℃` : "月別の欠測あり";
+      elements.annualPrecipitationNote.textContent = rain?.complete
+        ? `雨が最も多いのは${MONTH_LABELS[rain.maximum.index]}` : "月別の欠測あり";
+      elements.annualSolarNote.textContent = "日照時間ではなく、届くエネルギー";
+      elements.annualHumidityNote.textContent = humidity?.complete
+        ? (humidity.minimum.value >= 80 ? "全月の平均湿度が80%以上" : `月平均 ${numberText(humidity.minimum.value, 0)}〜${numberText(humidity.maximum.value, 0)}%`) : "月別の欠測あり";
+    }
+    elements.climateHeadline.textContent = message || ((reference ? "Bの特徴：" : "") + climateOverviewDescription(current));
+    elements.overviewLegend.textContent = reference
+      ? (shifted ? "B＝色線・棒 / A＝黒縁 · Bを6か月移動" : "B＝色線・棒 / A＝黒縁")
+      : "月別の気候平均 · 4要素を同じ月軸で";
+    for (const kind of overviewKinds) {
+      const extent = monthlyExtent(current[kind.key]);
+      const target = document.getElementById("overview" + kind.stem + "Insight");
+      if (!extent) { target.textContent = /取得しています|読み込み|問い合わせ/.test(message) ? "取得中" : "月別データなし"; target.title = ""; continue; }
+      const { minimum, maximum, complete } = extent;
+      const lowLabel = kind.key === "temperature" ? "最冷" : "最少";
+      const highLabel = kind.key === "temperature" ? "最暖" : "最多";
+      target.textContent = kind.key === "humidity"
+        ? `${MONTH_LABELS[minimum.index]} ${numberText(minimum.value, 1)}〜${MONTH_LABELS[maximum.index]} ${numberText(maximum.value, 1)}%`
+        : `${lowLabel}${MONTH_LABELS[minimum.index]} ${numberText(minimum.value, kind.digits)} / ${highLabel}${MONTH_LABELS[maximum.index]} ${numberText(maximum.value, kind.digits)}`;
+      if (!complete) target.textContent += "（欠測月あり）";
+      target.title = `元の暦の月別値。${kind.unit}。${kind.key === "temperature" ? "月平均気温の年較差 " + numberText(maximum.value - minimum.value) + "℃。" : ""}`;
+    }
+    drawClimateOverview();
+  }
+
+  function overviewDisplayed(values) {
+    return overviewModel.shifted ? values.map((_, index) => values[shiftedMonthIndex(index)]) : values;
+  }
+
+  function drawClimateOverview() {
+    if (!overviewModel) return;
+    const { current, reference } = overviewModel;
+    overviewKinds.forEach((kind) => {
+      const svg = document.getElementById("overview" + kind.stem + "Chart");
+      if (!svg.clientWidth || !svg.clientHeight) return;
+      const width = svg.clientWidth, height = svg.clientHeight;
+      const left = 29, right = 10, top = 7, bottom = height - 6;
+      const x = (index) => left + (index + 0.5) / 12 * (width - left - right);
+      const groups = reference ? [{ values: reference, role: "A", outlined: true }, { values: current, role: "B", outlined: false }]
+        : [{ values: current, role: "A", outlined: false }];
+      const plotted = groups.flatMap((group) => kind.key === "temperature"
+        ? [group.values.temperature, group.values.high, group.values.low].flat() : group.values[kind.key]).filter(validNumber);
+      const minimum = kind.key === "temperature" ? Math.min(0, Math.floor(Math.min(0, ...plotted) / 5) * 5) : 0;
+      const maximum = kind.key === "temperature" ? Math.max(35, Math.ceil(Math.max(0, ...plotted) / 5) * 5)
+        : kind.key === "precipitation" ? Math.max(50, Math.ceil(Math.max(0, ...plotted) / 50) * 50)
+          : kind.key === "solar" ? Math.max(30, Math.ceil(Math.max(0, ...plotted) / 5) * 5) : 100;
+      const y = (value) => top + (maximum - value) / (maximum - minimum) * (bottom - top);
+      svg.replaceChildren();
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("aria-describedby", "overviewReadout");
+      svg.setAttribute("aria-label", `${kind.title}、月別。${kind.unit}。左右キーで月の4要素を読取り。`);
+      for (let month = 0; month < 12; month++) {
+        svg.append(svgElement("line", { x1: x(month), x2: x(month), y1: top, y2: bottom, class: "overview-month-line" }));
+      }
+      const ticks = [minimum, maximum];
+      ticks.forEach((tick) => {
+        svg.append(svgElement("line", { x1: left, x2: width - right, y1: y(tick), y2: y(tick), class: "overview-gridline" }));
+        const label = svgElement("text", { x: left - 4, y: y(tick) + 3, "text-anchor": "end", class: "overview-axis-label" });
+        label.textContent = tick;
+        svg.append(label);
+      });
+      groups.forEach((group, groupIndex) => {
+        const shiftedValues = (key) => group.role === "B" ? overviewDisplayed(group.values[key]) : group.values[key];
+        const line = (key, color, weight = 1.8) => {
+          let connected = false;
+          const path = shiftedValues(key).map((value, index) => {
+            if (!validNumber(value)) { connected = false; return ""; }
+            const command = `${connected ? "L" : "M"}${x(index).toFixed(2)},${y(value).toFixed(2)}`;
+            connected = true;
+            return command;
+          }).join(" ");
+          if (group.outlined) svg.append(svgElement("path", { d: path, fill: "none", stroke: "#243b36", "stroke-width": weight + 2, opacity: 0.8 }));
+          svg.append(svgElement("path", { d: path, fill: "none", stroke: color, "stroke-width": weight, "data-overview-series": `${group.role}-${key}` }));
+          shiftedValues(key).forEach((value, index) => {
+            if (validNumber(value)) svg.append(svgElement("circle", { cx: x(index), cy: y(value), r: weight, fill: color, stroke: group.outlined ? "#243b36" : "#fff", "stroke-width": 0.7 }));
+          });
+        };
+        if (kind.key === "temperature") {
+          // Shade only complete adjacent high/low pairs; missing months stay gaps.
+          const high = shiftedValues("high"), low = shiftedValues("low");
+          for (let index = 0; index < 11; index++) {
+            if (![high[index], high[index + 1], low[index], low[index + 1]].every(validNumber)) continue;
+            svg.append(svgElement("polygon", { points: `${x(index)},${y(high[index])} ${x(index + 1)},${y(high[index + 1])} ${x(index + 1)},${y(low[index + 1])} ${x(index)},${y(low[index])}`, fill: group.outlined ? "#677c74" : "#e6b193", opacity: 0.13 }));
+          }
+          line("high", "#cf5946", 1.4);
+          line("low", "#287bb5", 1.4);
+          line("temperature", kind.color, 2.1);
+        } else if (kind.key === "precipitation") {
+          const groupWidth = (width - left - right) / 12 * 0.65;
+          const barWidth = groupWidth / groups.length;
+          shiftedValues(kind.key).forEach((value, index) => {
+            if (validNumber(value)) svg.append(svgElement("rect", { x: x(index) - groupWidth / 2 + groupIndex * barWidth, y: y(value), width: Math.max(1, barWidth - 1), height: Math.max(0, y(0) - y(value)), fill: kind.color, opacity: group.outlined ? 0.45 : 0.85, stroke: group.outlined ? "#243b36" : "none", "stroke-width": 1.3, "data-overview-series": `${group.role}-${kind.key}`, "data-month": index, "data-value": value }));
+          });
+        } else line(kind.key, kind.color);
+      });
+      if (!plotted.length) {
+        const label = svgElement("text", { x: width / 2, y: height / 2 + 3, "text-anchor": "middle", class: "overview-axis-label" });
+        label.textContent = /取得しています|読み込み|問い合わせ/.test(overviewModel.message) ? "取得中" : "月別データなし";
+        svg.append(label);
+      }
+      if (overviewCursor !== null) svg.append(svgElement("line", { x1: x(overviewCursor), x2: x(overviewCursor), y1: top, y2: bottom, class: "overview-cursor" }));
+    });
+    drawOverviewReadout();
+  }
+
+  function drawOverviewReadout() {
+    elements.overviewMonthAxis.replaceChildren(...MONTH_LABELS.map((label, index) => {
+      const item = document.createElement("span");
+      item.textContent = label;
+      item.classList.toggle("active", index === overviewCursor);
+      return item;
+    }));
+    if (overviewCursor === null) {
+      elements.overviewReadout.textContent = "グラフに触れると同じ月の4要素を確認 · 左右キーでも操作できます";
+      return;
+    }
+    const index = overviewCursor;
+    const { current, reference, shifted } = overviewModel;
+    const currentIndex = shifted ? shiftedMonthIndex(index) : index;
+    const rows = [{ values: current, index: currentIndex, role: reference ? "B" : "A" }];
+    if (reference) rows.push({ values: reference, index, role: "A" });
+    elements.overviewReadout.replaceChildren(...rows.map((row) => {
+      const line = document.createElement("span");
+      line.textContent = `${row.role} ${MONTH_LABELS[row.index]}｜気温 ${numberText(row.values.temperature[row.index])}℃（平均最高 ${numberText(row.values.high[row.index])} / 平均最低 ${numberText(row.values.low[row.index])}） · 雨 ${numberText(row.values.precipitation[row.index], 0)}mm · 日射 ${numberText(row.values.solar[row.index])}MJ/㎡/日 · 湿度 ${numberText(row.values.humidity[row.index])}%`;
+      return line;
+    }));
+  }
+
   function renderPayload(climatePayload, dailyPayload, referenceClimatePayload = null, referenceDailyPayload = null) {
     const temperature = dataSeries(climatePayload, "T2M").ANN;
     const precipitation = dataSeries(climatePayload, "PRECTOTCORR").ANN;
@@ -1979,6 +2177,7 @@
     setMetricComparison(elements.annualHumidityNote, humidity, referenceHumidity, "%", 1, "地上2m");
     renderCharts(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload);
     renderMonthly(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload);
+    renderClimateOverview(climatePayload, dailyPayload, referenceClimatePayload, referenceDailyPayload);
   }
 
   function renderCurrentPayload() {
@@ -2034,6 +2233,7 @@
   }
 
   function resetValues(message) {
+    renderClimateOverview(null, null, null, null, message);
     for (const element of [elements.annualTemperature, elements.annualPrecipitation, elements.annualSolar, elements.annualHumidity]) {
       element.textContent = "—";
     }
@@ -2295,6 +2495,28 @@
       point.x + (0.5 - anchorX) * nextSize,
       point.y + (0.5 - anchorY) * nextSize,
     );
+  }
+
+  const overviewResize = typeof ResizeObserver !== "undefined" ? new ResizeObserver(drawClimateOverview) : null;
+  for (const kind of overviewKinds) {
+    const svg = document.getElementById("overview" + kind.stem + "Chart");
+    overviewResize?.observe(svg);
+    const readMonth = (event) => {
+      if (!overviewModel) return;
+      const rect = svg.getBoundingClientRect();
+      const scale = rect.width / svg.clientWidth;
+      overviewCursor = clamp(Math.floor((event.clientX - rect.left - 29 * scale) / Math.max(1, rect.width - 39 * scale) * 12), 0, 11);
+      drawClimateOverview();
+    };
+    svg.addEventListener("pointerdown", readMonth);
+    svg.addEventListener("pointermove", (event) => { if (event.pointerType === "mouse") readMonth(event); });
+    svg.addEventListener("keydown", (event) => {
+      if (!overviewModel || !["ArrowLeft", "ArrowRight", "Home", "End", "Escape"].includes(event.key)) return;
+      event.preventDefault();
+      overviewCursor = event.key === "Escape" ? null : event.key === "Home" ? 0 : event.key === "End" ? 11
+        : clamp((overviewCursor ?? (event.key === "ArrowRight" ? -1 : 12)) + (event.key === "ArrowRight" ? 1 : -1), 0, 11);
+      drawClimateOverview();
+    });
   }
 
   drawGraticule();
