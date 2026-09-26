@@ -154,11 +154,11 @@ def verify_plant_catalog(app: str) -> None:
     require(catalog['regionSource']['sha256'] == outlines['sourceSha256'], 'plant boundary source mismatch')
     require(catalog['ratingMethod']['kind'] == 'editorial-provisional', 'rating method missing')
     expected = {'tropical':40, 'vegetables':25, 'annuals':20, 'perennials':20, 'trees':20,
-                'australian':33, 'succulents':25, 'caudex':28, 'tillandsia':20}
-    require(len(plants) == 231 and len({p['id'] for p in plants}) == 231, 'plant count or duplicate ID')
+                'australian':33, 'succulents':25, 'caudex':28, 'tillandsia':22}
+    require(len(plants) == 233 and len({p['id'] for p in plants}) == 233, 'plant count or duplicate ID')
     require({c['id'] for c in catalog['categories']} == set(expected), 'plant categories mismatch')
     require({c:sum(p['category'] == c for p in plants) for c in expected} == expected, 'genre count mismatch')
-    require(len({p['scientificName'] for p in plants}) == 231, 'duplicate accepted taxa')
+    require(len({p['scientificName'] for p in plants}) == 233, 'duplicate accepted taxa')
     for plant in plants:
         require(plant['taxonRank'] in ('species','variety','subspecies','cultivar'), 'invalid taxon rank')
         require(plant['originKind'] in ('native','cultigen','unresolved'), 'invalid origin kind')
@@ -217,8 +217,12 @@ def verify_plant_catalog(app: str) -> None:
         'Adenia glauca', 'Cyphostemma juttae', 'Dorstenia foetida', 'Jatropha podagrica',
         'Sinningia leucotricha', 'Dioscorea elephantipes', 'Othonna euphorbioides',
         'Othonna herrei', 'Tylecodon paniculatus', 'Tylecodon reticulatus', 'Pelargonium triste'}
+    tillandsia_research = {f'Tillandsia {name}' for name in (
+        'ionantha', 'xerographica', 'usneoides', 'caput-medusae', 'stricta', 'brachycaulos',
+        'bulbosa', 'butzii', 'tectorum', 'juncea', 'streptophylla', 'harrisii', 'fuchsii',
+        'magnusiana', 'tricolor', 'seleriana', 'capitata', 'aeranthos', 'bergeri', 'tenuifolia')}
     for category, requested in [('australian', australian_research), ('succulents', succulent_research),
-                                ('caudex', caudex_research)]:
+                                ('caudex', caudex_research), ('tillandsia', tillandsia_research)]:
         group = [p for p in plants if p['category'] == category]
         require(requested <= {p['scientificName'] for p in group}, 'requested research species missing')
         require(all(p['note'] and p['reference']['reason'] for p in group if p['scientificName'] in requested),
@@ -238,9 +242,12 @@ def verify_plant_catalog(app: str) -> None:
                 if p['scientificName'] in caudex_research), 'rooted caudex comparison scope missing')
     require('休' in by_id['dioscorea-elephantipes']['reference']['reason']
             and '露出' in by_id['fockea-edulis']['reference']['reason'], 'caudex season/exposure explanation missing')
+    require(all(p['taxonRank'] == 'species' and p['originKind'] == 'native'
+                for p in plants if p['scientificName'] in tillandsia_research),
+            'Tillandsia research must refer to original species')
     select_body = re.search(r'^  function selectPlant\([\s\S]*?^  }', app, re.M).group(0)
     require('setView(' not in select_body and 'focusPlantOrigin(' not in select_body, 'plant selection must preserve view')
-    print('PLANT_CATALOG_OK 231 taxa, 9 genres, reference reasons, outlines')
+    print('PLANT_CATALOG_OK 233 taxa, 9 genres, reference reasons, outlines')
 
 
 def main() -> None:

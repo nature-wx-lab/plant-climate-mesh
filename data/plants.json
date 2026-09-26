@@ -6938,12 +6938,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125266-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。葉色や花色の異なる園芸品種・交配種の耐性は別に確認し、色づきだけで水分や低温への耐性を判断しません。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125266-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "樹上・岩上の生育環境と、明るさ・湿り気・乾燥の切り替わりを比較しやすい種。栽培資料も明るい間接光と、給水後に余分な水を切る管理を案内しています。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/tillandsia-ionantha/",
+        "basis": "cultivation"
       }
     },
     {
@@ -6968,12 +6968,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A254442-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。樹上の日射や風と室内の環境を照合し、乾燥への適応から日本の猛暑や霜への耐性を推定しません。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A254442-2",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "乾季のある熱帯の高木の枝に着生する環境が、給水と風通しを考える手がかり。栽培資料も水分を与えた後の排水・乾燥を重視し、乾燥地原産でも断水し続ける意味ではありません。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/tillandsia-xerographica/",
+        "basis": "cultivation"
       }
     },
     {
@@ -7014,12 +7014,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125690-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "種全体の原産域を表示します。自然の亜種・変種や流通株の系統があり、産地を確認して比較します。ストリクタを親に持つ交配品種は対象外です。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125690-1",
-        "basis": "distribution"
+        "reason": "湿潤な熱帯の樹上・岩上での生育と、給水後に余分な水を切る栽培管理を照合できます。南米の広い分布では気候が異なるため、乾燥地型との比較には具体的な産地が役立ちます。",
+        "sourceUrl": "https://www.nparks.gov.sg/publications-resources/articles/eight-air-plants-for-your-home",
+        "basis": "cultivation"
       }
     },
     {
@@ -7048,10 +7048,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124804-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。南米南部の気候を参考にしても、日本の霜や長時間の凍結への耐性は保証できません。流通株の産地と、低温時に濡れる条件を別に確認します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "ブラジル南部・ウルグアイ・アルゼンチンなどまでの分布が、熱帯産の種と冬の気温・降水を比べる材料になります。南半球の季節を合わせ、産地を特定して比較すると有用です。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124804-1",
         "basis": "distribution"
       }
@@ -7124,12 +7124,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A286128-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。分布が広いため株の産地を確認します。膨らんだ株元に水が残り続けないか観察し、湿度を好むことを長時間濡らし続ける理由にしません。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 3,
-        "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A286128-2",
-        "basis": "distribution"
+        "stars": 4,
+        "reason": "湿り気を利用し、半日陰で育てる管理と原産地を照合できます。栽培資料は密な葉の基部に水が残る点にも注意しており、高い湿度と停滞した残水・蒸れを区別する題材です。",
+        "sourceUrl": "https://www.nparks.gov.sg/publications-resources/articles/eight-air-plants-for-your-home",
+        "basis": "cultivation"
       }
     },
     {
@@ -7166,12 +7166,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/287901-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。標高の範囲は引用先の自生記録の説明で、全産地の限界値ではありません。日本の平地の夏と同じ環境とせず、夜温・通風・株の乾き方を照合します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/287901-2",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "大学の種別資料は標高1,000〜2,300mの樹上生育と、中〜弱い光での栽培を案内しています。低緯度でも標高と夜温に注目し、給水不足と濡れすぎの両方を考える題材になります。",
+        "sourceUrl": "https://arboretum.ufm.edu/plantas/tillandsia-butzii/",
+        "basis": "cultivation"
       }
     },
     {
@@ -7179,7 +7179,9 @@
       "category": "tillandsia",
       "name": "カプトメデューサエ",
       "scientificName": "Tillandsia caput-medusae",
-      "aliases": [],
+      "aliases": [
+        "カプトメデューサ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -7212,12 +7214,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124945-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。属の栽培資料は株元の排水を重視していますが、自生株が必ず一定の向きで生育して水を排出するとは限りません。株の姿勢と残水を実物で確認します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124945-1",
-        "basis": "distribution"
+        "reason": "樹上に着生する環境を、株元の排水と風通しを考える材料にできます。属の管理指針と照合し、雨量だけでなく給水後に水が残る場所や乾き方を観察する対象です。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/types/houseplants/air-plants",
+        "basis": "cultivation"
       }
     },
     {
@@ -7284,10 +7286,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125275-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。分布が広く、標高や生育場所で気候条件が変わります。品種別の耐寒・耐暑性は未評価で、産地が分からない株を一地点だけで代表させません。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 3,
-        "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
+        "reason": "メキシコから熱帯アメリカに広く分布する樹上着生種。細い葉の形だけから少ない水でよいと考えず、産地の降水の季節性・湿り気・日射を確認して比較する必要があります。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125275-1",
         "basis": "distribution"
       }
@@ -7297,7 +7299,10 @@
       "category": "tillandsia",
       "name": "ウスネオイデス",
       "scientificName": "Tillandsia usneoides",
-      "aliases": [],
+      "aliases": [
+        "スパニッシュモス",
+        "サルオガセモドキ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -7408,12 +7413,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/1169665-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。細葉・太葉など流通株の系統や産地を確認します。空気中の相対湿度と、葉に実際に付く霧・露・雨の水分は区別して考えます。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 3,
-        "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/1169665-2",
-        "basis": "distribution"
+        "stars": 4,
+        "reason": "枝から垂れ下がる生育形と、湿り気を好む栽培特性を比較に活かせます。雨・霧・露で葉が濡れる機会と風通しが重要で、アメリカ大陸に広い分布を一地点の雨量で代表させることはできません。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/tillandsia-usneoides/",
+        "basis": "cultivation"
       }
     },
     {
@@ -7434,12 +7439,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/125712-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "種全体を対象にします。産地の標高・夜温・霧・岩場の環境を確認します。Kewは湿潤な熱帯の生育型としても掲載しており、全産地を乾燥した高地と一括りにしません。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/125712-1",
-        "basis": "distribution"
+        "reason": "エクアドル・ペルーの岩上の生育環境が、日射と根元の水はけを考える手がかり。栽培資料も散水後に乾かすことを案内しており、白いトリコームから断水や猛暑への強さを決めません。",
+        "sourceUrl": "https://www.nparks.gov.sg/florafaunaweb/flora/6/5/6559",
+        "basis": "cultivation"
       }
     },
     {
@@ -7482,10 +7487,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124896-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。葉色の異なる流通株や交配品種を同じ耐性とは扱いません。品種別の耐寒・耐暑性の比較は未評価で、産地と生育場所を確認します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 3,
-        "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
+        "reason": "メキシコからベネズエラまでの湿潤な熱帯で、樹上に着生する環境が手がかりです。雨季・乾季、林内の日射、濡れる機会を比較したい種ですが、分布全体を一つの気候では代表できません。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124896-1",
         "basis": "distribution"
       }
@@ -7532,12 +7537,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125688-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。交配品種は対象外です。葉の巻き方は観察の手がかりですが、それだけで給水量を決めず、気温・湿り気・株の状態と一緒に判断します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 3,
-        "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125688-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "乾燥時に葉が巻き、ねじれる性質がRHSの種別資料に記載されています。季節的に乾く自生環境と葉の反応を照合し、給水後の乾き方を観察する題材として使いやすい種です。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/78747/tillandsia-streptophylla/details",
+        "basis": "cultivation"
       }
     },
     {
@@ -7566,10 +7571,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A254278-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。属の排水・通風の指針を参考に、株の向きと水の残り方を観察します。自生株が必ず水をためない姿勢で育つとは決めつけず、実物で確かめます。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "メキシコ南部〜中央アメリカの亜熱帯で樹上に着生する環境が手がかり。膨らんだ株元を持つ株では、雨量と同時に濡れた後の残水・通風・乾く速さを確認して比較します。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A254278-2",
         "basis": "distribution"
       }
@@ -7598,10 +7603,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A254029-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。細い銀葉から耐暑性は決めません。涼しい産地の情報を使う場合も、標高と株の由来を確認します。日本の高温多湿への種別の限界温度は未評価です。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "メキシコ南部〜中央アメリカの湿潤な熱帯で、樹上に着生する環境を比較に使えます。低緯度という情報に加え、具体的な産地の標高・夜温・樹上の日射を確認することに価値があります。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A254029-2",
         "basis": "distribution"
       }
@@ -7611,7 +7616,9 @@
       "category": "tillandsia",
       "name": "フクシー",
       "scientificName": "Tillandsia fuchsii",
-      "aliases": [],
+      "aliases": [
+        "フックシー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -7628,10 +7635,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A312594-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "種全体の原産域を表示します。Kewは自然変種のvar. fuchsii・var. stephaniやf. gracilisを区別しています。流通名だけで同一の耐性とはせず、変種・型・産地を確認します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "stars": 3,
+        "reason": "季節的に乾くメキシコ・グアテマラの樹上環境が手がかりです。細葉の株が濡れる機会と乾く速さを比較したい種ですが、自然の変種・型や産地を区別して調べる必要があります。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A312594-2",
         "basis": "distribution"
       }
@@ -7662,10 +7669,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124943-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。葉色の異なる流通系統や交配品種の耐性は未評価です。色や流通名を耐寒性の根拠にせず、産地・系統を確認して比較します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "stars": 3,
+        "reason": "メキシコ・ホンジュラス・カリブ海の季節的に乾く熱帯に自生し、樹上・岩上の環境が手がかりです。地域と生育場所の違いが大きく、種名だけでは一つの気候に絞れません。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A124943-1",
         "basis": "distribution"
       }
@@ -7675,7 +7682,9 @@
       "category": "tillandsia",
       "name": "ベルゲリ",
       "scientificName": "Tillandsia bergeri",
-      "aliases": [],
+      "aliases": [
+        "ベルゲリー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -7688,12 +7697,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A253621-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。比較的寒さに強いという流通上の説明だけで、日本の霜・長時間の凍結に耐えるとは判断しません。原産地の冬の降水と、栽培株の産地も確認します。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A253621-2",
-        "basis": "distribution"
+        "reason": "ブラジル南部〜アルゼンチンの原産域は、冬の気温と乾湿を熱帯産の種と比較する題材になります。ただしRHSの栽培案内は霜のない場所を前提としており、耐凍結性の保証には使えません。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/61958/tillandsia-bergeri/details",
+        "basis": "cultivation"
       }
     },
     {
@@ -7746,10 +7755,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A312580-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "原種を対象にします。銀白色の葉から乾燥させ続ければよいとは判断しません。具体的な産地の標高・夜温・降水の季節性を確認し、品種別の低温限界は別に調べます。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "Kewが掲載する原産域はグアテマラで、湿潤な熱帯の樹上着生環境が調査の軸になります。比較する地域を絞りやすい一方、国名だけでは標高や日射・乾季の長さまでは分かりません。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A312580-2",
         "basis": "distribution"
       }
@@ -7835,6 +7844,112 @@
         "stars": 3,
         "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A30019940-2",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "tillandsia-tricolor",
+      "category": "tillandsia",
+      "name": "トリコロール",
+      "scientificName": "Tillandsia tricolor",
+      "aliases": [],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Costa Rica",
+        "Guatemala",
+        "Honduras",
+        "Mexico Gulf",
+        "Mexico Southeast",
+        "Mexico Southwest",
+        "Nicaragua",
+        "Panamá"
+      ],
+      "regionCodes": [
+        "COS",
+        "GUA",
+        "HON",
+        "MXG",
+        "MXS",
+        "MXT",
+        "NIC",
+        "PAN"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125738-1",
+      "checkedAt": "2026-09-26",
+      "note": "原種を対象にします。森林内の光や風は広域の気候値だけでは決まりません。流通株の産地・系統を確認し、品種別の耐寒・耐暑性は別に調べます。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "メキシコ南部〜パナマの湿潤な熱帯に自生する樹上着生種。雨量だけでなく、林内・樹上での湿り気と日射を確認して、乾燥地型のチランジアと比較する対象になります。",
+        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125738-1",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "tillandsia-tenuifolia",
+      "category": "tillandsia",
+      "name": "テヌイフォリア",
+      "scientificName": "Tillandsia tenuifolia",
+      "aliases": [],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Argentina Northeast",
+        "Argentina Northwest",
+        "Bolivia",
+        "Brazil North",
+        "Brazil Northeast",
+        "Brazil South",
+        "Brazil Southeast",
+        "Brazil West-Central",
+        "Colombia",
+        "Cuba",
+        "Dominican Republic",
+        "French Guiana",
+        "Guyana",
+        "Haiti",
+        "Jamaica",
+        "Paraguay",
+        "Peru",
+        "Puerto Rico",
+        "Suriname",
+        "Trinidad-Tobago",
+        "Venezuela",
+        "Venezuelan Antilles",
+        "Windward Is."
+      ],
+      "regionCodes": [
+        "AGE",
+        "AGW",
+        "BOL",
+        "BZC",
+        "BZE",
+        "BZL",
+        "BZN",
+        "BZS",
+        "CLM",
+        "CUB",
+        "DOM",
+        "FRG",
+        "GUY",
+        "HAI",
+        "JAM",
+        "PAR",
+        "PER",
+        "PUE",
+        "SUR",
+        "TRT",
+        "VEN",
+        "VNA",
+        "WIN"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125713-1",
+      "checkedAt": "2026-09-26",
+      "note": "種全体の原産域を表示します。Kewが認める複数の自然変種があり、園芸上の交配品種とは分けます。株の変種・産地を確認してから比較し、種名だけで低温限界は決めません。霧・露・標高・風・着生位置・乾く速さは地図に表示していないため、別途確認します。",
+      "reference": {
+        "stars": 3,
+        "reason": "カリブ海から南米に広く分布し、湿潤な熱帯の樹上・岩上で生育する種。水分環境の比較には使えますが、自然変種や産地による違いがあり、一地点の気候で全株を代表させることはできません。",
+        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A125713-1",
         "basis": "distribution"
       }
     },
