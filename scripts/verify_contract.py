@@ -35,10 +35,13 @@ SOURCE_FILES = {
     "app.js",
     "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
+    "data/plants.json",
+    "data/plant-outlines.json",
     "index.html",
     "robots.txt",
     "scripts/build_deployment_manifest.py",
     "scripts/build_climate_layers.py",
+    "scripts/build_plant_outlines.py",
     "scripts/build_japan_1km.py",
     "scripts/build_japan_humidity.py",
     "scripts/climate_layers_requirements.txt",
@@ -54,6 +57,8 @@ DEPLOY_FILES = {
     "app.js",
     "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
+    "data/plants.json",
+    "data/plant-outlines.json",
     "index.html",
     "robots.txt",
     "sitemap.xml",
@@ -82,7 +87,7 @@ const assert = require("node:assert/strict");
 const app = require("node:fs").readFileSync(process.argv[1], "utf8");
 const names = ["boundedChartWindow", "validNumber", "calendarDays", "dataSeries",
   "averageByCalendarDay", "sameCell", "chartLocationGroups", "chartSeriesStyle",
-  "oppositeHemispheres", "shiftedDailyValues", "shiftedMonthIndex"];
+  "oppositeHemispheres", "shiftedDailyValues", "shiftedMonthIndex", "normalizePlantSearch"];
 const functions = names.map(name => {
   const match = app.match(new RegExp("^  function " + name + "\\([\\s\\S]*?^  }", "m"));
   assert.ok(match, name + " missing");
@@ -96,6 +101,8 @@ assert.deepEqual(api.boundedChartWindow(100, 101), {start:100,end:106});
 assert.deepEqual(api.boundedChartWindow(0, 999), {start:0,end:365});
 assert.equal(api.calendarDays().length, 366);
 assert.equal(api.calendarDays()[59], "0229");
+assert.equal(api.normalizePlantSearch("さんすべりあ"), api.normalizePlantSearch("サンスベリア"));
+assert.equal(api.normalizePlantSearch("Ｆｉｃｕｓ・Elastica"), api.normalizePlantSearch("ficus elastica"));
 const numberedDays = Array.from({length:366}, (_, index) => index);
 assert.equal(api.shiftedDailyValues(numberedDays)[0], 183);
 assert.equal(api.shiftedDailyValues(numberedDays)[183], 0);
@@ -138,6 +145,65 @@ console.log("COMPARISON_MATH_OK");
     subprocess.run(["node", "-e", program, str(ROOT / "app.js")], check=True)
 
 
+def verify_plant_catalog(app: str) -> None:
+    catalog = json.loads((ROOT / 'data/plants.json').read_text())
+    outlines = json.loads((ROOT / 'data/plant-outlines.json').read_text())
+    plants = catalog['plants']
+    require(catalog['schema'] == outlines['schema'] == 1, 'plant schema mismatch')
+    require(catalog['regionSource']['sha256'] == outlines['sourceSha256'], 'plant boundary source mismatch')
+    require(catalog['ratingMethod']['kind'] == 'editorial-provisional', 'rating method missing')
+    expected = {'tropical':40, 'vegetables':25, 'annuals':20, 'perennials':20, 'trees':20,
+                'australian':20, 'succulents':20, 'caudex':20, 'tillandsia':20}
+    require(len(plants) == 205 and len({p['id'] for p in plants}) == 205, 'plant count or duplicate ID')
+    require({c['id'] for c in catalog['categories']} == set(expected), 'plant categories mismatch')
+    require({c:sum(p['category'] == c for p in plants) for c in expected} == expected, 'genre count mismatch')
+    require(len({p['scientificName'] for p in plants}) == 205, 'duplicate accepted taxa')
+    for plant in plants:
+        require(plant['taxonRank'] in ('species','variety','subspecies','cultivar'), 'invalid taxon rank')
+        require(plant['originKind'] in ('native','cultigen','unresolved'), 'invalid origin kind')
+        require(plant['checkedAt'] == '2026-09-26', 'source check date missing')
+        require(plant['sourceUrl'].startswith(('https://powo.science.kew.org/taxon/', 'https://www.rhs.org.uk/plants/')), 'plant source missing')
+        rating = plant['reference']
+        require(type(rating['stars']) is int and 1 <= rating['stars'] <= 5 and rating['reason'] and rating['sourceUrl'].startswith('https://'), 'plant rating lacks reason or source')
+        if plant['originKind'] == 'unresolved':
+            require(plant['id'] == 'philodendron-birkin' and not plant['nativeAreas'] and not plant['regionCodes'] and plant['id'] not in outlines['plantKeys'], 'unresolved origin must have no outline')
+        else:
+            require(len(plant['nativeAreas']) == len(plant['regionCodes']) and plant['regionCodes'] == sorted(set(plant['regionCodes'])), 'native region mapping incomplete')
+            require(outlines['plantKeys'][plant['id']] == '-'.join(plant['regionCodes']), 'outline region mismatch')
+    for outline in outlines['outlines'].values():
+        require(outline['rings'], 'empty plant outline')
+        for ring in outline['rings']:
+            require(len(ring) >= 4 and ring[0] == ring[-1], 'open plant outline ring')
+            require(all(len(pt) == 2 and -180.001 <= pt[0] <= 180.001 and -90 <= pt[1] <= 90 for pt in ring), 'invalid plant coordinates')
+    by_id = {p['id']:p for p in plants}
+    require(set(by_id['dracaena-trifasciata']['nativeAreas']) == {'Cameroon','Central African Republic','Congo','DR Congo','Equatorial Guinea','Gabon','Nigeria','Tanzania'}, 'Sansevieria native range changed')
+    require(by_id['solanum-tuberosum']['reference']['stars'] == 1 and '長日' in by_id['solanum-tuberosum']['reference']['reason'], 'potato improvement note missing')
+    require('フレンチマリーゴールド' in by_id['tagetes-erecta']['aliases'] and '別名' in by_id['tagetes-erecta']['note'], 'marigold synonym explanation missing')
+    perennials = {'Echinacea purpurea', 'Rudbeckia fulgida', 'Oenothera lindheimeri',
+                  'Achillea millefolium', 'Stachys byzantina', 'Phlox subulata',
+                  'Gypsophila paniculata', 'Veronica spicata', 'Geranium sanguineum',
+                  'Platycodon grandiflorus', 'Liatris spicata', 'Physostegia virginiana',
+                  'Phlox paniculata', 'Monarda didyma', 'Helenium autumnale',
+                  'Campanula persicifolia', 'Lamprocapnos spectabilis', 'Tricyrtis hirta',
+                  'Farfugium japonicum', 'Paeonia lactiflora'}
+    require({p['scientificName'] for p in plants if p['category'] == 'perennials'} == perennials,
+            'requested perennial species missing')
+    require('夏' in by_id['lamprocapnos-spectabilis']['reference']['reason']
+            and '休眠' in by_id['lamprocapnos-spectabilis']['reference']['reason'], 'summer dormancy explanation missing')
+    trees = {'Camellia japonica', 'Camellia sasanqua', 'Gardenia jasminoides', 'Pieris japonica',
+             'Nerium oleander', 'Kalmia latifolia', 'Hydrangea macrophylla', 'Enkianthus perulatus',
+             'Spiraea thunbergii', 'Spiraea cantoniensis', 'Spiraea japonica', 'Kerria japonica',
+             'Deutzia crenata', 'Cornus florida', 'Cornus kousa', 'Styrax japonicus',
+             'Chimonanthus praecox', 'Cercis chinensis', 'Syringa vulgaris', 'Magnolia denudata'}
+    require({p['scientificName'] for p in plants if p['category'] == 'trees'} == trees,
+            'requested flowering tree species missing')
+    require('遅霜' in by_id['magnolia-denudata']['reference']['reason']
+            and '改良' in by_id['syringa-vulgaris']['reference']['reason'], 'flowering/cultivar explanation missing')
+    select_body = re.search(r'^  function selectPlant\([\s\S]*?^  }', app, re.M).group(0)
+    require('setView(' not in select_body and 'focusPlantOrigin(' not in select_body, 'plant selection must preserve view')
+    print('PLANT_CATALOG_OK 205 taxa, 9 genres, reference reasons, outlines')
+
+
 def main() -> None:
     actual_files = {
         path.relative_to(ROOT).as_posix()
@@ -159,11 +225,11 @@ def main() -> None:
     require("Content-Security-Policy" in index, "CSP meta is missing")
     require("connect-src 'self' https://power.larc.nasa.gov" in index, "POWER must be the only external connection")
     require("'unsafe-inline'" not in index and "'unsafe-eval'" not in index, "unsafe CSP directive")
-    require("<script src=\"./app.js?v=20260923-native-outline\" defer></script>" in index, "versioned local deferred script missing")
-    require('href="./styles.css?v=20260923-sansevieria"' in index, "versioned local stylesheet missing")
-    require('id="toggleSansevieria"' in index and 'id="plantOriginLayer"' in index, "plant selection or native-country layer missing")
-    require("国全域の自生を示す線ではありません" in index, "native-country boundary caveat missing")
-    require("https://powo.science.kew.org/taxon/77164235-1" in index, "Kew species source missing")
+    require("<script src=\"./app.js?v=20260926-plant-catalog\" defer></script>" in index, "versioned local deferred script missing")
+    require('href="./styles.css?v=20260926-plant-catalog"' in index, "versioned local stylesheet missing")
+    require(all(f'id="{key}"' in index for key in ('plantSearch','plantCategory','plantResults','plantOriginLayer','plantReferenceStars')), "plant search, categories, outline or ratings missing")
+    require("地域全域の自生を示す線ではありません" in index, "native-region boundary caveat missing")
+    require("耐寒性・栽培可否の判定ではありません" in index, "reference rating disclaimer missing")
     require(".plant-origin-outline" in styles and "stroke-width: 3.5" in styles, "native-country outline style missing")
     require(not re.search(r"<script[^>]+src=[\"']https?://", index), "external script detected")
     require(
@@ -206,7 +272,8 @@ def main() -> None:
         require(f'data-result-page="{result_page}"' in index, f"result page missing: {result_page}")
     require('id="layerPanel" class="layer-panel"' in index, "left map-layer panel missing")
     require(index.count('data-weather-layer=') == 4, "four weather-layer controls are required")
-    require('id="layerPeriod"' in index and index.count('<option value=') == 13, "annual and monthly period selector missing")
+    period_select = re.search(r'<select id="layerPeriod">([\s\S]*?)</select>', index)
+    require(period_select is not None and period_select.group(1).count('<option value=') == 13, "annual and monthly period selector missing")
     require('id="weatherLayerToggle"' in index and 'id="weatherLayerOpacity"' in index, "weather-layer display controls missing")
     require('id="weatherLayer"' in index and 'id="weatherImage"' in index, "weather raster layer missing")
     require("日本の気温・降水・日射・湿度は約1kmの独自推定" in index, "map-layer provenance missing")
@@ -311,11 +378,7 @@ def main() -> None:
     require(collection.get("type") == "FeatureCollection", "world map is not a FeatureCollection")
     features = collection.get("features")
     require(isinstance(features, list) and 230 <= len(features) <= 270, "unexpected Natural Earth feature count")
-    native_codes = {"CMR", "CAF", "COG", "COD", "GNQ", "GAB", "NGA", "TZA"}
-    require(native_codes <= {feature.get("properties", {}).get("code") for feature in features}, "Kew native-country boundaries missing")
-    native_mapping = re.search(r"const SANSEVIERIA_NATIVE_CODES = new Set\(\[([^]]+)\]\);", app)
-    require(native_mapping is not None, "Kew native-country mapping missing")
-    require(set(re.findall(r'"([A-Z]{3})"', native_mapping.group(1))) == native_codes, "Kew native-country mapping mismatch")
+    verify_plant_catalog(app)
     coordinate_count = 0
     capital_count = 0
     for feature in features:

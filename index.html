@@ -18,8 +18,8 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260923-sansevieria">
-  <script src="./app.js?v=20260923-native-outline" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260926-plant-catalog">
+  <script src="./app.js?v=20260926-plant-catalog" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -75,21 +75,45 @@
       </div>
 
       <section class="plant-picker" aria-labelledby="plantPickerHeading">
-        <div class="plant-picker-heading">
-          <div><span>PLANT GUIDE · 試験表示</span><h3 id="plantPickerHeading">植物から探す</h3></div>
+        <details id="plantBrowser" class="plant-browser">
+          <summary id="plantPickerHeading">植物から探す <small id="plantCatalogCount">読込中</small></summary>
+          <label for="plantCategory">ジャンル</label>
+          <select id="plantCategory" disabled><option value="all">すべて</option></select>
+          <label for="plantSearch">名前・学名で検索</label>
+          <input id="plantSearch" type="search" placeholder="例：モンステラ、ジャガイモ" autocomplete="off" disabled>
+          <p id="plantResultCount" class="plant-result-count" role="status">植物データを読み込んでいます</p>
+          <div id="plantResults" class="plant-results" aria-label="植物の検索結果"></div>
+        </details>
+        <div id="selectedPlant" hidden>
+          <button id="togglePlantOrigin" class="plant-choice" type="button" aria-pressed="false" aria-controls="plantOriginLayer">
+            <span><strong id="selectedPlantName"></strong><small id="selectedPlantScientific"></small></span>
+            <b id="plantChoiceState">線を表示</b>
+          </button>
+          <p class="plant-reference"><span>気候の参考度</span> <b id="plantReferenceStars"></b><small>暫定</small></p>
+          <p id="plantReferenceReason" class="plant-reference-reason"></p>
+          <p id="plantTaxonNote" class="plant-taxon-note"></p>
         </div>
-        <button id="toggleSansevieria" class="plant-choice" type="button" aria-pressed="false" aria-controls="plantOriginInfo" disabled>
-          <span><strong>サンスベリア（トラノオ）</strong><small>Dracaena trifasciata</small></span>
-          <b id="plantChoiceState">地図読込中</b>
-        </button>
         <div id="plantOriginInfo" class="plant-origin-info" hidden>
-          <p><span class="origin-line-key" aria-hidden="true"></span>黒い太線：Kewが記す原産国の目安</p>
-          <p class="origin-caveat">国全域の自生を示す線ではありません。囲み内の地点を選んで気候を比べられます。</p>
+          <p id="plantOriginLabel"><span class="origin-line-key" aria-hidden="true"></span>黒い太線：原産地域の目安</p>
+          <p id="plantOriginCaveat" class="origin-caveat">地域全域の自生を示す線ではありません。囲み内の地点を選んで気候を比べられます。</p>
           <div class="plant-origin-actions">
-            <button id="focusSansevieria" type="button">原産国を中央に</button>
-            <a href="https://powo.science.kew.org/taxon/77164235-1" target="_blank" rel="noopener noreferrer">分布の出典：Kew</a>
+            <button id="focusPlantOrigin" type="button">原産地域を中央に</button>
+            <a id="plantSource" target="_blank" rel="noopener noreferrer">分布の出典：Kew</a>
+            <a id="plantReferenceSource" target="_blank" rel="noopener noreferrer">比較のポイントの出典</a>
           </div>
         </div>
+        <details class="plant-rating-guide">
+          <summary>星の見方</summary>
+          <p>原産地の気候を栽培の参考にしやすい度合いを、編集上の暫定評価で示します。耐寒性・栽培可否の判定ではありません。</p>
+          <ol>
+            <li>★1：原種未特定／日長などの改良の影響が大きい</li>
+            <li>★2：抽苔・結球などの品種特性を優先</li>
+            <li>★3：広い分布・栽培化・未評価の園芸改良に注意</li>
+            <li>★4：原種の地域を比較の手がかりに（暫定）</li>
+            <li>★5：栽培資料でも基本的な温度・水分の傾向を確認</li>
+          </ol>
+          <p>栽培種・広い分布・野菜/草花は★3、その他は★4を基本とし、個別資料がある植物は理由に応じて調整しています。★4・5でも地点の標高や品種別の耐寒性は別に確認してください。</p>
+        </details>
       </section>
 
       <div id="layerPanelBody" class="layer-panel-body">
@@ -195,7 +219,7 @@
           <button id="resetView" type="button">全体</button>
         </div>
         <div id="mapLayerLabel" class="map-layer-label">年平均｜平均気温</div>
-        <div id="plantMapBadge" class="plant-map-badge" hidden><span class="origin-line-key" aria-hidden="true"></span>サンスベリア｜黒太線＝原産国の目安</div>
+        <div id="plantMapBadge" class="plant-map-badge" hidden></div>
         <section id="climateLegend" class="climate-legend" aria-label="ケッペン＝ガイガー気候区分の凡例" hidden>
           <div class="climate-legend-heading">
             <strong>ケッペン＝ガイガー気候区分</strong>

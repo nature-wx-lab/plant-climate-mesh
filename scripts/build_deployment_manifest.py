@@ -21,6 +21,8 @@ DEPLOY_FILES = (
     "app.js",
     "data/koppen-geiger-1991-2020.png",
     "data/world-50m.geojson",
+    "data/plants.json",
+    "data/plant-outlines.json",
     "index.html",
     "robots.txt",
     "sitemap.xml",

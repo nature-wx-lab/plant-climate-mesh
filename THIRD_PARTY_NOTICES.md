@@ -32,14 +32,34 @@ The world boundary layer and country names are derived from Natural Earth 1:50m 
 
 Country boundaries are shown only as geographic context and do not express a legal position.
 
-## Sansevieria native-country guide
+## Plant catalog and native-region guide
 
-The experimental plant guide refers to *Dracaena trifasciata* (synonym *Sansevieria trifasciata*), not every plant commonly called Sansevieria. Its native-country list is adapted from the Royal Botanic Gardens, Kew, Plants of the World Online / Kew Backbone Distributions: Cameroon, Central African Republic, Congo, DR Congo, Equatorial Guinea, Gabon, Nigeria, and Tanzania. The source lists two accepted subspecies, including one in Tanzania. The map joins the listed Natural Earth country polygons, suppresses their shared internal borders, and draws one outer line for the connected mainland plus separate lines for disconnected islands. Those lines are **not** observed or modelled wild-range boundaries, and do not imply that the species occurs throughout the enclosed countries. No occurrence points or habitat polygons are distributed.
+The names, accepted taxonomic concepts and native botanical-region lists in `data/plants.json` are adapted from Royal Botanic Gardens, Kew, Plants of the World Online / Kew Names and Taxonomic Backbone / Kew Backbone Distributions (World Checklist of Vascular Plants), checked 2026-09-26. Each plant includes a direct source link. Introduced regions are excluded. Species, natural varieties, subspecies and cultigens are labelled separately. Dracaena trifasciata is the snake-plant species, not the entire former Sansevieria genus. Common genus names are represented by an explicitly named species. Birkin is retained as a requested horticultural name with unresolved species origin and no native outline.
 
-- Species and distribution: <https://powo.science.kew.org/taxon/77164235-1>
-- Kew Backbone Distributions / World Checklist of Vascular Plants: CC BY 3.0, <https://creativecommons.org/licenses/by/3.0/>
+- Kew: <https://powo.science.kew.org/>
+- Names and native-region lists: CC BY 3.0, <https://creativecommons.org/licenses/by/3.0/>
+- Taxonomic revision, native-region selection, Japanese descriptions and cartographic conversion are our adaptations. Kew does not endorse this site.
 
-The native-country list was checked on 2026-09-23. The cartographic outline is our own visual adaptation of that list using the Natural Earth boundary layer credited above. Kew does not endorse this site.
+### WGSRPD geographic regions
+
+The display-only outlines join the listed botanical regions from the TDWG World Geographical Scheme for Recording Plant Distributions (WGSRPD), Level 3. They are **not** observed or modelled wild-range or habitat boundaries and do not imply presence throughout an enclosed region. Contiguous regions share an outside outline; disconnected regions/islands have separate outlines. Interior holes are omitted. The outer rings are simplified by 0.025 degrees for drawing. No occurrence observations or habitat polygons are distributed.
+
+- TDWG repository: <https://github.com/tdwg/wgsrpd>
+- Pinned source: <https://github.com/tdwg/wgsrpd/blob/52da7828aba9d461dd133c27b3bd7a4407161f54/geojson/level3.geojson>
+- SHA-256: `c172bcf6aba20e19477adc60aebf0023068f0175dca8480f0760b090dcf64840`
+- Source metadata: <https://github.com/tdwg/wgsrpd/blob/52da7828aba9d461dd133c27b3bd7a4407161f54/level3/level3.shp.xml>
+
+TDWG credits R. Brummitt, F. Pando and S. Hollis, and thanks Royal Botanic Gardens, Kew for supplying the shapefiles. The source metadata declares no access or use constraints, but retains this third-party notice: Administrative boundary files are the intellectual property of ESRI and its licensors and are used therein with permission. © 1992–1997 ESRI, GMi. All Rights Reserved. This boundary source is not labelled CC0 or public domain here. Its historical region labels are geographic references, not a legal position. Our union/simplification does not extend the Kew data license to these boundaries.
+
+### Reference ratings and horticultural names
+
+Stars are our **provisional editorial screening** of how readily native climate can inform cultivation, not hardiness ratings, growing suitability scores, evidence confidence scores, or official ratings from the cited institutions. Reasons and source links accompany every entry. The default rating uses distribution breadth, cultigen status and horticultural category; where species/cultivar comparisons are unassessed, that limitation is stated. Individual ratings draw on the linked cultivation guidance or original studies. No universal equality between wild and cultivar temperature tolerance is claimed.
+
+- RHS horticultural name references: <https://www.rhs.org.uk/plants/505239/philodendron-birkin-v/details> and <https://www.rhs.org.uk/plants/79003/dracaena-fragrans-massangeana-v/details>
+- Annual and perennial flower cultivation guidance: North Carolina Extension Gardener Plant Toolbox, each species page linked in its entry, <https://plants.ces.ncsu.edu/>; Clarkia: <https://www.rhs.org.uk/plants/84578/clarkia-amoena/details>; herbaceous peonies: <https://www.rhs.org.uk/plants/peony/herbaceous/growing-guide>
+- Flowering tree cultivation guidance: the same NC State species pages, including cultivar changes to cold tolerance, heat tolerance, chilling requirements and reblooming; Enkianthus: <https://www.rhs.org.uk/plants/6395/enkianthus-perulatus/details>. Winter survival and frost damage to spring flowers are distinguished in our descriptions.
+- Vegetable cultivation guidance and original studies: direct links in each entry's `reference.sourceUrl`. These supply short factual paraphrases; no source photos, full articles, figures or plant-profile text are redistributed.
+- Tagetes patula is treated as a synonym of T. erecta by Kew and as a separate horticultural profile by NC State: <https://powo.science.kew.org/taxon/252146-1>, <https://plants.ces.ncsu.edu/plants/tagetes-patula/>. Both common names resolve to one catalog entry; the note distinguishes their garden groups.
 
 ## Köppen–Geiger climate classification
 

@@ -61,9 +61,6 @@
     ["Dfa", "高温・乾季なし"], ["Dfb", "温暖・乾季なし"], ["Dfc", "冷涼・乾季なし"], ["Dfd", "厳冬・乾季なし"],
     ["ET", "ツンドラ"], ["EF", "氷雪"],
   ];
-  // Kew POWO, Dracaena trifasciata (including both accepted subspecies): native countries.
-  const SANSEVIERIA_NATIVE_CODES = new Set(["CMR", "CAF", "COG", "COD", "GNQ", "GAB", "NGA", "TZA"]);
-
   const elements = {
     map: document.getElementById("worldMap"),
     mapWrap: document.querySelector(".map-wrap"),
@@ -71,10 +68,25 @@
     land: document.getElementById("landLayer"),
     border: document.getElementById("borderLayer"),
     plantOrigin: document.getElementById("plantOriginLayer"),
-    toggleSansevieria: document.getElementById("toggleSansevieria"),
+    plantBrowser: document.getElementById("plantBrowser"),
+    plantCatalogCount: document.getElementById("plantCatalogCount"),
+    plantCategory: document.getElementById("plantCategory"),
+    plantSearch: document.getElementById("plantSearch"),
+    plantResultCount: document.getElementById("plantResultCount"),
+    plantResults: document.getElementById("plantResults"),
+    selectedPlant: document.getElementById("selectedPlant"),
+    selectedPlantName: document.getElementById("selectedPlantName"),
+    selectedPlantScientific: document.getElementById("selectedPlantScientific"),
+    togglePlantOrigin: document.getElementById("togglePlantOrigin"),
+    plantReferenceStars: document.getElementById("plantReferenceStars"),
+    plantReferenceReason: document.getElementById("plantReferenceReason"),
+    plantTaxonNote: document.getElementById("plantTaxonNote"),
+    plantSource: document.getElementById("plantSource"),
+    plantReferenceSource: document.getElementById("plantReferenceSource"),
+    plantOriginLabel: document.getElementById("plantOriginLabel"),
     plantChoiceState: document.getElementById("plantChoiceState"),
     plantOriginInfo: document.getElementById("plantOriginInfo"),
-    focusSansevieria: document.getElementById("focusSansevieria"),
+    focusPlantOrigin: document.getElementById("focusPlantOrigin"),
     plantMapBadge: document.getElementById("plantMapBadge"),
     mapDescription: document.getElementById("mapDescription"),
     weather: document.getElementById("weatherLayer"),
@@ -164,6 +176,9 @@
     geographyStatus: "loading",
     plantVisible: false,
     plantOriginBounds: null,
+    plants: [],
+    plantOutlines: null,
+    selectedPlant: null,
     currentRecord: null,
     referenceRecord: null,
     comparisonEnabled: true,
@@ -749,84 +764,138 @@
     return "";
   }
 
+  function normalizePlantSearch(value) {
+    return value.normalize("NFKC").toLowerCase()
+      .replace(/[ぁ-ゖ]/g, (character) => String.fromCharCode(character.charCodeAt(0) + 0x60))
+      .replace(/[^\p{L}\p{N}]/gu, "");
+  }
+
+  function plantStars(plant) {
+    return "★".repeat(plant.reference.stars) + "☆".repeat(5 - plant.reference.stars);
+  }
+
+  function renderPlantResults() {
+    const query = normalizePlantSearch(elements.plantSearch.value);
+    const category = elements.plantCategory.value;
+    const plants = state.plants.filter((plant) => (category === "all" || plant.category === category)
+      && (!query || normalizePlantSearch([plant.name, plant.scientificName, ...plant.aliases].join(" ")).includes(query)));
+    const fragment = document.createDocumentFragment();
+    for (const plant of plants) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "plant-result";
+      button.dataset.plantId = plant.id;
+      button.setAttribute("aria-pressed", String(state.selectedPlant?.id === plant.id));
+      const name = document.createElement("strong");
+      name.textContent = plant.name;
+      const scientific = document.createElement("small");
+      scientific.textContent = plant.scientificName;
+      const stars = document.createElement("span");
+      stars.className = "plant-result-stars";
+      stars.textContent = plantStars(plant);
+      stars.setAttribute("aria-label", `気候の参考度5段階中${plant.reference.stars}（暫定）`);
+      button.append(name, stars, scientific);
+      fragment.append(button);
+    }
+    elements.plantResults.replaceChildren(fragment);
+    elements.plantResultCount.textContent = plants.length ? `${plants.length}件 · 選択すると原産地域を表示` : "該当する植物がありません。名前・ジャンルを変えてください。";
+  }
+
   function updatePlantOrigin() {
+    const plant = state.selectedPlant;
     const visible = state.plantVisible && Boolean(state.plantOriginBounds);
     elements.plantOrigin.toggleAttribute("hidden", !visible);
-    elements.plantOriginInfo.toggleAttribute("hidden", !visible);
     elements.plantMapBadge.toggleAttribute("hidden", !visible);
-    elements.toggleSansevieria.setAttribute("aria-pressed", String(visible));
-    elements.plantChoiceState.textContent = visible ? "表示中" : "表示する";
-    elements.mapDescription.textContent = visible
-      ? "日本の気温・降水・日射・湿度は約1kmの独自推定、日本以外はNASA POWERの気候平均を表示します。サンスベリア（Dracaena trifasciata）のKew掲載原産国を黒い太線で概略表示します。線は実際の自生域境界ではありません。"
-      : "日本の気温・降水・日射・湿度は約1kmの独自推定、日本以外はNASA POWERの気候平均を表示します。";
+    elements.togglePlantOrigin.setAttribute("aria-pressed", String(visible));
+    elements.togglePlantOrigin.disabled = !state.plantOriginBounds;
+    elements.focusPlantOrigin.disabled = !state.plantOriginBounds;
+    elements.focusPlantOrigin.hidden = !state.plantOriginBounds;
+    document.getElementById("plantOriginCaveat").hidden = !state.plantOriginBounds;
+    elements.plantChoiceState.textContent = visible ? "線を非表示" : state.plantOriginBounds ? "線を表示" : "原種未特定";
+    const originLabel = plant?.originKind === "cultigen" ? "栽培化した種の成立地域（目安）" : "原産地域の目安";
+    if (visible) {
+      const key = document.createElement("span");
+      key.className = "origin-line-key";
+      key.setAttribute("aria-hidden", "true");
+      elements.plantMapBadge.replaceChildren(key, document.createTextNode(`${plant.name}｜${originLabel}`));
+    }
+    elements.mapDescription.textContent = "日本の気温・降水・日射・湿度は約1kmの独自推定、日本以外はNASA POWERの気候平均を表示します。"
+      + (visible ? `${plant.name}（${plant.scientificName}）のKew掲載地域を黒い太線で概略表示します。線は実際の自生域境界ではありません。` : "");
+  }
+
+  function selectPlant(id) {
+    const plant = state.plants.find((candidate) => candidate.id === id);
+    if (!plant) return;
+    const outline = state.plantOutlines.outlines[state.plantOutlines.plantKeys[id]];
+    state.selectedPlant = plant;
+    state.plantOriginBounds = outline ? nativeBounds([{ geometry: { coordinates: outline.rings } }]) : null;
+    state.plantVisible = Boolean(outline);
+    const pathData = outline ? outline.rings.map(ringToPath).join(" ") : "";
+    elements.plantOrigin.replaceChildren(...(pathData ? [
+      svgElement("path", { d: pathData, class: "plant-origin-halo" }),
+      svgElement("path", { d: pathData, class: "plant-origin-outline" }),
+    ] : []));
+    elements.selectedPlant.hidden = false;
+    elements.plantOriginInfo.hidden = false;
+    elements.selectedPlantName.textContent = plant.name;
+    elements.selectedPlantScientific.textContent = plant.scientificName;
+    elements.plantReferenceStars.textContent = plantStars(plant);
+    elements.plantReferenceStars.setAttribute("aria-label", `5段階中${plant.reference.stars}`);
+    elements.plantReferenceReason.textContent = plant.reference.reason;
+    const kind = plant.taxonRank === "variety" ? "自然変種" : plant.taxonRank === "subspecies" ? "亜種" : plant.originKind === "cultigen" ? "栽培化した種" : plant.taxonRank === "cultivar" ? "園芸品種（原種未特定）" : "原種・種全体";
+    elements.plantTaxonNote.textContent = `${kind}${plant.note ? " · " + plant.note : ""}`;
+    elements.plantSource.href = plant.sourceUrl;
+    elements.plantSource.textContent = plant.originKind === "unresolved" ? "品種名の出典：RHS" : "分布の出典：Kew";
+    elements.plantReferenceSource.href = plant.reference.sourceUrl;
+    elements.plantReferenceSource.hidden = plant.reference.sourceUrl === plant.sourceUrl;
+    elements.plantOriginLabel.textContent = outline
+      ? `黒い太線：${plant.originKind === "cultigen" ? "栽培化した種の成立地域" : "原産地域"}の目安`
+      : "原種未特定のため、原産地域の線は表示しません";
+    elements.plantBrowser.open = false;
+    updatePlantOrigin();
+    renderPlantResults();
+    // Selection changes the overlay only. Pan/zoom is an explicit, separate action.
   }
 
   function focusPlantOrigin() {
     const bounds = state.plantOriginBounds;
     if (!bounds) return;
-    const centerX = (bounds.minX + bounds.maxX) / 2;
-    const centerY = (bounds.minY + bounds.maxY) / 2;
-    setView(state.zoom, centerX, centerY);
+    setView(state.zoom, (bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2);
   }
 
-  function nativeOuterRings(features) {
-    // The bundled Natural Earth polygons share identical, oppositely directed border segments.
-    // Cancel shared segments so adjacent native countries have one outside boundary.
-    const edges = new Map();
-    for (const feature of features) {
-      const geometry = feature.geometry;
-      const polygons = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
-      for (const polygon of polygons) {
-        for (const ring of polygon) {
-          for (let index = 1; index < ring.length; index += 1) {
-            const from = ring[index - 1];
-            const to = ring[index];
-            const fromKey = JSON.stringify(from);
-            const toKey = JSON.stringify(to);
-            const edgeKey = [fromKey, toKey].sort().join("|");
-            const previous = edges.get(edgeKey);
-            if (!previous) {
-              edges.set(edgeKey, { fromKey, toKey, from });
-            } else {
-              if (previous.toKey !== fromKey || previous.fromKey !== toKey) {
-                throw new Error("原産国の境界が一致しません");
-              }
-              edges.delete(edgeKey);
-            }
-          }
-        }
+  async function loadPlantCatalog() {
+    try {
+      const [catalog, outlines] = await Promise.all(["./data/plants.json", "./data/plant-outlines.json"].map(async (url) => {
+        const response = await fetch(url, { credentials: "same-origin", referrerPolicy: "no-referrer" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      }));
+      if (catalog.schema !== 1 || outlines.schema !== 1 || !Array.isArray(catalog.plants)
+          || !Array.isArray(catalog.categories) || !outlines.outlines || !outlines.plantKeys
+          || outlines.sourceSha256 !== catalog.regionSource.sha256) throw new Error("植物データ形式が不正です");
+      for (const plant of catalog.plants) {
+        if (!plant.id || !plant.name || !Array.isArray(plant.aliases)
+            || !Number.isInteger(plant.reference?.stars) || plant.reference.stars < 1 || plant.reference.stars > 5
+            || !plant.reference.reason || !/^https:\/\//.test(plant.sourceUrl) || !/^https:\/\//.test(plant.reference.sourceUrl)
+            || (plant.regionCodes.length && !outlines.outlines[outlines.plantKeys[plant.id]])) throw new Error("植物の分布・参考度が不足しています");
       }
-    }
-    const next = new Map();
-    for (const edge of edges.values()) {
-      if (next.has(edge.fromKey)) throw new Error("原産国の外周が分岐しています");
-      next.set(edge.fromKey, edge);
-    }
-    const visited = new Set();
-    const rings = [];
-    for (const start of next.keys()) {
-      if (visited.has(start)) continue;
-      const ring = [];
-      let current = start;
-      while (!visited.has(current)) {
-        const edge = next.get(current);
-        if (!edge) throw new Error("原産国の外周が閉じていません");
-        visited.add(current);
-        ring.push(edge.from);
-        current = edge.toKey;
+      state.plants = catalog.plants;
+      state.plantOutlines = outlines;
+      elements.plantCategory.options[0].textContent = `すべて（${catalog.plants.length}）`;
+      for (const category of catalog.categories) {
+        const option = document.createElement("option");
+        option.value = category.id;
+        option.textContent = `${category.label}（${catalog.plants.filter((plant) => plant.category === category.id).length}）`;
+        elements.plantCategory.append(option);
       }
-      if (current !== start) throw new Error("原産国の外周が交差しています");
-      let signedArea = 0;
-      for (let index = 0; index < ring.length; index += 1) {
-        const from = ring[index];
-        const to = ring[(index + 1) % ring.length];
-        signedArea += from[0] * to[1] - to[0] * from[1];
-      }
-      // Natural Earth exterior rings are clockwise; ignore its near-zero seam artifact.
-      if (signedArea < -0.002) rings.push(ring);
+      elements.plantCatalogCount.textContent = `${catalog.plants.length}件 / 9ジャンル`;
+      elements.plantCategory.disabled = false;
+      elements.plantSearch.disabled = false;
+      renderPlantResults();
+    } catch (error) {
+      elements.plantCatalogCount.textContent = "読込エラー";
+      elements.plantResultCount.textContent = "植物データを読み込めませんでした。ページを再読み込みしてください。";
     }
-    if (visited.size !== next.size || !rings.length) throw new Error("原産国の外周を作れません");
-    return rings;
   }
 
   function nativeBounds(features) {
@@ -871,30 +940,12 @@
       }
       elements.land.replaceChildren(fragment);
       elements.border.replaceChildren(borderFragment);
-      const nativeFeatures = collection.features.filter((feature) => SANSEVIERIA_NATIVE_CODES.has(feature.properties?.code));
-      if (nativeFeatures.length === SANSEVIERIA_NATIVE_CODES.size) {
-        try {
-          const pathData = nativeOuterRings(nativeFeatures).map(ringToPath).join(" ");
-          elements.plantOrigin.replaceChildren(
-            svgElement("path", { d: pathData, class: "plant-origin-halo" }),
-            svgElement("path", { d: pathData, class: "plant-origin-outline" }),
-          );
-          state.plantOriginBounds = nativeBounds(nativeFeatures);
-          elements.toggleSansevieria.disabled = false;
-          updatePlantOrigin();
-        } catch (error) {
-          elements.plantChoiceState.textContent = "表示できません";
-        }
-      } else {
-        elements.plantChoiceState.textContent = "表示できません";
-      }
       if (state.referenceRecord?.cell) {
         state.referenceRecord.location = describeLocation(state.referenceRecord.cell);
       }
       if (state.selectedCell) updateLocation(state.selectedCell);
     } catch (error) {
       state.geographyStatus = "error";
-      elements.plantChoiceState.textContent = "地図を読めません";
       if (state.referenceRecord?.cell) state.referenceRecord.location = describeLocation(state.referenceRecord.cell);
       if (state.selectedCell) updateLocation(state.selectedCell);
     }
@@ -2238,6 +2289,8 @@
   drawClimateLegend();
   setView(1);
   loadWorldMap();
+  elements.plantBrowser.open = window.matchMedia("(min-width: 761px)").matches;
+  loadPlantCatalog();
   elements.weatherImage.addEventListener("load", () => {
     elements.layerStatus.textContent = "表示中";
     elements.layerStatus.dataset.state = "ready";
@@ -2271,12 +2324,18 @@
     const expanded = elements.layerPanel.classList.toggle("is-open");
     elements.toggleLayerPanel.setAttribute("aria-expanded", String(expanded));
   });
-  elements.toggleSansevieria.addEventListener("click", () => {
+  elements.togglePlantOrigin.addEventListener("click", () => {
     if (!state.plantOriginBounds) return;
     state.plantVisible = !state.plantVisible;
     updatePlantOrigin();
   });
-  elements.focusSansevieria.addEventListener("click", focusPlantOrigin);
+  elements.focusPlantOrigin.addEventListener("click", focusPlantOrigin);
+  elements.plantCategory.addEventListener("change", renderPlantResults);
+  elements.plantSearch.addEventListener("input", renderPlantResults);
+  elements.plantResults.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-plant-id]");
+    if (button && elements.plantResults.contains(button)) selectPlant(button.dataset.plantId);
+  });
   elements.map.addEventListener("pointerdown", beginDrag);
   elements.map.addEventListener("pointermove", moveDrag);
   elements.map.addEventListener("pointerup", endDrag);
