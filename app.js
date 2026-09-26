@@ -3,6 +3,7 @@
 
   const SVG_NS = "http://www.w3.org/2000/svg";
   const MAP_SIZE = 1000;
+  const INITIAL_MAP_VIEW = { longitude: 146, latitude: 34, zoom: 2.44140625 };
   const MAX_LAT = 85.05112878;
   const METEOROLOGY_LAT_STEP = 0.5;
   const METEOROLOGY_LON_STEP = 0.625;
@@ -2287,7 +2288,7 @@
 
   drawGraticule();
   drawClimateLegend();
-  setView(1);
+  setView(INITIAL_MAP_VIEW.zoom, ...project(INITIAL_MAP_VIEW.longitude, INITIAL_MAP_VIEW.latitude));
   loadWorldMap();
   elements.plantBrowser.open = window.matchMedia("(min-width: 761px)").matches;
   loadPlantCatalog();
