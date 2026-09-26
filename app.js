@@ -132,6 +132,9 @@
     referenceState: document.getElementById("referenceState"),
     referenceActions: document.getElementById("referenceActions"),
     currentActions: document.getElementById("currentActions"),
+    pickComparison: document.getElementById("pickComparison"),
+    mapGuide: document.getElementById("mapGuide"),
+    mapSettings: document.getElementById("mapSettings"),
     referenceLocation: document.getElementById("referenceLocation"),
     referenceDetail: document.getElementById("referenceDetail"),
     currentCard: document.getElementById("currentCard"),
@@ -852,9 +855,11 @@
     elements.plantOriginLabel.textContent = outline
       ? `黒い太線：${plant.originKind === "cultigen" ? "栽培化した種の成立地域" : "原産地域"}の目安`
       : "原種未特定のため、原産地域の線は表示しません";
-    elements.plantBrowser.open = false;
     updatePlantOrigin();
-    renderPlantResults();
+    // Keep the picker, scroll position and keyboard focus stable for rapid switching.
+    elements.plantResults.querySelectorAll("button[data-plant-id]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.plantId === id));
+    });
     // Selection changes the overlay only. Pan/zoom is an explicit, separate action.
   }
 
@@ -1836,6 +1841,12 @@
     elements.referenceRole.textContent = hasReference ? "基準地点" : "選択地点";
     elements.referenceState.textContent = hasReference ? "固定" : "未固定";
     elements.currentCard.hidden = !hasReference;
+    elements.pickComparison.hidden = !hasReference || !currentIsReference;
+    const guideDetail = document.createElement("span");
+    guideDetail.textContent = hasReference ? `基準A：${state.referenceRecord.location.headerLabel}`
+      : "地点を固定すると、2地点を比較できます";
+    elements.mapGuide.replaceChildren(document.createTextNode(hasReference
+      ? "地図をクリックして比較地点Bを選択" : "地図をクリックして気候を確認"), guideDetail);
     elements.referenceCard.classList.toggle("is-empty", !state.currentRecord && !hasReference);
     elements.referenceCard.classList.toggle("overlay-off", hasReference && !state.comparisonEnabled);
     elements.currentCard.classList.toggle("is-empty", currentIsReference);
@@ -2294,7 +2305,7 @@
     Math.max(1, initialMapBounds.width / Math.max(1, initialMapBounds.height)));
   setView(initialZoom, ...project(INITIAL_MAP_VIEW.longitude, INITIAL_MAP_VIEW.latitude));
   loadWorldMap();
-  elements.plantBrowser.open = window.matchMedia("(min-width: 761px)").matches;
+  elements.plantBrowser.open = true;
   loadPlantCatalog();
   elements.weatherImage.addEventListener("load", () => {
     elements.layerStatus.textContent = "表示中";
@@ -2328,6 +2339,20 @@
   elements.toggleLayerPanel.addEventListener("click", () => {
     const expanded = elements.layerPanel.classList.toggle("is-open");
     elements.toggleLayerPanel.setAttribute("aria-expanded", String(expanded));
+    elements.toggleLayerPanel.textContent = expanded ? "地図へ戻る" : "植物を選ぶ";
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (elements.mapSettings.open && !elements.mapSettings.contains(event.target)) elements.mapSettings.open = false;
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (elements.mapSettings.open) {
+      elements.mapSettings.open = false;
+      elements.mapSettings.querySelector("summary").focus();
+    } else if (window.matchMedia("(max-width: 760px)").matches && elements.layerPanel.classList.contains("is-open")) {
+      elements.toggleLayerPanel.click();
+      elements.toggleLayerPanel.focus();
+    }
   });
   elements.togglePlantOrigin.addEventListener("click", () => {
     if (!state.plantOriginBounds) return;
@@ -2360,6 +2385,7 @@
   elements.clearReference.addEventListener("click", clearReference);
   elements.swapLocations.addEventListener("click", swapLocations);
   elements.closeResults.addEventListener("click", closeResultPanel);
+  elements.pickComparison.addEventListener("click", closeResultPanel);
   elements.openResults.addEventListener("click", openResultPanel);
   elements.resultTabs.forEach((button) => {
     button.addEventListener("click", () => setResultPanelPage(button.dataset.resultTab));

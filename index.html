@@ -18,14 +18,14 @@
   <meta name="twitter:card" content="summary">
   <title>植物気候メッシュ｜Nature Wx Lab</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318675b'/%3E%3Cpath d='M32 51V28M32 35C19 34 14 25 14 14c12 0 20 6 18 21zm0-2c13-1 18-10 18-21-12 0-20 6-18 21z' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260926-plant-catalog">
-  <script src="./app.js?v=20260926-world-overview" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=20260926-explorer">
+  <script src="./app.js?v=20260926-explorer" defer></script>
 </head>
 <body>
   <header class="topbar">
     <div class="title-row">
       <h1>植物気候メッシュ <small>β</small></h1>
-      <p>世界地図をクリックして、その場所の気候を確かめる</p>
+      <p>原産地と栽培地点の気候を、地図で比べる</p>
     </div>
     <div class="header-actions">
       <a class="brand" href="https://naturewxlab.com/" target="_blank" rel="noopener noreferrer" aria-label="NatureWxLab公式ホームページへ">
@@ -68,42 +68,36 @@
     <aside id="layerPanel" class="layer-panel" aria-labelledby="layerPanelHeading">
       <div class="layer-panel-heading">
         <div>
-          <span>MAP LAYER</span>
-          <h2 id="layerPanelHeading">世界の気候分布</h2>
+          <h2 id="layerPanelHeading">植物から探す</h2>
+          <span>原産地を知る → 地図で気候を比べる</span>
         </div>
-        <button id="toggleLayerPanel" type="button" aria-controls="layerPanelBody" aria-expanded="false" aria-label="地図レイヤー設定を開閉">⌄</button>
+        <button id="toggleLayerPanel" type="button" aria-controls="plantPicker" aria-expanded="false">植物を選ぶ</button>
       </div>
 
-      <section class="plant-picker" aria-labelledby="plantPickerHeading">
+      <section id="plantPicker" class="plant-picker" aria-labelledby="plantPickerHeading">
         <details id="plantBrowser" class="plant-browser">
-          <summary id="plantPickerHeading">植物から探す <small id="plantCatalogCount">読込中</small></summary>
-          <label for="plantCategory">ジャンル</label>
-          <select id="plantCategory" disabled><option value="all">すべて</option></select>
-          <label for="plantSearch">名前・学名で検索</label>
-          <input id="plantSearch" type="search" placeholder="例：モンステラ、ジャガイモ" autocomplete="off" disabled>
+          <summary id="plantPickerHeading">植物一覧 <small id="plantCatalogCount">読込中</small></summary>
+          <div class="plant-filters">
+            <label class="search-field" for="plantSearch"><span class="sr-only">名前・学名で検索</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m15.5 15.5 5 5"></path></svg><input id="plantSearch" type="search" placeholder="植物名・学名で検索" autocomplete="off" disabled></label>
+            <label class="category-field" for="plantCategory"><span>ジャンル</span><select id="plantCategory" disabled><option value="all">すべて</option></select></label>
+          </div>
           <p id="plantResultCount" class="plant-result-count" role="status">植物データを読み込んでいます</p>
           <div id="plantResults" class="plant-results" aria-label="植物の検索結果"></div>
         </details>
-        <div id="selectedPlant" hidden>
-          <button id="togglePlantOrigin" class="plant-choice" type="button" aria-pressed="false" aria-controls="plantOriginLayer">
-            <span><strong id="selectedPlantName"></strong><small id="selectedPlantScientific"></small></span>
-            <b id="plantChoiceState">線を表示</b>
-          </button>
-          <p class="plant-reference"><span>気候の参考度</span> <b id="plantReferenceStars"></b><small>暫定</small></p>
-          <p id="plantReferenceReason" class="plant-reference-reason"></p>
-          <p id="plantTaxonNote" class="plant-taxon-note"></p>
-        </div>
-        <div id="plantOriginInfo" class="plant-origin-info" hidden>
-          <p id="plantOriginLabel"><span class="origin-line-key" aria-hidden="true"></span>黒い太線：原産地域の目安</p>
-          <p id="plantOriginCaveat" class="origin-caveat">地域全域の自生を示す線ではありません。囲み内の地点を選んで気候を比べられます。</p>
+        <div id="selectedPlant" class="selected-plant" hidden>
+          <div class="selected-plant-heading" aria-live="polite"><strong id="selectedPlantName"></strong><small id="selectedPlantScientific"></small></div>
           <div class="plant-origin-actions">
-            <button id="focusPlantOrigin" type="button">原産地域を中央に</button>
-            <a id="plantSource" target="_blank" rel="noopener noreferrer">分布の出典：Kew</a>
-            <a id="plantReferenceSource" target="_blank" rel="noopener noreferrer">比較のポイントの出典</a>
+            <button id="togglePlantOrigin" type="button" aria-pressed="false" aria-controls="plantOriginLayer"><span class="origin-line-key" aria-hidden="true"></span><span id="plantChoiceState">線を表示</span></button>
+            <button id="focusPlantOrigin" type="button">原産地へ移動</button>
           </div>
+          <div id="plantOriginInfo" class="plant-origin-info" hidden><p id="plantOriginLabel">黒い太線：原産地域の目安</p><p id="plantOriginCaveat" class="origin-caveat">地域全域の自生を示す線ではありません。囲み内をクリックして気候を確認。</p></div>
+          <details class="plant-detail"><summary><span>参考度 <b id="plantReferenceStars"></b></span><span>解説・出典</span></summary><div class="plant-detail-body">
+            <p class="plant-reference">気候の参考度（暫定）</p><p id="plantReferenceReason" class="plant-reference-reason"></p><p id="plantTaxonNote" class="plant-taxon-note"></p>
+            <div class="plant-source-links"><a id="plantSource" target="_blank" rel="noopener noreferrer">分布の出典：Kew</a><a id="plantReferenceSource" target="_blank" rel="noopener noreferrer">比較のポイントの出典</a></div>
+          </div></details>
         </div>
         <details class="plant-rating-guide">
-          <summary>星の見方</summary>
+          <summary>参考度の星について</summary>
           <p>原産地の気候を栽培の参考にしやすい度合いを、編集上の暫定評価で示します。耐寒性・栽培可否の判定ではありません。</p>
           <ol>
             <li>★1：原種未特定／日長などの改良の影響が大きい</li>
@@ -116,10 +110,11 @@
         </details>
       </section>
 
-      <div id="layerPanelBody" class="layer-panel-body">
-        <section class="layer-control-group" aria-labelledby="elementHeading">
-          <h3 id="elementHeading">気象要素</h3>
-          <div class="weather-layer-buttons">
+    </aside>
+
+    <section class="map-panel" aria-label="世界地図">
+      <div class="map-toolbar">
+          <div class="weather-layer-buttons" role="group" aria-label="地図に表示する気象要素">
             <button type="button" data-weather-layer="temperature" aria-pressed="true">
               <b aria-hidden="true">℃</b><span>気温</span>
             </button>
@@ -133,12 +128,8 @@
               <b aria-hidden="true">☀</b><span>日射量</span>
             </button>
           </div>
-        </section>
-
-        <section class="layer-control-group" aria-labelledby="periodHeading">
-          <h3 id="periodHeading">表示期間</h3>
           <label class="select-field" for="layerPeriod">
-            <span>年間・月別</span>
+            <span class="sr-only">地図の表示期間</span>
             <select id="layerPeriod">
               <option value="annual">年平均</option>
               <option value="01">1月</option>
@@ -155,22 +146,11 @@
               <option value="12">12月</option>
             </select>
           </label>
-        </section>
-
-        <section class="active-layer-card" aria-live="polite">
+        <details id="mapSettings" class="map-settings"><summary>表示設定</summary><div id="layerPanelBody" class="layer-panel-body">
+        <section class="active-layer-card">
           <span id="activeLayerPeriod">年平均</span>
           <strong id="activeLayerName">平均気温</strong>
           <small id="activeLayerMeta">1991–2020年の気候平均｜0.5°×0.625°格子</small>
-          <span id="layerStatus" class="layer-status" data-state="ready">表示中</span>
-        </section>
-
-        <section class="weather-legend" aria-labelledby="weatherLegendTitle">
-          <div class="weather-legend-heading">
-            <strong id="weatherLegendTitle">平均気温</strong>
-            <span id="weatherLegendUnit">℃</span>
-          </div>
-          <div id="weatherLegendBar" class="weather-legend-bar" aria-hidden="true"></div>
-          <div id="weatherLegendTicks" class="weather-legend-ticks"></div>
         </section>
 
         <section class="layer-control-group compact-settings" aria-label="レイヤー表示設定">
@@ -182,11 +162,9 @@
           <button id="climateToggle" class="secondary-layer-button" type="button" aria-controls="climateLegend" aria-pressed="false">気候区分を重ねる</button>
         </section>
 
-        <p class="layer-panel-note">日本の気温・降水・日射・湿度は約1kmの独自推定。日本以外はNASA POWER。日本の白抜きは欠測です。地図をクリックすると年間変化を表示します。</p>
+        <p class="layer-panel-note">日本は約1kmの独自推定、日本以外はNASA POWER。日本の白抜きは欠測です。</p>
+        </div></details>
       </div>
-    </aside>
-
-    <section class="map-panel" aria-label="世界地図">
       <div class="map-wrap">
         <svg id="worldMap" viewBox="0 0 1000 1000" role="img" aria-label="世界地図" aria-describedby="mapDescription">
           <desc id="mapDescription">日本の気温・降水・日射・湿度は約1kmの独自推定、日本以外はNASA POWERの気候平均を表示します。</desc>
@@ -218,8 +196,10 @@
           <button id="zoomIn" type="button" aria-label="地図を拡大">＋</button>
           <button id="resetView" type="button">全体</button>
         </div>
-        <div id="mapLayerLabel" class="map-layer-label">年平均｜平均気温</div>
+        <div id="mapLayerLabel" class="sr-only">年平均｜平均気温</div>
+        <p id="mapGuide" class="map-guide">地図をクリックして気候を確認 <span>地点を固定すると、2地点を比較できます</span></p>
         <div id="plantMapBadge" class="plant-map-badge" hidden></div>
+        <section class="weather-legend" aria-labelledby="weatherLegendTitle"><div class="weather-legend-heading"><strong id="weatherLegendTitle">平均気温</strong><span id="weatherLegendUnit">℃</span><span id="layerStatus" class="layer-status" data-state="ready" role="status">表示中</span></div><div id="weatherLegendBar" class="weather-legend-bar" aria-hidden="true"></div><div id="weatherLegendTicks" class="weather-legend-ticks"></div></section>
         <section id="climateLegend" class="climate-legend" aria-label="ケッペン＝ガイガー気候区分の凡例" hidden>
           <div class="climate-legend-heading">
             <strong>ケッペン＝ガイガー気候区分</strong>
@@ -254,7 +234,7 @@
               <span id="referenceDetail" class="location-detail">Aを基準に固定すると、比較地点Bを選べます</span>
             </div>
             <div id="currentCard" class="location-card current-location" hidden>
-              <div class="location-card-top"><strong class="location-role"><b>B</b> <span id="selectionState">比較地点</span></strong><div id="currentActions" class="location-actions"><button id="toggleSeasonShift" class="header-action season-shift-toggle" type="button" aria-pressed="false" hidden>季節を合わせる</button></div></div>
+              <div class="location-card-top"><strong class="location-role"><b>B</b> <span id="selectionState">比較地点</span></strong><div id="currentActions" class="location-actions"><button id="pickComparison" class="header-action pick-comparison" type="button" hidden>地図で地点Bを選ぶ</button><button id="toggleSeasonShift" class="header-action season-shift-toggle" type="button" aria-pressed="false" hidden>季節を合わせる</button></div></div>
               <strong id="currentLocation" class="location-name">次に、地図で比べたい地点Bを選択</strong>
               <span id="currentDetail" class="location-detail">国と周辺地域を表示します</span>
               <span id="seasonShiftStatus" class="season-shift-status" hidden>季節合わせ中：Bの日別を183日、月別を6か月移動。横軸はAの日付。年平均はそのまま。</span>
