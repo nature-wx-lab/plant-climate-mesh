@@ -323,7 +323,10 @@
     const visibleBottom = Math.min(wrapRect.height, window.innerHeight - wrapRect.top);
     // Park most of the panel beyond either side or below the map, leaving
     // enough of its header inside the visible map to grab it again.
-    const grabWidth = Math.min(140, panelRect.width, Math.max(0, visibleRight - visibleLeft - 16));
+    const trailingActions = elements.swapLocations.hidden ? 0
+      : headerRect.right - elements.swapLocations.getBoundingClientRect().left;
+    const grabWidth = Math.min(Math.max(140, trailingActions + 64), panelRect.width,
+      Math.max(0, visibleRight - visibleLeft - 16));
     const minimumTop = visibleTop + 8;
     return {
       left: clamp(position.left, visibleLeft + 8 + grabWidth - panelRect.width, visibleRight - grabWidth - 8),
