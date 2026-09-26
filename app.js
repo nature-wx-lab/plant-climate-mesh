@@ -316,9 +316,18 @@
   function clampResultPanelPosition(position) {
     const wrapRect = elements.mapWrap.getBoundingClientRect();
     const panelRect = elements.resultPanel.getBoundingClientRect();
+    const headerRect = elements.resultHeading.getBoundingClientRect();
+    const visibleLeft = Math.max(0, -wrapRect.left);
+    const visibleRight = Math.min(wrapRect.width, document.documentElement.clientWidth - wrapRect.left);
+    const visibleTop = Math.max(0, -wrapRect.top);
+    const visibleBottom = Math.min(wrapRect.height, window.innerHeight - wrapRect.top);
+    // Park most of the panel beyond either side or below the map, leaving
+    // enough of its header inside the visible map to grab it again.
+    const grabWidth = Math.min(140, panelRect.width, Math.max(0, visibleRight - visibleLeft - 16));
+    const minimumTop = visibleTop + 8;
     return {
-      left: clamp(position.left, 8, Math.max(8, wrapRect.width - panelRect.width - 8)),
-      top: clamp(position.top, 8, Math.max(8, wrapRect.height - panelRect.height - 8)),
+      left: clamp(position.left, visibleLeft + 8 + grabWidth - panelRect.width, visibleRight - grabWidth - 8),
+      top: clamp(position.top, minimumTop, Math.max(minimumTop, visibleBottom - headerRect.height - 8)),
     };
   }
 
