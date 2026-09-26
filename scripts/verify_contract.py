@@ -154,11 +154,11 @@ def verify_plant_catalog(app: str) -> None:
     require(catalog['regionSource']['sha256'] == outlines['sourceSha256'], 'plant boundary source mismatch')
     require(catalog['ratingMethod']['kind'] == 'editorial-provisional', 'rating method missing')
     expected = {'tropical':40, 'vegetables':25, 'annuals':20, 'perennials':20, 'trees':20,
-                'australian':20, 'succulents':20, 'caudex':20, 'tillandsia':20}
-    require(len(plants) == 205 and len({p['id'] for p in plants}) == 205, 'plant count or duplicate ID')
+                'australian':33, 'succulents':25, 'caudex':28, 'tillandsia':20}
+    require(len(plants) == 231 and len({p['id'] for p in plants}) == 231, 'plant count or duplicate ID')
     require({c['id'] for c in catalog['categories']} == set(expected), 'plant categories mismatch')
     require({c:sum(p['category'] == c for p in plants) for c in expected} == expected, 'genre count mismatch')
-    require(len({p['scientificName'] for p in plants}) == 205, 'duplicate accepted taxa')
+    require(len({p['scientificName'] for p in plants}) == 231, 'duplicate accepted taxa')
     for plant in plants:
         require(plant['taxonRank'] in ('species','variety','subspecies','cultivar'), 'invalid taxon rank')
         require(plant['originKind'] in ('native','cultigen','unresolved'), 'invalid origin kind')
@@ -200,9 +200,47 @@ def verify_plant_catalog(app: str) -> None:
             'requested flowering tree species missing')
     require('遅霜' in by_id['magnolia-denudata']['reference']['reason']
             and '改良' in by_id['syringa-vulgaris']['reference']['reason'], 'flowering/cultivar explanation missing')
+    australian_research = {'Acacia baileyana', 'Eucalyptus gunnii', 'Melaleuca citrina',
+        'Grevillea lanigera', 'Banksia ericifolia', 'Melaleuca linariifolia', 'Westringia fruticosa',
+        'Eremophila nivea', 'Chamelaucium uncinatum', 'Boronia heterophylla', 'Hardenbergia violacea',
+        'Actinotus helianthi', 'Anigozanthos flavidus', 'Leucophyta brownii', 'Crowea exalata',
+        'Backhousia citriodora', 'Leptospermum petersonii', 'Erioseira myoporoides',
+        'Ceratopetalum gummiferum', 'Telopea speciosissima'}
+    succulent_research = {'Echeveria agavoides', 'Echeveria elegans', 'Echeveria laui', 'Echeveria lilacina',
+        'Haworthia cooperi', 'Haworthia cymbiformis', 'Haworthia retusa', 'Haworthia truncata',
+        'Haworthiopsis attenuata', 'Agave parryi', 'Agave victoriae-reginae', 'Agave potatorum',
+        'Agave attenuata', 'Agave americana', 'Crassula ovata', 'Kalanchoe tomentosa',
+        'Aeonium arboreum', 'Sempervivum tectorum', 'Sedum morganianum', 'Curio rowleyanus'}
+    caudex_research = {'Pachypodium rosulatum subsp. gracilius', 'Pachypodium lamerei',
+        'Pachypodium densiflorum', 'Pachypodium brevicaule', 'Pachypodium eburneum',
+        'Adenium obesum', 'Operculicarya pachypus', 'Operculicarya decaryi', 'Fockea edulis',
+        'Adenia glauca', 'Cyphostemma juttae', 'Dorstenia foetida', 'Jatropha podagrica',
+        'Sinningia leucotricha', 'Dioscorea elephantipes', 'Othonna euphorbioides',
+        'Othonna herrei', 'Tylecodon paniculatus', 'Tylecodon reticulatus', 'Pelargonium triste'}
+    for category, requested in [('australian', australian_research), ('succulents', succulent_research),
+                                ('caudex', caudex_research)]:
+        group = [p for p in plants if p['category'] == category]
+        require(requested <= {p['scientificName'] for p in group}, 'requested research species missing')
+        require(all(p['note'] and p['reference']['reason'] for p in group if p['scientificName'] in requested),
+                'individual research caveat missing')
+    require('Philotheca myoporoides' in by_id['erioseira-myoporoides']['aliases'], 'revised name search alias missing')
+    require(by_id['eremophila-nivea']['reference']['stars'] == 3
+            and '接ぎ木' in by_id['eremophila-nivea']['note'], 'grafted plant limitation missing')
+    require('変種' in by_id['haworthia-cooperi']['note']
+            and '基本変種' in by_id['haworthia-cymbiformis']['note'], 'variety source scope missing')
+    require(by_id['aeonium-arboreum']['originKind'] == 'native'
+            and by_id['aeonium-arboreum']['taxonRank'] == 'species'
+            and '黒法師' in by_id['aeonium-arboreum']['note']
+            and '園芸品種' in by_id['aeonium-arboreum']['note'], 'Aeonium cultivar/species distinction missing')
+    require(by_id['pachypodium-rosulatum-subsp-gracilius']['taxonRank'] == 'subspecies'
+            and by_id['pachypodium-rosulatum']['taxonRank'] == 'species', 'Gracilius subspecies distinction missing')
+    require(all('発根' in p['note'] and '自根' in p['note'] for p in plants
+                if p['scientificName'] in caudex_research), 'rooted caudex comparison scope missing')
+    require('休' in by_id['dioscorea-elephantipes']['reference']['reason']
+            and '露出' in by_id['fockea-edulis']['reference']['reason'], 'caudex season/exposure explanation missing')
     select_body = re.search(r'^  function selectPlant\([\s\S]*?^  }', app, re.M).group(0)
     require('setView(' not in select_body and 'focusPlantOrigin(' not in select_body, 'plant selection must preserve view')
-    print('PLANT_CATALOG_OK 205 taxa, 9 genres, reference reasons, outlines')
+    print('PLANT_CATALOG_OK 231 taxa, 9 genres, reference reasons, outlines')
 
 
 def main() -> None:

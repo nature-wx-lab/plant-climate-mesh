@@ -4465,7 +4465,9 @@
       "category": "australian",
       "name": "バンクシア・エリキフォリア",
       "scientificName": "Banksia ericifolia",
-      "aliases": [],
+      "aliases": [
+        "ヒースバンクシア"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -4476,12 +4478,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A703098-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "種内の区分で自生地域が異なります。Giant Candlesなど他種との交配品種には、この種だけの原産地を当てはめません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A703098-1",
-        "basis": "distribution"
+        "reason": "降水の季節と、砂質で水が抜ける根の環境をセットで比較する対象です。栽培資料でも酸性で排水のよい土が重視されています。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/banksia-ericifolia/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4719,7 +4721,10 @@
       "category": "australian",
       "name": "ギンヨウアカシア",
       "scientificName": "Acacia baileyana",
-      "aliases": [],
+      "aliases": [
+        "ミモザ",
+        "ギンヨウアカシア"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -4730,12 +4735,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A469798-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "ミモザ全般ではなくギンヨウアカシア1種を対象にします。紫葉や矮性の園芸品種がありますが、外見の選抜から耐寒性の一致までは判断できません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A469798-1",
-        "basis": "distribution"
+        "reason": "限られた自生地域の冬の気温・降水を比較する手がかりになります。栽培では幅広い気候に適応し、日照と排水のよさが重要です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/acacia-baileyana/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4771,7 +4776,8 @@
       "scientificName": "Melaleuca citrina",
       "aliases": [
         "Callistemon citrinus",
-        "ブラシノキ"
+        "ブラシノキ",
+        "カリステモン・シトリヌス"
       ],
       "taxonRank": "species",
       "originKind": "native",
@@ -4787,12 +4793,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77108602-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "旧名 Callistemon citrinus。園芸品種では花色・樹形が選抜され、他種との交配もあります。ブラシノキという流通名だけでこの原種の耐性を当てはめないでください。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77108602-1",
-        "basis": "distribution"
+        "stars": 3,
+        "reason": "栽培でも適度な水分が必要で、乾燥地向けのオージープランツとは管理を分けて比較できます。ただし流通品には他種との交配系統もあります。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/callistemon-citrinus-syn-melaleuca-citrina/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4862,7 +4868,9 @@
       "category": "australian",
       "name": "ワックスフラワー",
       "scientificName": "Chamelaucium uncinatum",
-      "aliases": [],
+      "aliases": [
+        "ワックスフラワー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -4873,12 +4881,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A592188-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "園芸品種では花色が選抜され、系統間で丈夫さに差があります。他種との交配品種もあり、夏の多湿への反応は品種ごとに確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A592188-1",
-        "basis": "distribution"
+        "stars": 3,
+        "reason": "夏に乾燥する自生地と日本の梅雨・夏を比較する題材です。ただし園芸系統で多湿への適応に差があり、原種の気候だけでは丈夫さを判断できません。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/chamelaucium-uncinatum/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4886,7 +4894,9 @@
       "category": "australian",
       "name": "カンガルーポー（フラビダス）",
       "scientificName": "Anigozanthos flavidus",
-      "aliases": [],
+      "aliases": [
+        "カンガルーポー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -4897,12 +4907,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A429575-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "園芸品種では他種との交配で花色などが改良されています。丈夫なフラビダス種を交配に使っていても、すべての交配品種が同じ乾湿・寒さへの反応とは限りません。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A429575-1",
-        "basis": "distribution"
+        "stars": 3,
+        "reason": "この種は湿った土や湿潤な夏にも比較的対応し、開花には日照と水分が大切です。交配系統が多いため、カンガルーポー全体に同じ管理は広げられません。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/anigozanthos-flavidus/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4910,7 +4920,9 @@
       "category": "australian",
       "name": "ウエストリンギア",
       "scientificName": "Westringia fruticosa",
-      "aliases": [],
+      "aliases": [
+        "オーストラリアンローズマリー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -4923,12 +4935,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/461913-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "オーストラリアンローズマリーとして登録する対象はこの種です。斑入り・小型・交配系統まで同じ耐性とは判断しません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/461913-1",
-        "basis": "distribution"
+        "reason": "ニューサウスウェールズ州の海岸の気候を比較する対象です。栽培資料では日照と排水、冬の凍結からの保護が示され、海岸の穏やかさにも注目できます。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/68077/westringia-fruticosa/details",
+        "basis": "cultivation"
       }
     },
     {
@@ -4955,12 +4967,378 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/497362-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "園芸品種では花色・つる性や低木状の樹形・生育力が選抜されています。原産系統の違いもあり、原産域全体の平均的な気候で一括りにはできません。",
+      "reference": {
+        "stars": 3,
+        "reason": "分布が広く、乾燥地域由来と湿潤地域由来では適応が異なります。冬から春の季節を比較しつつ、栽培地に近い気候の原産系統を確認したい種です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/hardenbergia-violacea/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "eucalyptus-gunnii",
+      "category": "australian",
+      "name": "ユーカリ・グニー",
+      "scientificName": "Eucalyptus gunnii",
+      "aliases": [
+        "グニーユーカリ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Tasmania"
+      ],
+      "regionCodes": [
+        "TAS"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A592987-1",
+      "checkedAt": "2026-09-26",
+      "note": "他のユーカリの耐性には広げません。産地・系統や幼木と成木の差があり、地図上の平均気温は越冬限界を示しません。",
+      "reference": {
+        "stars": 5,
+        "reason": "タスマニアの季節変化と冬の冷え込みを調べやすい種です。栽培資料でも耐寒性が認められ、日照と幼木期の風よけが参考になります。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/6888/eucalyptus-gunnii/details",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "grevillea-lanigera",
+      "category": "australian",
+      "name": "グレビレア・ラニゲラ",
+      "scientificName": "Grevillea lanigera",
+      "aliases": [
+        "グレヴィレア・ラニゲラ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales",
+        "Victoria"
+      ],
+      "regionCodes": [
+        "NSW",
+        "VIC"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A703877-1",
+      "checkedAt": "2026-09-26",
+      "note": "樹形の変異が大きい種です。匍匐型などの園芸系統と他種との交配品種を区別し、形の違いから耐寒性を決めません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/497362-1",
+        "reason": "日照・排水のよさと、活着後の乾燥への適応を栽培資料でも確認できます。自生環境の幅が広いため、産地や株の系統を確認すると比較に役立ちます。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/grevillea-lanigera/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "melaleuca-linariifolia",
+      "category": "australian",
+      "name": "メラレウカ・リナリフォリア（スノーインサマー）",
+      "scientificName": "Melaleuca linariifolia",
+      "aliases": [
+        "スノーインサマー"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales",
+        "Queensland"
+      ],
+      "regionCodes": [
+        "NSW",
+        "QLD"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A598003-1",
+      "checkedAt": "2026-09-26",
+      "note": "小型の園芸品種では樹形が選抜されています。スノーインサマーという名前でも種を確認し、耐寒性は株の条件に合わせて調べます。",
+      "reference": {
+        "stars": 5,
+        "reason": "周期的に水に浸かる場所にも自生し、栽培でも乾きすぎると生育や花付きが悪くなります。原産地の降水と生育期の水分を結びつけやすい種です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/melaleuca-linariifolia/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "eremophila-nivea",
+      "category": "australian",
+      "name": "エレモフィラ・ニベア",
+      "scientificName": "Eremophila nivea",
+      "aliases": [
+        "エレモフィラ・ニヴェア"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Western Australia"
+      ],
+      "regionCodes": [
+        "WAU"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A929405-1",
+      "checkedAt": "2026-09-26",
+      "note": "接ぎ木で苗の丈夫さ・生育力が改善されても、葉の多湿による病気を十分に防げるとは限りません。台木を確認し、通風と葉をぬらし続けない管理に注目します。",
+      "reference": {
+        "stars": 3,
+        "reason": "乾燥した気候と、多湿で毛の多い葉に病気が出やすい性質を比較できます。接ぎ木苗は丈夫さが変わるため、原種の気候だけで管理を決めにくい種です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/eremophila-nivea/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "boronia-heterophylla",
+      "category": "australian",
+      "name": "ボロニア・ヘテロフィラ",
+      "scientificName": "Boronia heterophylla",
+      "aliases": [
+        "レッドボロニア"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Western Australia"
+      ],
+      "regionCodes": [
+        "WAU"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A771623-1",
+      "checkedAt": "2026-09-26",
+      "note": "ボロニア属全体ではなくヘテロフィラ種を対象にします。原産州の乾燥した地点を選ぶだけでは、実際の根の環境を再現できません。",
+      "reference": {
+        "stars": 5,
+        "reason": "西オーストラリア原産でも乾燥と熱風が苦手で、夏の水分と涼しい根元が栽培の要点です。気温・降水に日陰や地温を加えて比較できます。",
+        "sourceUrl": "https://www.anbg.gov.au/gnp/gnp1/boronia-heterophylla.html",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "actinotus-helianthi",
+      "category": "australian",
+      "name": "フランネルフラワー",
+      "scientificName": "Actinotus helianthi",
+      "aliases": [
+        "アクチノータス・ヘリアンティ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales",
+        "Queensland"
+      ],
+      "regionCodes": [
+        "NSW",
+        "QLD"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A837289-1",
+      "checkedAt": "2026-09-26",
+      "note": "フランネルフラワーはこの1種を対象にします。園芸系統の寿命・草丈や耐性の違いは、原産地の気候とは別に確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "豪州東部の季節と、砂質土の排水を合わせて比べる題材です。栽培でも水はけが重要で、降水量だけから水やりを決めない説明に向きます。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/actinotus-helianthi/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "leucophyta-brownii",
+      "category": "australian",
+      "name": "クッションブッシュ（プラチーナ）",
+      "scientificName": "Leucophyta brownii",
+      "aliases": [
+        "プラチーナ",
+        "カロケファルス",
+        "Calocephalus brownii"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "South Australia",
+        "Tasmania",
+        "Victoria",
+        "Western Australia"
+      ],
+      "regionCodes": [
+        "SOA",
+        "TAS",
+        "VIC",
+        "WAU"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A230241-1",
+      "checkedAt": "2026-09-26",
+      "note": "若い株が根付くまでは水分に配慮します。乾燥に強いという性質を、植え付け直後や湿り続ける鉢土にもそのまま当てはめません。",
+      "reference": {
+        "stars": 5,
+        "reason": "海岸の風・乾燥への適応と、高湿度・根の過湿への弱さが栽培資料でも対応します。日本の梅雨と、原産海岸の通風・排水の違いを比較しやすい種です。",
+        "sourceUrl": "https://www.anbg.gov.au/gnp/interns-2014/leucophyta-brownii.html",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "crowea-exalata",
+      "category": "australian",
+      "name": "サザンクロス（クロウエア・エクサラタ）",
+      "scientificName": "Crowea exalata",
+      "aliases": [
+        "サザンクロス",
+        "クロウェア・エクサラタ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales",
+        "Queensland",
+        "Victoria"
+      ],
+      "regionCodes": [
+        "NSW",
+        "QLD",
+        "VIC"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A772294-1",
+      "checkedAt": "2026-09-26",
+      "note": "サリグナ種は別種です。Festivalなど交配系統があり、園芸品種では花色・樹形が選抜されています。低くコンパクトな系統と低木状の系統でも適応に差があります。",
+      "reference": {
+        "stars": 3,
+        "reason": "適度な湿り気と排水、活着後の乾燥への対応を比較できます。ただし樹形による適応差や交配品種があり、サザンクロスという流通名だけでは判断しにくい種です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/crowea-exalata/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "backhousia-citriodora",
+      "category": "australian",
+      "name": "レモンマートル",
+      "scientificName": "Backhousia citriodora",
+      "aliases": [
+        "バクホウシア・シトリオドラ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Queensland"
+      ],
+      "regionCodes": [
+        "QLD"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A591026-1",
+      "checkedAt": "2026-09-26",
+      "note": "レモンティーツリーとは別種です。香りの成分が異なる系統があり、香りの選抜から耐寒性まで改良されたとは判断しません。",
+      "reference": {
+        "stars": 5,
+        "reason": "雨林の環境と、特に幼木を霜から守る栽培上の性質を結びつけやすい種です。乾燥地のオージープランツと分けて、降水・冬の寒さを比べます。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/backhousia-citriodora/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "leptospermum-petersonii",
+      "category": "australian",
+      "name": "レモンティーツリー",
+      "scientificName": "Leptospermum petersonii",
+      "aliases": [
+        "レプトスペルマム・ペテルソニー"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales",
+        "Queensland"
+      ],
+      "regionCodes": [
+        "NSW",
+        "QLD"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A597478-1",
+      "checkedAt": "2026-09-26",
+      "note": "レモンマートルとは別種です。自生環境からの暫定評価で、園芸品種別の耐寒性・耐暑性の一致は確認していません。",
+      "reference": {
+        "stars": 4,
+        "reason": "湿潤な森林や雨林の周辺、砂質土・岩の崖に自生します。降水と根の排水をセットで調べる対象で、乾燥地の植物として一括りにはしません。",
+        "sourceUrl": "https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?page=nswfl&lvl=sp&name=Leptospermum~petersonii",
         "basis": "distribution"
+      }
+    },
+    {
+      "id": "erioseira-myoporoides",
+      "category": "australian",
+      "name": "フィロテカ・ミオポロイデス（エリオステモン）",
+      "scientificName": "Erioseira myoporoides",
+      "aliases": [
+        "Philotheca myoporoides",
+        "Eriostemon myoporoides",
+        "エリオステモン"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales",
+        "Queensland",
+        "Victoria"
+      ],
+      "regionCodes": [
+        "NSW",
+        "QLD",
+        "VIC"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77363625-1",
+      "checkedAt": "2026-09-26",
+      "note": "Kewの採用名は Erioseira myoporoides。Philotheca myoporoides、Eriostemon myoporoidesの名前でも流通します。種内の区分や園芸系統の違いを残して比較します。",
+      "reference": {
+        "stars": 4,
+        "reason": "栽培資料では、半日陰・排水のよい土と、活着後の乾燥やある程度の霜への適応が示されています。原産地の季節変化に加え、種内の産地の違いも確認します。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/philotheca-myoporoides/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "ceratopetalum-gummiferum",
+      "category": "australian",
+      "name": "クリスマスブッシュ",
+      "scientificName": "Ceratopetalum gummiferum",
+      "aliases": [
+        "セラトペタルム・グミフェルム"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales"
+      ],
+      "regionCodes": [
+        "NSW"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A790478-1",
+      "checkedAt": "2026-09-26",
+      "note": "花のように見える赤い部分は萼です。園芸系統で萼の色などが選抜されていますが、色の選抜を耐寒性・耐暑性の改良と同じには扱いません。",
+      "reference": {
+        "stars": 4,
+        "reason": "栽培では適度な湿り気を保ちながら排水を確保します。原産地の降水と、鉢土・植え場所の水の抜け方を比較する題材です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/ceratopetalum-gummiferum/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "telopea-speciosissima",
+      "category": "australian",
+      "name": "ワラタ",
+      "scientificName": "Telopea speciosissima",
+      "aliases": [
+        "ワラター",
+        "テロペア・スペキオシシマ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "New South Wales"
+      ],
+      "regionCodes": [
+        "NSW"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A706840-1",
+      "checkedAt": "2026-09-26",
+      "note": "ワラタ全般ではなくスペキオシシマ種を対象にします。園芸品種では花色などの選抜や他種との交配があり、交配品種にこの種だけの原産地・耐性を当てはめません。",
+      "reference": {
+        "stars": 3,
+        "reason": "シドニー周辺の自生地と、栽培で必要な水分・良好な排水を比較できます。ただし栽培が難しく、流通する他種との交配品種を分けて確認したい対象です。",
+        "sourceUrl": "https://anpsa.org.au/plant_profiles/telopea-speciosissima-and-cultivars/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4968,7 +5346,9 @@
       "category": "succulents",
       "name": "エケベリア・エレガンス（月影）",
       "scientificName": "Echeveria elegans",
-      "aliases": [],
+      "aliases": [
+        "月影"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -4983,12 +5363,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A86934-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "月影の原種エレガンスを対象にします。同名の園芸系統や交配品種の耐性まで一致すると確認した評価ではありません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A86934-2",
-        "basis": "distribution"
+        "reason": "日照と水はけを好み、過湿に注意する性質が栽培資料でも示されています。現地の降水と、雨ざらしの鉢土が乾く速さを合わせて比較できます。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/echeveria-elegans/",
+        "basis": "cultivation"
       }
     },
     {
@@ -4996,7 +5376,10 @@
       "category": "succulents",
       "name": "エケベリア・アガボイデス",
       "scientificName": "Echeveria agavoides",
-      "aliases": [],
+      "aliases": [
+        "東雲",
+        "しののめ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5009,12 +5392,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/273738-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "東雲はアガボイデス種の別名として検索できます。アガボイデス交配という名称の株には別の親種もあり、この種だけの原産地・耐性を当てはめません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/273738-1",
-        "basis": "distribution"
+        "reason": "原産地の乾湿の季節変化を、栽培資料の排水のよさ・生育期の水分・冬の乾燥管理と照合できます。日差しの強さは現地の生育場所も調べます。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/6220/echeveria-agavoides/details",
+        "basis": "cultivation"
       }
     },
     {
@@ -5022,7 +5405,9 @@
       "category": "succulents",
       "name": "エケベリア・ラウイ",
       "scientificName": "Echeveria laui",
-      "aliases": [],
+      "aliases": [
+        "ラウイ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5033,10 +5418,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A273910-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "自生環境からの暫定評価です。雨季・乾季は比較の手がかりですが、鉢植えの水やり時期や園芸交配系の耐寒性をそのまま決めるものではありません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "メキシコのオアハカ州に自生し、Kewでは季節的に乾燥する熱帯の環境に分類されています。雨季と乾季を比べ、エケベリア全体を冷涼な高地の植物とは扱いません。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A273910-1",
         "basis": "distribution"
       }
@@ -5098,7 +5483,9 @@
       "category": "succulents",
       "name": "ハオルチア・クーペリ",
       "scientificName": "Haworthia cooperi",
-      "aliases": [],
+      "aliases": [
+        "クーペリー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5109,12 +5496,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536029-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "出典は変種ピクツラータの例です。クーペリー全体が同じ環境ではありません。園芸系統では窓・葉形・斑などが選抜され、種間交配もあるため、変種・親種を確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536029-1",
-        "basis": "distribution"
+        "stars": 3,
+        "reason": "変種・産地によって生育場所が異なり、地域の気温や雨だけでは判断しにくい種です。変種ピクツラータのような日陰の崖の環境も比較の手がかりになります。",
+        "sourceUrl": "https://pza.sanbi.org/haworthia-cooperi-var-picturata",
+        "basis": "cultivation"
       }
     },
     {
@@ -5122,7 +5509,9 @@
       "category": "succulents",
       "name": "ハオルチア・シンビフォルミス",
       "scientificName": "Haworthia cymbiformis",
-      "aliases": [],
+      "aliases": [
+        "シンビフォルミス"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5133,12 +5522,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536035-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "出典の栽培例は基本変種 var. cymbiformisです。地図は種全体の掲載地域で、すべての変種・交配品種の水やりの季節や耐性が一致するとは限りません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536035-1",
-        "basis": "distribution"
+        "reason": "代表的な変種は夏に雨が降る地域で生育します。季節と降水を照合し、ハオルチアだから冬型と決めず、霜や水の与えすぎも分けて考えられます。",
+        "sourceUrl": "https://pza.sanbi.org/haworthia-cymbiformis",
+        "basis": "cultivation"
       }
     },
     {
@@ -5146,7 +5535,9 @@
       "category": "succulents",
       "name": "ハオルチア・トルンカータ（玉扇）",
       "scientificName": "Haworthia truncata",
-      "aliases": [],
+      "aliases": [
+        "玉扇"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5157,12 +5548,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536237-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "出典は基本変種 var. truncataの例です。園芸系統では窓・模様・斑などが選抜されています。種間交配系や別の変種は分け、種全体の輪郭から管理を一律には決めません。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536237-1",
-        "basis": "distribution"
+        "stars": 3,
+        "reason": "基本変種は地面から葉先だけが出る姿で自生し、冬の降水地域に分布します。露出した鉢植えとの光・温度の違いを考え、園芸系統の特徴も確認したい種です。",
+        "sourceUrl": "https://pza.sanbi.org/haworthia-truncata-var-truncata",
+        "basis": "cultivation"
       }
     },
     {
@@ -5170,7 +5561,10 @@
       "category": "succulents",
       "name": "ハオルチア・レツーサ（寿）",
       "scientificName": "Haworthia retusa",
-      "aliases": [],
+      "aliases": [
+        "寿",
+        "レツーサ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5181,12 +5575,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536185-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "寿の原種レツーサを対象にします。窓や葉形を選抜した園芸系統・交配品種の耐性は、見た目の類似だけで原種と同じとは判断しません。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A536185-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "乾燥地原産でも、栽培では明るい間接光が適し、強い昼の日差しを避けます。現地の晴天率だけでなく岩陰・植物の陰の光環境を調べる価値がある種です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/haworthia-retusa/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5194,7 +5588,10 @@
       "category": "succulents",
       "name": "ハオルチオプシス・アテヌアータ",
       "scientificName": "Haworthiopsis attenuata",
-      "aliases": [],
+      "aliases": [
+        "十二の巻",
+        "アテヌアータ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5205,12 +5602,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/77138002-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "十二の巻という流通名だけでは種が確定しません。Haworthiopsis fasciataは別種で、この登録はH. attenuataです。斑や葉の模様の違いから耐性を判断しません。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/77138002-1",
-        "basis": "distribution"
+        "stars": 3,
+        "reason": "明るい間接光・排水・凍結を避ける管理が栽培資料に示されています。ただし流通時にファスキアータ種と取り違えられることがあり、まず種を確認したい対象です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/haworthiopsis-attenuata/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5242,7 +5639,9 @@
       "category": "succulents",
       "name": "アオノリュウゼツラン",
       "scientificName": "Agave americana",
-      "aliases": [],
+      "aliases": [
+        "アオノリュウゼツラン"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5265,12 +5664,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A319063-2",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "アオノリュウゼツランの原種を対象にします。斑入り・小型や他種との交配系統について、同じ耐寒性・耐暑性が確認された評価ではありません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A319063-2",
-        "basis": "distribution"
+        "reason": "日照と排水のよい土を好み、湿り続ける土では根腐れに注意する性質が栽培資料でも示されています。雨量だけでなく根の乾湿を比べる題材です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/agave-americana/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5278,7 +5677,10 @@
       "category": "succulents",
       "name": "アガベ・アテヌアータ",
       "scientificName": "Agave attenuata",
-      "aliases": [],
+      "aliases": [
+        "アテナータ",
+        "アテヌアータ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5291,12 +5693,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/61824-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "アテナータ種の原種を対象にします。アガベ全体が同じ耐寒性ではありません。園芸系統の葉色や樹形の選抜から、寒さへの強さまで判断しません。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/61824-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "霜に弱く、栽培でも冬の保護と乾燥管理が必要な種です。寒さに対応するパリーと並べて、同じアガベでも冬越しの考え方が異なると比較できます。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/670/agave-attenuata/details",
+        "basis": "cultivation"
       }
     },
     {
@@ -5304,7 +5706,9 @@
       "category": "succulents",
       "name": "アガベ・ビクトリアエレギナエ（笹の雪）",
       "scientificName": "Agave victoriae-reginae",
-      "aliases": [],
+      "aliases": [
+        "笹の雪"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5315,12 +5719,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A62342-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "笹の雪の原種を対象にします。パリーなど別種の耐寒情報は転用せず、斑入りや形を選抜した園芸系統の耐性も個別に確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A62342-1",
-        "basis": "distribution"
+        "reason": "日照と排水のよさ、生育期の水分と冬の乾燥・低温対策が栽培資料に示されています。原産地域の冬の降水を、日本の鉢土の湿り方と比較できます。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/698/agave-victoriae-reginae/details",
+        "basis": "cultivation"
       }
     },
     {
@@ -5328,7 +5732,9 @@
       "category": "succulents",
       "name": "アガベ・ポタトルム（雷神）",
       "scientificName": "Agave potatorum",
-      "aliases": [],
+      "aliases": [
+        "雷神"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5343,10 +5749,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A62198-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "雷神の原種ポタトルムを対象にします。自生環境からの暫定評価で、葉形や斑の選抜・交配系統の耐寒性まで確認したものではありません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "メキシコの季節的に乾燥する熱帯の自生環境が、雨季と乾季を比べる手がかりになります。実際の生育地点の標高・冬の乾湿まで調べたい種です。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A62198-1",
         "basis": "distribution"
       }
@@ -5356,7 +5762,9 @@
       "category": "succulents",
       "name": "アガベ・パリー",
       "scientificName": "Agave parryi",
-      "aliases": [],
+      "aliases": [
+        "パリー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5377,12 +5785,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A62172-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "最低気温だけでは屋外越冬を判断できません。変種・産地・園芸系統や、雨よけの有無を確認し、乾燥した条件での耐寒情報を湿った鉢土に転用しません。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A62172-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "乾燥した条件での耐寒性と、湿った土での根腐れへの注意が栽培資料でも対応します。冬の気温と降水・排水をセットで比較するのに向く種です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/agave-parryi/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5414,7 +5822,9 @@
       "category": "succulents",
       "name": "カネノナルキ",
       "scientificName": "Crassula ovata",
-      "aliases": [],
+      "aliases": [
+        "金のなる木"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5429,12 +5839,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/273350-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "まず斑入りではない原種の通常葉を対象にします。葉色・葉形を選抜した園芸系統の強光や寒さへの反応は、別に確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/273350-1",
-        "basis": "distribution"
+        "reason": "土の乾きを確認して水を与え、秋から冬は水分を控える性質が栽培資料に示されています。冬の気温・降水と、鉢土の乾湿を比較できます。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/crassula-ovata/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5442,7 +5852,9 @@
       "category": "succulents",
       "name": "月兎耳",
       "scientificName": "Kalanchoe tomentosa",
-      "aliases": [],
+      "aliases": [
+        "月兎耳"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5453,12 +5865,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A274502-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "月兎耳の原種を対象にします。葉色や形を選抜した園芸系統もあり、その見た目から原種と同じ耐性とは判断しません。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A274502-1",
-        "basis": "distribution"
+        "reason": "低緯度原産でも極端な暑さや強い直射を無条件に好む種ではありません。栽培資料では明るい間接光・排水・霜を避ける管理が示され、日射も合わせて比較できます。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/kalanchoe-tomentosa/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5488,11 +5900,168 @@
       }
     },
     {
+      "id": "echeveria-lilacina",
+      "category": "succulents",
+      "name": "エケベリア・リラシナ",
+      "scientificName": "Echeveria lilacina",
+      "aliases": [
+        "リラシナ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Mexico Northeast"
+      ],
+      "regionCodes": [
+        "MXE"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A86992-2",
+      "checkedAt": "2026-09-26",
+      "note": "リラシナ種を対象にします。葉色や形の似た交配品種には、この種だけの原産地や耐性を当てはめません。",
+      "reference": {
+        "stars": 4,
+        "reason": "排水と生育期の水分を確保し、冬は過湿と霜を避ける栽培上の性質が示されています。乾燥への強さと凍結への弱さを分けて比較できます。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/284418/echeveria-lilacina/details",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "aeonium-arboreum",
+      "category": "succulents",
+      "name": "アエオニウム・アルボレウム",
+      "scientificName": "Aeonium arboreum",
+      "aliases": [
+        "黒法師の原種",
+        "黒法師"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Canary Is.",
+        "Morocco"
+      ],
+      "regionCodes": [
+        "CNY",
+        "MOR"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A272194-1",
+      "checkedAt": "2026-09-26",
+      "note": "登録は緑葉の原種Aeonium arboreumです。黒法師は黒い葉を持つ園芸品種で、葉色が大きく異なります。検索の手がかりとして載せていますが、黒法師の単独の原産域を示すものではありません。",
+      "reference": {
+        "stars": 3,
+        "reason": "カナリア諸島などの季節を比べる対象です。黒法師などの園芸名は原種の緑葉とは区別し、葉色・系統による日差しへの反応まで確認したい種です。",
+        "sourceUrl": "https://www.rhs.org.uk/plants/trials-awards/plant-trial-results/aeonium",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "sempervivum-tectorum",
+      "category": "succulents",
+      "name": "センペルビウム・テクトルム",
+      "scientificName": "Sempervivum tectorum",
+      "aliases": [
+        "センペルヴィヴム・テクトルム"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Albania",
+        "Austria",
+        "France",
+        "Germany",
+        "Hungary",
+        "Italy",
+        "NW. Balkan Pen.",
+        "Spain",
+        "Switzerland"
+      ],
+      "regionCodes": [
+        "ALB",
+        "AUT",
+        "FRA",
+        "GER",
+        "HUN",
+        "ITA",
+        "SPA",
+        "SWI",
+        "YUG"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A276682-1",
+      "checkedAt": "2026-09-26",
+      "note": "センペルビウム属全体ではなくテクトルム種を対象にします。園芸交配系や選抜系統まで同じ耐性とは扱わず、山地と日本の平地の夏の差を確認します。",
+      "reference": {
+        "stars": 5,
+        "reason": "ヨーロッパの山地の寒さと、栽培で重視する排水のよさを比較できます。非常に暑い場所では午後の日差しを避け、冬と夏の対策を分ける題材です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/sempervivum-tectorum/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "sedum-morganianum",
+      "category": "succulents",
+      "name": "玉つづり（セダム・モルガニアナム）",
+      "scientificName": "Sedum morganianum",
+      "aliases": [
+        "玉綴り",
+        "タマツヅリ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Mexico Central",
+        "Mexico Gulf",
+        "Mexico Southeast"
+      ],
+      "regionCodes": [
+        "MXC",
+        "MXG",
+        "MXT"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A231789-2",
+      "checkedAt": "2026-09-26",
+      "note": "原産域はKewが自生として掲載するメキシコの地域を表示します。玉つづりのモルガニアナム種を対象にし、葉形の違う流通系統や別種は分けて確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "排水と明るさを確保し、冬の低温・凍結を避ける栽培上の性質を比較できます。セダムの仲間だから霜に強いとは一括りにできない例です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/sedum-morganianum/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "curio-rowleyanus",
+      "category": "succulents",
+      "name": "グリーンネックレス",
+      "scientificName": "Curio rowleyanus",
+      "aliases": [
+        "Senecio rowleyanus",
+        "セネシオ・ロウレヤヌス"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Cape Provinces"
+      ],
+      "regionCodes": [
+        "CPP"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A1011412-1",
+      "checkedAt": "2026-09-26",
+      "note": "旧名Senecio rowleyanus。原種の緑葉を対象にします。斑入りなどの園芸系統の光への反応は個別に確認し、乾燥地原産だから水分を一律に断つとは考えません。",
+      "reference": {
+        "stars": 5,
+        "reason": "乾燥地でも低木や岩の下に生育し、栽培では明るい間接光・半日陰と排水を重視します。地域の晴天率と株が受ける光の違いを比較しやすい種です。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/curio-rowleyanus/",
+        "basis": "cultivation"
+      }
+    },
+    {
       "id": "adenium-obesum",
       "category": "caudex",
       "name": "アデニウム・オベスム",
       "scientificName": "Adenium obesum",
-      "aliases": [],
+      "aliases": [
+        "砂漠のバラ"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5551,12 +6120,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A76369-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "園芸品種では花色・八重咲き・斑などが改良されています。登録はオベスム種で、花の交配系統や台木の性質まで原種の気候から決める評価ではありません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 3,
-        "reason": "掲載範囲が広く、選ぶ地域で気候が変わります。原種の分布を調べる手がかりとして比較し、園芸品種の性質は別に確認します。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A76369-1",
-        "basis": "distribution"
+        "reason": "暖かい生育期には水を吸い、休眠中は水分を減らす性質を栽培資料でも確認できます。分布が広く、交配品種・接ぎ木株もあるため、株の由来を確認して比較します。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/adenium-obesum/",
+        "basis": "cultivation"
       }
     },
     {
@@ -5611,10 +6180,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A80705-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "ラメリー種を対象にします。暖房下の株と野外の株では条件が異なり、葉がある時と落葉時の吸水を観察します。島全体の平均的な気候を管理条件にはしません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "マダガスカル中南部から南部の季節的に乾燥する熱帯の環境が比較の軸です。乾季・気温と葉の状態を照合し、冬という暦だけで落葉や休眠を判定しません。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A80705-1",
         "basis": "distribution"
       }
@@ -5672,7 +6241,9 @@
       "category": "caudex",
       "name": "パキポディウム・ブレビカウレ（恵比寿笑い）",
       "scientificName": "Pachypodium brevicaule",
-      "aliases": [],
+      "aliases": [
+        "恵比寿笑い"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5683,10 +6254,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A80694-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "恵比寿笑いのブレビカウレ種を対象にします。産地・種内の区分や接ぎ木の有無を確認し、マダガスカル原産という情報だけで真夏の暑さへの強さを判断しません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "stars": 3,
+        "reason": "マダガスカル中央部の生育地点の標高・夜温と、根元の排水を確認したい対象です。島全体の輪郭だけでは気候を代表できず、日本の平地の夏とは条件を分けて比べます。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A80694-1",
         "basis": "distribution"
       }
@@ -5696,7 +6267,10 @@
       "category": "caudex",
       "name": "パキポディウム・デンシフロルム",
       "scientificName": "Pachypodium densiflorum",
-      "aliases": [],
+      "aliases": [
+        "シバ女王の玉櫛",
+        "デンシフローラム"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5707,10 +6281,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A80697-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "シバ女王の玉櫛はデンシフロルム種の別名です。輪郭は島全体の掲載地域で、岩場などの生育場所や品種別の耐性を示すものではありません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "マダガスカル中央部の乾燥した自生環境を、降水の季節性と根元の排水から調べる対象です。降雨後に根が乾く環境と、鉢土の乾き方を合わせて比較します。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A80697-1",
         "basis": "distribution"
       }
@@ -5744,7 +6318,9 @@
       "category": "caudex",
       "name": "亀甲竜",
       "scientificName": "Dioscorea elephantipes",
-      "aliases": [],
+      "aliases": [
+        "アフリカ亀甲竜"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5755,12 +6331,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A317936-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "アフリカ亀甲竜で、メキシコ亀甲竜とは別種です。葉のない休眠期の過湿を避け、原産地の月を日本の同じ月へそのまま転用しません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A317936-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "暑く乾燥する夏に休み、冬から春に生育する性質が栽培資料でも示されています。季節を合わせて比較し、水やりの再開は芽やつるの動きと照合する題材です。",
+        "sourceUrl": "https://pza.sanbi.org/dioscorea-elephantipes",
+        "basis": "cultivation"
       }
     },
     {
@@ -5814,7 +6390,9 @@
       "category": "caudex",
       "name": "フォッケア・エデュリス（火星人）",
       "scientificName": "Fockea edulis",
-      "aliases": [],
+      "aliases": [
+        "火星人"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5827,10 +6405,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A97438-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "火星人のエデュリス種を対象にします。塊根を露出させる高さや、つる・葉の生育状態を確認します。気象の平均値は塊根表面の温度ではありません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "stars": 3,
+        "reason": "塊根を持つ地中生活型の植物で、原産地の気温に加え、地中の塊根と観賞用に露出させた塊根の環境差を調べたい対象です。日射や乾き方を合わせて比較します。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A97438-1",
         "basis": "distribution"
       }
@@ -5889,10 +6467,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/674085-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "グラウカ種を対象にします。降水量だけで一律に水を減らさず、葉・つるの活動と鉢土の排水を確認します。栽培系統の耐性比較は未確認の暫定評価です。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "ボツワナ南東部から南アフリカ北部の乾燥した環境を比較する対象です。葉やつるが伸びる時期と降水を照合し、乾燥に耐える性質と生育中の吸水を分けて調べます。",
         "sourceUrl": "https://powo.science.kew.org/taxon/674085-1",
         "basis": "distribution"
       }
@@ -5930,7 +6508,9 @@
       "category": "caudex",
       "name": "オペルクリカリア・デカリー",
       "scientificName": "Operculicarya decaryi",
-      "aliases": [],
+      "aliases": [
+        "デカリー"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5941,10 +6521,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A70148-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "デカリー種を対象にします。島全体の輪郭は詳細な生育場所を示さず、同じ属のパキプスの管理条件をそのまま転用しません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "マダガスカルの季節的に乾燥する熱帯の環境を、雨季・乾季と気温の変化から比較する対象です。パキプスとは自生地域を同一視せず、具体的な地点を調べます。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A70148-1",
         "basis": "distribution"
       }
@@ -5954,7 +6534,9 @@
       "category": "caudex",
       "name": "オペルクリカリア・パキプス",
       "scientificName": "Operculicarya pachypus",
-      "aliases": [],
+      "aliases": [
+        "パキプス"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -5965,10 +6547,10 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A986930-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "パキプス種を対象にします。未発根の輸入株の発根管理は原産地の雨量とは別問題です。デカリーと同じ属でも、同じ自生場所とは扱いません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
+        "reason": "マダガスカル南西部の乾燥した低木地の、乾季の長さと雨が降る季節の気温を調べる対象です。気候は発根後の季節的な生育を考える手がかりとして比較します。",
         "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A986930-1",
         "basis": "distribution"
       }
@@ -5989,12 +6571,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A68139-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "ユッタエ種を対象にします。冬の吸水低下や排水、霜からの保護を確認します。原産地の乾燥に耐える性質は、生育中も水を与えなくてよいという意味ではありません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A68139-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "ナミビアの乾燥した環境と、夏の生育・冬の落葉を栽培資料でも照合できます。寒い時期の過湿を避けるため、気温と乾湿をセットで比べるのに向く種です。",
+        "sourceUrl": "https://pza.sanbi.org/cyphostemma-juttae",
+        "basis": "cultivation"
       }
     },
     {
@@ -6030,7 +6612,9 @@
       "category": "caudex",
       "name": "チレコドン・パニクラツス",
       "scientificName": "Tylecodon paniculatus",
-      "aliases": [],
+      "aliases": [
+        "阿房宮"
+      ],
       "taxonRank": "species",
       "originKind": "native",
       "nativeAreas": [
@@ -6043,12 +6627,12 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A276916-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "阿房宮のパニクラツス種を対象にします。他種との交配も報告されており、交配株にはこの種だけの原産地を当てはめません。葉の活動と休眠を観察します。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
-        "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A276916-1",
-        "basis": "distribution"
+        "stars": 5,
+        "reason": "冬に葉を展開し、暑く乾燥する夏に落葉する性質が栽培資料でも確認できます。幹が水を蓄えることと、真夏に旺盛に育つことを分けて比較する題材です。",
+        "sourceUrl": "https://pza.sanbi.org/tylecodon-paniculatus",
+        "basis": "cultivation"
       }
     },
     {
@@ -6079,12 +6663,243 @@
       ],
       "sourceUrl": "https://powo.science.kew.org/taxon/350415-1",
       "checkedAt": "2026-09-26",
-      "note": "",
+      "note": "サンゴアブラギリのポダグリカ種を対象にします。寒い時期には室内で保護し、原産地の暦ではなく栽培中の葉の状態を確認して比較します。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 5,
+        "reason": "暖かい時期の成長と、落葉後の水分を控える管理が栽培資料に示されています。生育期と活動が落ちる時期で吸水が変わることを、気温・降水と照合できます。",
+        "sourceUrl": "https://plants.ces.ncsu.edu/plants/jatropha-podagrica/",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "pachypodium-rosulatum-subsp-gracilius",
+      "category": "caudex",
+      "name": "グラキリス",
+      "scientificName": "Pachypodium rosulatum subsp. gracilius",
+      "aliases": [
+        "Pachypodium gracilius",
+        "パキポディウム・グラキリス"
+      ],
+      "taxonRank": "subspecies",
+      "originKind": "native",
+      "nativeAreas": [
+        "Madagascar"
+      ],
+      "regionCodes": [
+        "MDG"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77065710-1",
+      "checkedAt": "2026-09-26",
+      "note": "独立した自然亜種として登録します。グラキリス系の交配株は分けます。輪郭は掲載地域のマダガスカル全体で、この亜種の詳しい自生範囲ではありません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
       "reference": {
         "stars": 4,
-        "reason": "原種の掲載地域を気候比較の手がかりにできます。品種別の耐寒性や現地の生育場所までは確認していない暫定評価です。",
-        "sourceUrl": "https://powo.science.kew.org/taxon/350415-1",
+        "reason": "マダガスカル中南部の、雨季と乾季がある自生環境を比較する対象です。雨の時期・気温と、葉や生育の動きを照合し、暦だけで水やりを決めない手がかりにします。",
+        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A77065710-1",
         "basis": "distribution"
+      }
+    },
+    {
+      "id": "pachypodium-eburneum",
+      "category": "caudex",
+      "name": "パキポディウム・エブルネウム",
+      "scientificName": "Pachypodium eburneum",
+      "aliases": [
+        "エブレネウム"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Madagascar"
+      ],
+      "regionCodes": [
+        "MDG"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A997795-1",
+      "checkedAt": "2026-09-26",
+      "note": "輪郭は掲載地域のマダガスカル全体です。山地の自生範囲ではなく、島の暖かい低地の気候をこの種の代表として選ばないようにします。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 3,
+        "reason": "Kewでは熱帯の山地環境に分類されています。低緯度でも標高によって気温が違うため、現地の標高・夜温・降水と平地の鉢植え環境を照合したい種です。",
+        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A997795-1",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "dorstenia-foetida",
+      "category": "caudex",
+      "name": "ドルステニア・フォエチダ",
+      "scientificName": "Dorstenia foetida",
+      "aliases": [
+        "フォエチダ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Djibouti",
+        "Eritrea",
+        "Ethiopia",
+        "Kenya",
+        "Oman",
+        "Saudi Arabia",
+        "Somalia",
+        "Sudan-South Sudan",
+        "Tanzania",
+        "Yemen"
+      ],
+      "regionCodes": [
+        "DJI",
+        "ERI",
+        "ETH",
+        "KEN",
+        "OMA",
+        "SAU",
+        "SOM",
+        "SUD",
+        "TAN",
+        "YEM"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A851554-1",
+      "checkedAt": "2026-09-26",
+      "note": "種内に亜種があり、登録の輪郭はフォエチダ種全体です。原産国を一つだけ選んで代表させず、由来の分からない園芸株の耐性も同じとは判断しません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 3,
+        "reason": "アフリカ北東部からアラビア半島まで分布し、産地によって気候が異なります。具体的な産地を絞り、日射・降水・乾燥期間を調べて比較したい種です。",
+        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A851554-1",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "sinningia-leucotricha",
+      "category": "caudex",
+      "name": "断崖の女王（シンニンギア・レウコトリカ）",
+      "scientificName": "Sinningia leucotricha",
+      "aliases": [
+        "断崖の女王",
+        "シンニンギア・レウコトリカ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Brazil South"
+      ],
+      "regionCodes": [
+        "BZS"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A237094-2",
+      "checkedAt": "2026-09-26",
+      "note": "断崖の女王のレウコトリカ種を対象にします。輪郭はブラジル南部という掲載地域で、岩の隙間などの自生場所そのものではありません。鉢土・塊根の露出も別に確認します。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "ブラジルのパラナ州に自生する、塊根を持つ岩生植物です。岩場の排水と季節的な乾燥を比べ、塊根植物をすべて砂漠の植物とは扱わない題材です。",
+        "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A237094-2",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "othonna-euphorbioides",
+      "category": "caudex",
+      "name": "オトンナ・ユーフォルビオイデス（黒鬼城）",
+      "scientificName": "Othonna euphorbioides",
+      "aliases": [
+        "黒鬼城"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Cape Provinces"
+      ],
+      "regionCodes": [
+        "CPP"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A236012-1",
+      "checkedAt": "2026-09-26",
+      "note": "黒鬼城のユーフォルビオイデス種を対象にします。園芸株の生育・休眠は葉や芽を観察し、冬型という呼び名だけで厳しい寒さへの強さを判断しません。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "自生地では冬の季節に葉と花をつける性質が記載されています。乾燥地原産でも生育の中心が真夏とは限らず、降水の季節と葉の活動を比べる対象です。",
+        "sourceUrl": "https://www.sanbi.org/wp-content/uploads/2024/06/2023_Guide-to-the-identification-of-succulent-plant-species.pdf",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "othonna-herrei",
+      "category": "caudex",
+      "name": "オトンナ・ヘレー（蛮鬼塔）",
+      "scientificName": "Othonna herrei",
+      "aliases": [
+        "蛮鬼塔",
+        "オトンナ・ヘレイ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Cape Provinces"
+      ],
+      "regionCodes": [
+        "CPP"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A236033-1",
+      "checkedAt": "2026-09-26",
+      "note": "蛮鬼塔のヘレー種を対象にします。日本では南半球と季節を合わせて読み、現地の月をそのまま水やり予定にしません。休眠中の鉢土の湿り方も確認します。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 5,
+        "reason": "冬の降水地域で生育し、夏は葉を落として休む性質が栽培資料でも示されています。南・南東向きの岩場など、斜面の向きと光環境まで比較する意味がある種です。",
+        "sourceUrl": "https://pza.sanbi.org/othonna-herrei",
+        "basis": "cultivation"
+      }
+    },
+    {
+      "id": "tylecodon-reticulatus",
+      "category": "caudex",
+      "name": "チレコドン・レティキュラツス（万物想）",
+      "scientificName": "Tylecodon reticulatus",
+      "aliases": [
+        "万物想"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Cape Provinces",
+        "Namibia"
+      ],
+      "regionCodes": [
+        "CPP",
+        "NAM"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A276921-1",
+      "checkedAt": "2026-09-26",
+      "note": "万物想のレティキュラツス種を対象にします。出典の栽培季節の説明はチレコドン属の性質で、種内の産地・区分や株ごとの耐性は個別に確認します。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "冬の降水と夏の乾燥を、涼しい季節の生育・夏の落葉と照合する対象です。乾燥した低木地の季節を比べ、冬型という呼び名と強い耐寒性は分けて考えます。",
+        "sourceUrl": "https://pza.sanbi.org/tylecodon-ectypus",
+        "basis": "distribution"
+      }
+    },
+    {
+      "id": "pelargonium-triste",
+      "category": "caudex",
+      "name": "ペラルゴニウム・トリステ",
+      "scientificName": "Pelargonium triste",
+      "aliases": [
+        "トリステ"
+      ],
+      "taxonRank": "species",
+      "originKind": "native",
+      "nativeAreas": [
+        "Cape Provinces"
+      ],
+      "regionCodes": [
+        "CPP"
+      ],
+      "sourceUrl": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A377136-1",
+      "checkedAt": "2026-09-26",
+      "note": "トリステ種を対象にします。自生状態では塊根が地中にあり、露出させると日射や乾燥の受け方が変わります。日本の栽培では葉・芽と鉢土の状態を照合します。 発根・活着した自根株で比較。未発根株・接ぎ木株の管理は分けて確認します。",
+      "reference": {
+        "stars": 4,
+        "reason": "地下の塊根で乾季を休み、雨の再開で葉を伸ばす性質が記載されています。栽培条件によって葉を保つ例もあり、暦だけで休眠を決めない比較に向く種です。",
+        "sourceUrl": "https://pza.sanbi.org/pelargonium-triste",
+        "basis": "cultivation"
       }
     },
     {
