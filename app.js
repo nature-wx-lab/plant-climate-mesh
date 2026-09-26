@@ -2017,7 +2017,8 @@
     const current = overviewValues(climate, daily);
     const reference = referenceClimate ? overviewValues(referenceClimate, referenceDaily) : null;
     const shifted = Boolean(reference && seasonShiftActive());
-    overviewModel = { current, reference, shifted, message };
+    const currentRole = state.referenceRecord && !sameCell(state.referenceRecord.cell, state.currentRecord?.cell) ? "B" : "A";
+    overviewModel = { current, reference, shifted, currentRole, message };
     overviewCursor = null;
     if (climate && !reference) {
       const temperature = monthlyExtent(current.temperature), rain = monthlyExtent(current.precipitation);
@@ -2030,10 +2031,10 @@
       elements.annualHumidityNote.textContent = humidity?.complete
         ? (humidity.minimum.value >= 80 ? "全月の平均湿度が80%以上" : `月平均 ${numberText(humidity.minimum.value, 0)}〜${numberText(humidity.maximum.value, 0)}%`) : "月別の欠測あり";
     }
-    elements.climateHeadline.textContent = message || ((reference ? "Bの特徴：" : "") + climateOverviewDescription(current));
+    elements.climateHeadline.textContent = message || ((currentRole === "B" ? "Bの特徴：" : "") + climateOverviewDescription(current));
     elements.overviewLegend.textContent = reference
       ? (shifted ? "B＝色線・棒 / A＝黒縁 · Bを6か月移動" : "B＝色線・棒 / A＝黒縁")
-      : "月別の気候平均 · 4要素を同じ月軸で";
+      : currentRole === "B" ? "Bのみ表示 · Aの重ね表示OFF" : "月別の気候平均 · 4要素を同じ月軸で";
     for (const kind of overviewKinds) {
       const extent = monthlyExtent(current[kind.key]);
       const target = document.getElementById("overview" + kind.stem + "Insight");
@@ -2056,7 +2057,7 @@
 
   function drawClimateOverview() {
     if (!overviewModel) return;
-    const { current, reference } = overviewModel;
+    const { current, reference, currentRole } = overviewModel;
     overviewKinds.forEach((kind) => {
       const svg = document.getElementById("overview" + kind.stem + "Chart");
       if (!svg.clientWidth || !svg.clientHeight) return;
@@ -2064,7 +2065,7 @@
       const left = 29, right = 10, top = 7, bottom = height - 6;
       const x = (index) => left + (index + 0.5) / 12 * (width - left - right);
       const groups = reference ? [{ values: reference, role: "A", outlined: true }, { values: current, role: "B", outlined: false }]
-        : [{ values: current, role: "A", outlined: false }];
+        : [{ values: current, role: currentRole, outlined: false }];
       const plotted = groups.flatMap((group) => kind.key === "temperature"
         ? [group.values.temperature, group.values.high, group.values.low].flat() : group.values[kind.key]).filter(validNumber);
       const minimum = kind.key === "temperature" ? Math.min(0, Math.floor(Math.min(0, ...plotted) / 5) * 5) : 0;
@@ -2142,9 +2143,9 @@
       return;
     }
     const index = overviewCursor;
-    const { current, reference, shifted } = overviewModel;
+    const { current, reference, shifted, currentRole } = overviewModel;
     const currentIndex = shifted ? shiftedMonthIndex(index) : index;
-    const rows = [{ values: current, index: currentIndex, role: reference ? "B" : "A" }];
+    const rows = [{ values: current, index: currentIndex, role: currentRole }];
     if (reference) rows.push({ values: reference, index, role: "A" });
     elements.overviewReadout.replaceChildren(...rows.map((row) => {
       const line = document.createElement("span");
